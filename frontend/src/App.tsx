@@ -4,6 +4,7 @@ import { trpc, createTRPCClient } from './lib/trpc';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { HomePage } from './pages/HomePage';
 import { DashboardPage } from './pages/DashboardPage';
+import { ModulePage } from './pages/ModulePage';
 import { useAuthStore } from './store/authStore';
 
 function App() {
@@ -29,6 +30,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/module/:id"
+              element={
+                <ProtectedRoute>
+                  <ModulePage />
                 </ProtectedRoute>
               }
             />

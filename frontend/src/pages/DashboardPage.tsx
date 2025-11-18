@@ -212,7 +212,11 @@ export const DashboardPage = () => {
                               </span>
                             </div>
                           </div>
-                          <Button size="sm" variant="outline">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => window.location.href = `/module/${module.id}`}
+                          >
                             Estudar
                           </Button>
                         </div>

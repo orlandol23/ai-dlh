@@ -5,38 +5,35 @@
       "src": "frontend/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist"
+        "distDir": "frontend/dist"
       }
     },
     {
       "src": "server/index.ts",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["server/**"]
-      }
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/trpc/(.*)",
-      "dest": "/server/index.ts"
+      "dest": "server/index.ts"
     },
     {
       "src": "/health",
-      "dest": "/server/index.ts"
+      "dest": "server/index.ts"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "server/index.ts"
     },
     {
       "src": "/(.*)",
-      "dest": "/frontend/$1"
+      "dest": "frontend/dist/$1"
     }
   ],
-  "env": {
-    "NODE_ENV": "production"
-  },
   "functions": {
     "server/index.ts": {
-      "memory": 1024,
-      "maxDuration": 10
+      "maxDuration": 30
     }
   }
 }

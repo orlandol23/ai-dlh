@@ -16,7 +16,12 @@ const app = express();
 app.use(express.json());
 app.use(corsMiddleware);
 
-// Health check endpoint
+// Simple health check for Railway (always returns 200)
+app.get('/healthz', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
+// Detailed health check endpoint
 app.get('/health', async (req, res) => {
   const dbOk = await checkDatabaseConnection();
   const blockchainOk = await web3Service.testConnection();

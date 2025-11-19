@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["nodejs_22"]
+
+[phases.install]
+cmds = ["cd server && npm install --omit=dev"]
+
+[phases.build]
+cmds = ["cd server && npm install", "cd server && npm run build"]
+
+[start]
+cmd = "cd server && node dist/index.js"

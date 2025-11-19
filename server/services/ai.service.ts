@@ -141,7 +141,7 @@ export class AIService {
    * Build prompt for AI generation
    */
   private buildPrompt(topic: string, level: string): string {
-    const levelDescriptions = {
+    const levelDescriptions: Record<string, string> = {
       beginner: 'iniciante (conceitos básicos, explicações simples)',
       intermediate: 'intermediário (aprofundamento, alguns conceitos avançados)',
       advanced: 'avançado (conceitos complexos, técnicas profissionais)',

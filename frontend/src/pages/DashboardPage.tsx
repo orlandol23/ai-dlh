@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Badge } from '@/components/atoms/Badge';
 import { useAuth } from '@/hooks/useAuth';
 import { trpc } from '@/lib/trpc';
-import { formatAddress, getEtherscanUrl } from '@/lib/utils';
+import { formatAddress } from '@/lib/utils';
 
 /**
  * DashboardPage - Main user dashboard
@@ -140,7 +140,7 @@ export const DashboardPage = () => {
                       required
                       minLength={3}
                       maxLength={200}
-                      disabled={generateMutation.isPending}
+                      disabled={isGenerating}
                     />
                   </div>
 
@@ -178,7 +178,7 @@ export const DashboardPage = () => {
                     )}
                   </Button>
 
-                  {generateMutation.isPending && (
+                  {isGenerating && (
                     <p className="text-sm text-gray-600 text-center animate-pulse">
                       ⏳ A IA está criando seu módulo personalizado...
                     </p>

@@ -36,7 +36,7 @@ export class AuthService {
   generateToken(payload: JWTPayload): string {
     return jwt.sign(payload, config.JWT_SECRET, {
       expiresIn: config.JWT_EXPIRES_IN,
-    });
+    } as jwt.SignOptions);
   }
 
   /**

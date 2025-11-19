@@ -31,15 +31,11 @@ export const useAuth = () => {
       const signer = await provider.getSigner();
       const address = await signer.getAddress();
 
-      console.log('Connected wallet:', address);
-
       // Create message to sign
       const message = `AI-DLH Authentication\n\nSign this message to authenticate with AI-DLH.\n\nAddress: ${address}\nTimestamp: ${Date.now()}\n\nThis will not cost any gas.`;
 
       // Request signature
       const signature = await signer.signMessage(message);
-
-      console.log('Message signed');
 
       // Authenticate with backend
       const result = await loginMutation.mutateAsync({
@@ -47,8 +43,6 @@ export const useAuth = () => {
         signature,
         message,
       });
-
-      console.log('Authentication successful');
 
       // Save to store
       setToken(result.token);

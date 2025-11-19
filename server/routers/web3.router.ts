@@ -1,4 +1,3 @@
-import { z } from 'zod';
 import { router, protectedProcedure } from '../trpc';
 import { web3Service } from '../services/web3.service';
 import { TRPCError } from '@trpc/server';

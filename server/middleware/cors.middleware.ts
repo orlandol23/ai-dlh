@@ -18,11 +18,36 @@ export const corsMiddleware = cors({
     const isDevelopment = config.NODE_ENV === 'development';
     const isLocalhost = origin?.startsWith('http://localhost:');
 
-    if (!origin || allowedOrigins.includes(origin) || (isDevelopment && isLocalhost)) {
+    // Allow when no origin (server-to-server requests, native apps)
+    if (!origin) {
       callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+      return;
     }
+
+    // Allow explicit origins
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    // Allow Vercel app domains (production and preview): *.vercel.app
+    try {
+      const originHost = new URL(origin).host;
+      if (originHost.endsWith('.vercel.app')) {
+        callback(null, true);
+        return;
+      }
+    } catch (e) {
+      // ignore URL parse errors
+    }
+
+    // Allow localhost in development
+    if (isDevelopment && isLocalhost) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

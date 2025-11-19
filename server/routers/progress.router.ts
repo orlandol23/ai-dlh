@@ -7,6 +7,15 @@ import { eq, and, desc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { logger } from '../utils/logger';
 
+/**
+ * Progress Router - Handles quiz submissions and progress tracking
+ * 
+ * Endpoints:
+ * - submitQuiz: Submit quiz answers and record on blockchain if passing
+ * - getUserProgress: Get all progress records for user
+ * - getStatistics: Get aggregated statistics (avg score, completion rate, etc.)
+ * - getModuleProgress: Get progress for specific module
+ */
 export const progressRouter = router({
   /**
    * Submit quiz answers and record progress

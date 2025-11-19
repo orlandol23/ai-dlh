@@ -6,6 +6,23 @@ Bem-vindo à documentação completa do AI-Powered Decentralized Learning Hub.
 
 ### 🚀 Começando
 
+#### Novos Usuários (Comece Aqui!)
+
+- **[Pré-requisitos](../PREREQUISITES.md)** ⭐ - Verificação antes de começar (5 min)
+- **[Início Rápido](../START-NOW.md)** ⚡ - Comece em 5 minutos!
+- **[Guia Completo de Setup](../SETUP-GUIDE.md)** 📖 - Todas as 6 fases detalhadas (90 min)
+- **[Checklist de Progresso](../PROGRESS-CHECKLIST.md)** ✅ - Acompanhe cada passo
+- **[FAQ - Perguntas Frequentes](../FAQ.md)** 💬 - 50+ dúvidas respondidas
+- **[Índice de Guias](../GUIDES-INDEX.md)** 🗂️ - Navegue pelos guias
+
+#### Referência Rápida
+
+- **[Cartão de Referência](../QUICK-CARD.md)** 🎴 - Comandos essenciais (imprima!)
+- **[Referência Visual](../QUICK-REFERENCE.md)** 📊 - Diagramas ASCII
+- **[Script PowerShell](../scripts.ps1)** 🤖 - Automação para Windows
+
+#### Documentação Original
+
 - **[README Principal](../README.md)** - Visão geral do projeto, features, stack
 - **[Quick Start](../QUICKSTART.md)** - Guia de início rápido (10 minutos)
 - **[Instalação Completa](../README.md#instalação)** - Setup detalhado passo a passo
@@ -81,6 +98,7 @@ Recomendamos ler nesta ordem:
 5. [Troubleshooting](./TROUBLESHOOTING.md) - Problemas comuns
 
 **Arquivos importantes:**
+
 ```
 frontend/
 ├── src/components/     # Componentes React
@@ -101,6 +119,7 @@ Recomendamos ler nesta ordem:
 5. [Troubleshooting](./TROUBLESHOOTING.md) - Database e API
 
 **Arquivos importantes:**
+
 ```
 server/
 ├── routers/            # tRPC routers (API)
@@ -122,6 +141,7 @@ Recomendamos ler nesta ordem:
 4. [Troubleshooting](./TROUBLESHOOTING.md) - Blockchain e Web3
 
 **Arquivos importantes:**
+
 ```
 contracts/
 ├── contracts/LearningProgress.sol  # Main contract
@@ -139,6 +159,7 @@ Recomendamos ler nesta ordem:
 3. [Arquitetura](./ARCHITECTURE.md) - Infraestrutura
 
 **Arquivos importantes:**
+
 ```
 .github/workflows/ci.yml  # CI/CD pipeline
 vercel.json               # Vercel config
@@ -155,7 +176,7 @@ vercel.json               # Vercel config
 // Frontend
 const module = await trpc.ai.generateModule.mutate({
   topic: "React Hooks",
-  level: "intermediate"
+  level: "intermediate",
 });
 
 // Retorna módulo completo com conteúdo + quiz
@@ -187,12 +208,12 @@ Fluxo completo: [ARCHITECTURE.md → Fluxo 1](./ARCHITECTURE.md#fluxo-1-autentic
 // Automático após quiz!
 const result = await trpc.progress.submitQuiz.mutate({
   moduleId: 123,
-  answers: [0, 2, 1, 3]
+  answers: [0, 2, 1, 3],
 });
 
 if (result.score >= 70) {
-  console.log('Registrado on-chain!');
-  console.log('TX:', result.transactionHash);
+  console.log("Registrado on-chain!");
+  console.log("TX:", result.transactionHash);
 }
 ```
 

@@ -25,9 +25,20 @@ export const ModuleContentSchema = z.object({
 export type ModuleContent = z.infer<typeof ModuleContentSchema>;
 export type QuizQuestion = z.infer<typeof QuizQuestionSchema>;
 
+/**
+ * AI Service for generating educational content using Google Gemini AI.
+ * 
+ * Features:
+ * - Generates personalized learning modules based on topic and difficulty level
+ * - Creates quiz questions with explanations
+ * - Validates generated content with Zod schemas
+ * - Handles JSON parsing and cleaning from AI responses
+ * 
+ * @class AIService
+ */
 export class AIService {
   private model = genAI.getGenerativeModel({
-    model: 'gemini-1.5-flash',
+    model: 'gemini-2.0-flash-001',
     generationConfig: {
       temperature: 0.7,
       topP: 0.95,
@@ -51,15 +62,59 @@ export class AIService {
       const text = result.response.text();
 
       logger.debug('AI Response received');
+      logger.debug('Response length:', text.length);
+      logger.debug('First 200 chars:', text.substring(0, 200));
 
-      // Extract JSON from response (remove markdown if present)
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      // Try to extract and clean JSON from response
+      let jsonText = text;
+      
+      // Remove markdown code blocks if present
+      jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+      
+      // Find JSON object
+      const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         logger.error('No JSON found in AI response');
+        logger.error('Full response:', text);
         throw new Error('No JSON found in AI response');
       }
+      
+      logger.debug('JSON match found, length:', jsonMatch[0].length);
 
-      const parsed = JSON.parse(jsonMatch[0]);
+      // Clean the JSON string - approach simples
+      let cleanJson = jsonMatch[0].trim();
+      
+      logger.debug('Attempting to parse JSON...');
+      logger.debug('JSON length:', cleanJson.length);
+      
+      let parsed;
+      
+      try {
+        // Try direct parse first
+        parsed = JSON.parse(cleanJson);
+      } catch (firstError: any) {
+        logger.warn('Direct JSON parse failed:', firstError.message);
+        logger.debug('Problematic JSON start:', cleanJson.substring(0, 500));
+        
+        // Try with basic cleaning
+        try {
+          cleanJson = cleanJson
+            .replace(/,(\s*[}\]])/g, '$1') // Remove trailing commas
+            .replace(/\r\n/g, '\\n') // Fix Windows newlines
+            .replace(/\n/g, '\\n') // Fix Unix newlines
+            .replace(/\t/g, ' ') // Replace tabs
+            .replace(/[\u0000-\u001F\u007F-\u009F]/g, ''); // Remove control chars
+          
+          parsed = JSON.parse(cleanJson);
+          logger.info('Cleaned JSON parsed successfully');
+        } catch (secondError: any) {
+          logger.error('Cleaned JSON parse also failed:', secondError.message);
+          logger.error('JSON sample (first 1000 chars):', cleanJson.substring(0, 1000));
+          throw new Error(`AI generated invalid JSON: ${secondError.message}`);
+        }
+      }
+      
+      logger.debug('JSON parsed, validating schema...');
       const validated = ModuleContentSchema.parse(parsed);
 
       logger.info(`Module generated successfully: ${validated.title}`);
@@ -70,7 +125,12 @@ export class AIService {
 
       if (error instanceof z.ZodError) {
         logger.error('Validation errors:', error.errors);
-        throw new Error('Generated module failed validation');
+        throw new Error('Generated module failed validation: ' + error.errors.map(e => e.message).join(', '));
+      }
+
+      if (error instanceof SyntaxError) {
+        logger.error('JSON parsing error at:', error.message);
+        throw new Error('AI generated invalid JSON format');
       }
 
       throw new Error('Failed to generate module with AI');
@@ -90,7 +150,14 @@ export class AIService {
     return `
 Você é um especialista em educação e criação de conteúdo educacional. Crie um módulo educacional completo sobre "${topic}" para nível ${levelDescriptions[level]}.
 
-IMPORTANTE: Retorne APENAS um objeto JSON válido, sem markdown, sem explicações extras.
+CRÍTICO: Retorne APENAS um objeto JSON válido. NÃO use markdown code blocks. NÃO adicione texto antes ou depois do JSON.
+
+REGRAS OBRIGATÓRIAS:
+1. JSON deve começar com { e terminar com }
+2. Não use vírgulas após o último item de arrays ou objetos
+3. Todas as strings devem estar entre aspas duplas "
+4. Escape aspas dentro de strings com \\"
+5. Não quebre linhas dentro de strings
 
 Estrutura do JSON:
 
@@ -109,11 +176,12 @@ Estrutura do JSON:
 }
 
 Requisitos do conteúdo:
-- Formato: Markdown bem formatado com títulos (##, ###), listas, código \`inline\`, blocos de código
+- Formato: Markdown bem formatado com títulos (##, ###), listas, código inline, blocos de código
 - Extensão: 500-1500 palavras
 - Estrutura: Introdução, desenvolvimento com exemplos práticos, conclusão
 - Linguagem: Português brasileiro, clara e objetiva
 - Exemplos: Incluir pelo menos 2 exemplos práticos com código (se aplicável)
+- IMPORTANTE: Use \\n para quebras de linha no content, não quebre a string JSON
 
 Requisitos do quiz:
 - Quantidade: 4-5 perguntas
@@ -125,7 +193,14 @@ Requisitos do quiz:
 Tempo estimado:
 - Baseado no conteúdo: 10-30 minutos para leitura e quiz
 
-Retorne APENAS o JSON, sem markdown (\`\`\`json), sem texto adicional.
+LEMBRE-SE: 
+- Retorne APENAS o JSON
+- Sem código markdown
+- Sem texto antes ou depois
+- JSON deve ser válido e parseável
+- Teste mentalmente se há vírgulas extras ou aspas não escapadas
+
+Comece sua resposta diretamente com o caractere { e termine com }
 `;
   }
 

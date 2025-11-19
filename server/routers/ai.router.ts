@@ -6,6 +6,15 @@ import { modules } from '../db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 
+/**
+ * AI Router - Handles AI-powered module generation and management
+ * 
+ * Endpoints:
+ * - generateModule: Generate new learning module with AI
+ * - getUserModules: Get all modules for authenticated user
+ * - getModuleById: Get specific module details
+ * - deleteModule: Delete user's module
+ */
 export const aiRouter = router({
   /**
    * Generate a new learning module with AI

@@ -16,9 +16,22 @@ export interface AuthResult {
   user: User;
 }
 
+/**
+ * Authentication Service for Web3-based user authentication.
+ * 
+ * Features:
+ * - JWT token generation and verification
+ * - Web3 signature validation
+ * - User management (create, update, fetch)
+ * - Session management with token expiration
+ * 
+ * @class AuthService
+ */
 export class AuthService {
   /**
-   * Generate JWT token
+   * Generate JWT token with user payload
+   * @param {JWTPayload} payload - User ID and wallet address
+   * @returns {string} Signed JWT token
    */
   generateToken(payload: JWTPayload): string {
     return jwt.sign(payload, config.JWT_SECRET, {

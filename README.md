@@ -10,6 +10,7 @@ Hub de aprendizado personalizado que usa **IA Generativa** para criar conteúdo 
 
 ## 📋 Índice
 
+- [🚀 **COMECE AQUI - Guias de Setup**](#-guias-de-setup)
 - [Sobre o Projeto](#sobre-o-projeto)
 - [Stack Tecnológico](#stack-tecnológico)
 - [Funcionalidades](#funcionalidades)
@@ -23,6 +24,24 @@ Hub de aprendizado personalizado que usa **IA Generativa** para criar conteúdo 
 - [Roadmap](#roadmap)
 - [Contribuindo](#contribuindo)
 - [Licença](#licença)
+
+---
+
+## 🚀 Guias de Setup
+
+**NOVO!** Guias completos para configurar o projeto:
+
+| Guia                   | Tempo | Descrição                    | Link                                           |
+| ---------------------- | ----- | ---------------------------- | ---------------------------------------------- |
+| ⚡ **Comece AGORA**    | 5 min | Setup básico imediato        | [START-NOW.md](START-NOW.md)                   |
+| 🏆 **Setup Completo**  | 1h    | Guia passo a passo detalhado | [SETUP-GUIDE.md](SETUP-GUIDE.md)               |
+| ✅ **Checklist**       | -     | Acompanhe seu progresso      | [PROGRESS-CHECKLIST.md](PROGRESS-CHECKLIST.md) |
+| 📊 **Referência**      | -     | Resumo visual rápido         | [QUICK-REFERENCE.md](QUICK-REFERENCE.md)       |
+| 📚 **Índice Completo** | -     | Todos os guias disponíveis   | [GUIDES-INDEX.md](GUIDES-INDEX.md)             |
+
+**💡 Recomendação:** Comece com [START-NOW.md](START-NOW.md) se é sua primeira vez!
+
+---
 
 ## 🎯 Sobre o Projeto
 
@@ -47,6 +66,7 @@ O AI-DLH é uma plataforma educacional que combina:
 ## 🛠️ Stack Tecnológico
 
 ### Frontend
+
 - **Framework**: React 18 + TypeScript (strict mode)
 - **Build**: Vite 5
 - **Styling**: Tailwind CSS
@@ -54,6 +74,7 @@ O AI-DLH é uma plataforma educacional que combina:
 - **API Client**: tRPC React
 
 ### Backend
+
 - **Runtime**: Node.js 20
 - **Framework**: Express
 - **API**: tRPC (type-safe)
@@ -62,16 +83,19 @@ O AI-DLH é uma plataforma educacional que combina:
 - **Logger**: Winston
 
 ### Blockchain
+
 - **Smart Contract**: Solidity 0.8.20
 - **Framework**: Hardhat
 - **Library**: ethers.js v6
 - **Network**: Ethereum Sepolia (testnet)
 
 ### IA
+
 - **Model**: Google Gemini 1.5 Flash
 - **Usage**: Geração de conteúdo educacional
 
 ### DevOps
+
 - **CI/CD**: GitHub Actions
 - **Deploy**: Vercel
 - **Tests**: Vitest, Hardhat
@@ -81,20 +105,24 @@ O AI-DLH é uma plataforma educacional que combina:
 ### Para Usuários
 
 1. **Autenticação Web3**
+
    - Login via MetaMask (assinatura de mensagem)
    - Sessão segura com JWT
 
 2. **Geração de Módulos com IA**
+
    - Digite um tópico (ex: "TypeScript", "React Hooks")
    - Escolha o nível (Iniciante, Intermediário, Avançado)
    - IA gera conteúdo personalizado + quiz
 
 3. **Sistema de Quiz**
+
    - 4-5 perguntas de múltipla escolha
    - Feedback imediato
    - Explicações das respostas corretas
 
 4. **Certificação Blockchain**
+
    - Score ≥ 70% → Registro automático na blockchain
    - Certificado permanente e verificável
    - Link para Etherscan
@@ -114,6 +142,17 @@ O AI-DLH é uma plataforma educacional que combina:
 - **Google Gemini API Key**
 
 ## 🚀 Instalação
+
+### 📚 Guias Disponíveis
+
+Escolha o guia adequado para você:
+
+- **[SETUP-GUIDE.md](SETUP-GUIDE.md)** - 🎯 Guia completo passo a passo (RECOMENDADO)
+- **[QUICK-REFERENCE.md](QUICK-REFERENCE.md)** - ⚡ Resumo visual rápido
+- **[PRODUCTION-CHECKLIST.md](PRODUCTION-CHECKLIST.md)** - ✅ Checklist de produção
+- **[QUICKSTART.md](QUICKSTART.md)** - 🏃 Início rápido básico
+
+### Instalação Rápida
 
 ### 1. Clone o repositório
 
@@ -170,6 +209,7 @@ npm run generate:wallet
 ```
 
 **⚠️ IMPORTANTE:**
+
 - Esta wallet é APENAS para o backend
 - Adicione o `PRIVATE_KEY` no `.env`
 - Obtenha ETH testnet: https://sepoliafaucet.com
@@ -312,14 +352,14 @@ ai-dlh/
 
 ## 📊 API Costs (Free Tier)
 
-| Serviço | Tier | Custo |
-|---------|------|-------|
-| Vercel | Free | $0 |
-| Vercel Postgres | 256MB | $0 |
-| Gemini API | 1500 req/dia | $0 |
-| Infura | 100k req/dia | $0 |
-| Sepolia Testnet | - | $0 |
-| **TOTAL** | | **$0/mês** |
+| Serviço         | Tier         | Custo      |
+| --------------- | ------------ | ---------- |
+| Vercel          | Free         | $0         |
+| Vercel Postgres | 256MB        | $0         |
+| Gemini API      | 1500 req/dia | $0         |
+| Infura          | 100k req/dia | $0         |
+| Sepolia Testnet | -            | $0         |
+| **TOTAL**       |              | **$0/mês** |
 
 ## 🤝 Contribuindo
 

@@ -25,6 +25,19 @@ export interface BlockchainReceipt {
   gasUsed: string;
 }
 
+/**
+ * Web3 Service for blockchain interactions.
+ * 
+ * Features:
+ * - Records module completions on Ethereum blockchain
+ * - Retrieves user progress from smart contract
+ * - Verifies Web3 signatures for authentication
+ * - Manages gas fees and transaction confirmations
+ * 
+ * Smart Contract: LearningProgress (Sepolia testnet)
+ * 
+ * @class Web3Service
+ */
 export class Web3Service {
   private provider: ethers.JsonRpcProvider;
   private wallet: ethers.Wallet;

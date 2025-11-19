@@ -4,6 +4,18 @@ import { Button } from '@/components/atoms/Button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/atoms/Card';
 import { useAuth } from '@/hooks/useAuth';
 
+/**
+ * HomePage - Landing page with authentication
+ * 
+ * Features:
+ * - Hero section with project description
+ * - MetaMask connection button
+ * - Feature showcase (AI, Blockchain, Progress)
+ * - "How it works" section
+ * - Auto-redirect to dashboard if authenticated
+ * 
+ * @component
+ */
 export const HomePage = () => {
   const navigate = useNavigate();
   const { isAuthenticated, isConnecting, connectWallet } = useAuth();

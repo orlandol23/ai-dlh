@@ -66,12 +66,13 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 
 // Start server
 const PORT = parseInt(config.PORT);
+const HOST = '0.0.0.0'; // Listen on all interfaces for Railway
 
-app.listen(PORT, () => {
+app.listen(PORT, HOST, () => {
   logger.info('═══════════════════════════════════════════════════════════');
   logger.info('  AI-DLH Backend Server Started');
   logger.info('═══════════════════════════════════════════════════════════');
-  logger.info(`🚀 Server running on port ${PORT}`);
+  logger.info(`🚀 Server running on ${HOST}:${PORT}`);
   logger.info(`📍 Environment: ${config.NODE_ENV}`);
   logger.info(`🔗 API: http://localhost:${PORT}/trpc`);
   logger.info(`❤️  Health: http://localhost:${PORT}/health`);

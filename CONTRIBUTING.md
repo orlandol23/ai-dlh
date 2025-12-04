@@ -1,77 +1,83 @@
-# Contribuindo para AI-DLH
+# Contributing to AI-DLH
 
-Obrigado por considerar contribuir para o AI-DLH! 🎉
+Thank you for considering contributing to AI-DLH! 🎉
 
-## 🤝 Como Contribuir
+## 🤝 How to Contribute
 
-### Reportar Bugs
+### Reporting Bugs
 
-1. Verifique se o bug já foi reportado nas [Issues](https://github.com/seu-usuario/ai-dlh/issues)
-2. Se não, crie uma nova issue com:
-   - Descrição clara do problema
-   - Passos para reproduzir
-   - Comportamento esperado vs atual
-   - Screenshots (se aplicável)
-   - Ambiente (OS, Browser, Node version)
+1. Check if the bug has already been reported in [Issues](https://github.com/YOUR_USERNAME/ai-dlh/issues)
+2. If not, create a new issue with:
+   - Clear description of the problem
+   - Steps to reproduce
+   - Expected vs actual behavior
+   - Screenshots (if applicable)
+   - Environment (OS, Browser, Node version)
 
-### Sugerir Features
+### Suggesting Features
 
-1. Crie uma issue com a tag `enhancement`
-2. Descreva a feature e seu caso de uso
-3. Explique por que seria útil para outros usuários
+1. Create an issue with the `enhancement` label
+2. Describe the feature and its use case
+3. Explain why it would be useful for other users
 
 ### Pull Requests
 
-1. **Fork** o repositório
-2. **Clone** seu fork:
+1. **Fork** the repository
+
+2. **Clone** your fork:
+
    ```bash
-   git clone https://github.com/seu-usuario/ai-dlh.git
+   git clone https://github.com/YOUR_USERNAME/ai-dlh.git
    ```
 
-3. **Crie uma branch** para sua feature:
+3. **Create a branch** for your feature:
+
    ```bash
-   git checkout -b feature/MinhaFeature
+   git checkout -b feature/MyFeature
    ```
 
-4. **Faça suas alterações** seguindo os padrões do projeto
+4. **Make your changes** following the project standards
 
-5. **Teste** suas alterações:
+5. **Test** your changes:
+
    ```bash
    npm run test
    npm run lint
    ```
 
-6. **Commit** com mensagens descritivas:
+6. **Commit** with descriptive messages:
+
    ```bash
-   git commit -m "feat: adiciona funcionalidade X"
+   git commit -m "feat: add X functionality"
    ```
 
-7. **Push** para seu fork:
+7. **Push** to your fork:
+
    ```bash
-   git push origin feature/MinhaFeature
+   git push origin feature/MyFeature
    ```
 
-8. **Abra um Pull Request** no repositório original
+8. **Open a Pull Request** to the original repository
 
-## 📝 Padrões de Código
+## 📝 Code Standards
 
 ### TypeScript
 
 - Use TypeScript strict mode
-- Evite `any` sempre que possível
-- Documente funções complexas com JSDoc
+- Avoid `any` whenever possible
+- Document complex functions with JSDoc
 
 ### Commits
 
-Siga o padrão [Conventional Commits](https://www.conventionalcommits.org/):
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
-- `feat:` nova funcionalidade
-- `fix:` correção de bug
-- `docs:` mudanças na documentação
-- `style:` formatação (sem mudança de código)
-- `refactor:` refatoração
-- `test:` adição/modificação de testes
-- `chore:` tarefas de manutenção
+- `feat:` new feature
+- `fix:` bug fix
+- `docs:` documentation changes
+- `style:` formatting (no code change)
+- `refactor:` code refactoring
+- `test:` adding/modifying tests
+- `chore:` maintenance tasks
 
 ### Linting
 
@@ -83,9 +89,9 @@ cd frontend && npm run lint
 cd server && npm run lint
 ```
 
-## 🧪 Testes
+## 🧪 Testing
 
-Adicione testes para novas funcionalidades:
+Add tests for new features:
 
 ```bash
 # Smart contracts
@@ -98,17 +104,26 @@ npm run test:backend
 npm run test
 ```
 
-## 📚 Documentação
+## 📁 Project Structure
 
-Atualize a documentação quando necessário:
+```
+ai-dlh/
+├── contracts/     # Solidity smart contracts
+├── frontend/      # React application
+├── server/        # Node.js backend
+└── docs/          # Documentation
+```
 
-- README.md
-- Comentários no código
-- JSDoc/TSDoc
+## 🔒 Security
 
-## ❓ Dúvidas?
+- Never commit secrets or API keys
+- Use environment variables for sensitive data
+- Report security vulnerabilities privately
 
-- Abra uma issue com a tag `question`
-- Entre em contato: seu-email@example.com
+## 📄 License
 
-Obrigado por contribuir! 🚀
+By contributing, you agree that your contributions will be licensed under the MIT License.
+
+---
+
+Thank you for contributing! 🙏

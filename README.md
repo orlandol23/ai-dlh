@@ -1,308 +1,292 @@
 # 🚀 AI-Powered Decentralized Learning Hub (AI-DLH)
 
-Hub de aprendizado personalizado que usa **IA Generativa** para criar conteúdo educacional sob demanda e **registra progresso em blockchain**. Projeto de portfólio demonstrando proficiência em Frontend, Full Stack, IA Generativa e Web3.
+A personalized learning platform that uses **Generative AI** to create educational content on-demand and **records progress on blockchain**. Portfolio project demonstrating proficiency in Frontend, Full Stack, Generative AI, and Web3.
 
-![Stack](https://img.shields.io/badge/React-18-blue)
+![React](https://img.shields.io/badge/React-18-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)
 ![Node.js](https://img.shields.io/badge/Node.js-20-green)
 ![Solidity](https://img.shields.io/badge/Solidity-0.8.20-orange)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-## 📋 Índice
+## 📋 Table of Contents
 
-- [🚀 **COMECE AQUI - Guias de Setup**](#-guias-de-setup)
-- [Sobre o Projeto](#sobre-o-projeto)
-- [Stack Tecnológico](#stack-tecnológico)
-- [Funcionalidades](#funcionalidades)
-- [Pré-requisitos](#pré-requisitos)
-- [Instalação](#instalação)
-- [Configuração](#configuração)
-- [Uso](#uso)
-- [Deploy](#deploy)
-- [Estrutura do Projeto](#estrutura-do-projeto)
-- [Testes](#testes)
-- [Roadmap](#roadmap)
-- [Contribuindo](#contribuindo)
-- [Licença](#licença)
-
----
-
-## 🚀 Guias de Setup
-
-**NOVO!** Guias completos para configurar o projeto:
-
-| Guia                   | Tempo | Descrição                    | Link                                           |
-| ---------------------- | ----- | ---------------------------- | ---------------------------------------------- |
-| ⚡ **Comece AGORA**    | 5 min | Setup básico imediato        | [START-NOW.md](START-NOW.md)                   |
-| 🏆 **Setup Completo**  | 1h    | Guia passo a passo detalhado | [SETUP-GUIDE.md](SETUP-GUIDE.md)               |
-| ✅ **Checklist**       | -     | Acompanhe seu progresso      | [PROGRESS-CHECKLIST.md](PROGRESS-CHECKLIST.md) |
-| 📊 **Referência**      | -     | Resumo visual rápido         | [QUICK-REFERENCE.md](QUICK-REFERENCE.md)       |
-| 📚 **Índice Completo** | -     | Todos os guias disponíveis   | [GUIDES-INDEX.md](GUIDES-INDEX.md)             |
-
-**💡 Recomendação:** Comece com [START-NOW.md](START-NOW.md) se é sua primeira vez!
+- [About the Project](#-about-the-project)
+- [Tech Stack](#-tech-stack)
+- [Features](#-features)
+- [Prerequisites](#-prerequisites)
+- [Installation](#-installation)
+- [Configuration](#-configuration)
+- [Usage](#-usage)
+- [Testing](#-testing)
+- [Deployment](#-deployment)
+- [Project Structure](#-project-structure)
+- [Roadmap](#-roadmap)
+- [Contributing](#-contributing)
+- [License](#-license)
 
 ---
 
-## 🎯 Sobre o Projeto
+## 🎯 About the Project
 
-O AI-DLH é uma plataforma educacional que combina:
+AI-DLH is an educational platform that combines:
 
-- **IA Generativa (Gemini)**: Gera módulos de aprendizado personalizados baseados no tópico e nível escolhido pelo usuário
-- **Blockchain (Ethereum)**: Registra conclusões de módulos (score ≥ 70%) como certificados permanentes na blockchain
-- **Web3 Auth**: Autenticação descentralizada via MetaMask
-- **Type-safe API (tRPC)**: Comunicação frontend-backend com type safety end-to-end
+- **Generative AI (Gemini)**: Creates personalized learning modules based on user-selected topic and difficulty level
+- **Blockchain (Ethereum)**: Records module completions (score ≥ 70%) as permanent certificates on the blockchain
+- **Web3 Auth**: Decentralized authentication via MetaMask
+- **Type-safe API (tRPC)**: End-to-end type safety between frontend and backend
 
-### Demonstração de Competências
+### Skills Demonstrated
 
-- ✅ Frontend moderno (React 18, TypeScript, Tailwind CSS)
-- ✅ Arquitetura escalável (Atomic Design, Clean Code)
-- ✅ Backend robusto (Node.js, tRPC, Drizzle ORM)
-- ✅ Smart Contracts seguros (Solidity, OpenZeppelin)
-- ✅ Integração IA (Google Gemini API)
+- ✅ Modern Frontend (React 18, TypeScript, Tailwind CSS)
+- ✅ Scalable Architecture (Atomic Design, Clean Code)
+- ✅ Robust Backend (Node.js, tRPC, Drizzle ORM)
+- ✅ Secure Smart Contracts (Solidity, OpenZeppelin)
+- ✅ AI Integration (Google Gemini API)
 - ✅ Web3 (ethers.js, MetaMask)
 - ✅ DevOps (CI/CD, Docker-ready)
-- ✅ Testes (Unit, Integration, E2E)
+- ✅ Testing (Unit, Integration, E2E)
 
-## 🛠️ Stack Tecnológico
+---
+
+## 🛠️ Tech Stack
 
 ### Frontend
 
-- **Framework**: React 18 + TypeScript (strict mode)
-- **Build**: Vite 5
-- **Styling**: Tailwind CSS
-- **State**: Zustand
-- **API Client**: tRPC React
+| Technology   | Purpose          |
+| ------------ | ---------------- |
+| React 18     | UI Framework     |
+| TypeScript   | Type Safety      |
+| Vite 5       | Build Tool       |
+| Tailwind CSS | Styling          |
+| Zustand      | State Management |
+| tRPC React   | API Client       |
 
 ### Backend
 
-- **Runtime**: Node.js 20
-- **Framework**: Express
-- **API**: tRPC (type-safe)
-- **ORM**: Drizzle ORM
-- **Database**: PostgreSQL
-- **Logger**: Winston
+| Technology  | Purpose       |
+| ----------- | ------------- |
+| Node.js 20  | Runtime       |
+| Express     | HTTP Server   |
+| tRPC        | Type-safe API |
+| Drizzle ORM | Database ORM  |
+| PostgreSQL  | Database      |
+| Winston     | Logging       |
 
 ### Blockchain
 
-- **Smart Contract**: Solidity 0.8.20
-- **Framework**: Hardhat
-- **Library**: ethers.js v6
-- **Network**: Ethereum Sepolia (testnet)
+| Technology       | Purpose               |
+| ---------------- | --------------------- |
+| Solidity 0.8.20  | Smart Contract        |
+| Hardhat          | Development Framework |
+| ethers.js v6     | Blockchain Library    |
+| OpenZeppelin     | Security Patterns     |
+| Ethereum Sepolia | Test Network          |
 
-### IA
+### AI
 
-- **Model**: Google Gemini 1.5 Flash
-- **Usage**: Geração de conteúdo educacional
+| Technology              | Purpose            |
+| ----------------------- | ------------------ |
+| Google Gemini 2.0 Flash | Content Generation |
 
-### DevOps
+---
 
-- **CI/CD**: GitHub Actions
-- **Deploy**: Vercel
-- **Tests**: Vitest, Hardhat
+## ✨ Features
 
-## ✨ Funcionalidades
+### For Users
 
-### Para Usuários
+1. **Web3 Authentication**
 
-1. **Autenticação Web3**
+   - Login via MetaMask (message signing)
+   - Secure sessions with JWT
 
-   - Login via MetaMask (assinatura de mensagem)
-   - Sessão segura com JWT
+2. **AI-Powered Module Generation**
 
-2. **Geração de Módulos com IA**
+   - Enter any topic (e.g., "TypeScript", "React Hooks")
+   - Choose difficulty level (Beginner, Intermediate, Advanced)
+   - AI generates personalized content + quiz
 
-   - Digite um tópico (ex: "TypeScript", "React Hooks")
-   - Escolha o nível (Iniciante, Intermediário, Avançado)
-   - IA gera conteúdo personalizado + quiz
+3. **Interactive Quiz System**
 
-3. **Sistema de Quiz**
+   - 4-5 multiple choice questions
+   - Immediate feedback
+   - Explanations for correct answers
 
-   - 4-5 perguntas de múltipla escolha
-   - Feedback imediato
-   - Explicações das respostas corretas
+4. **Blockchain Certification**
 
-4. **Certificação Blockchain**
+   - Score ≥ 70% → Automatic blockchain recording
+   - Permanent and verifiable certificate
+   - Etherscan transaction link
 
-   - Score ≥ 70% → Registro automático na blockchain
-   - Certificado permanente e verificável
-   - Link para Etherscan
+5. **Progress Dashboard**
+   - Statistics (modules, average score, pass rate)
+   - Module history
+   - Blockchain records
 
-5. **Dashboard de Progresso**
-   - Estatísticas (módulos, score médio, aprovações)
-   - Histórico de módulos
-   - Registros blockchain
+---
 
-## 📦 Pré-requisitos
+## 📦 Prerequisites
 
 - **Node.js** 20+
-- **npm** ou **yarn**
+- **npm** or **yarn**
 - **Git**
-- **MetaMask** (extensão do navegador)
-- **Conta Infura/Alchemy** (RPC Ethereum)
+- **MetaMask** (browser extension)
+- **Infura/Alchemy account** (Ethereum RPC)
 - **Google Gemini API Key**
 
-## 🚀 Instalação
+---
 
-### 📚 Guias Disponíveis
+## 🚀 Installation
 
-Escolha o guia adequado para você:
+For detailed setup instructions, see [docs/SETUP.md](docs/SETUP.md).
 
-- **[SETUP-GUIDE.md](SETUP-GUIDE.md)** - 🎯 Guia completo passo a passo (RECOMENDADO)
-- **[QUICK-REFERENCE.md](QUICK-REFERENCE.md)** - ⚡ Resumo visual rápido
-- **[PRODUCTION-CHECKLIST.md](PRODUCTION-CHECKLIST.md)** - ✅ Checklist de produção
-- **[QUICKSTART.md](QUICKSTART.md)** - 🏃 Início rápido básico
-
-### Instalação Rápida
-
-### 1. Clone o repositório
+### Quick Start
 
 ```bash
-git clone https://github.com/seu-usuario/ai-dlh.git
+# 1. Clone the repository
+git clone https://github.com/YOUR_USERNAME/ai-dlh.git
 cd ai-dlh
-```
 
-### 2. Instale as dependências
-
-```bash
-# Instalar em todos os subprojetos
+# 2. Install all dependencies
 npm run setup
 
-# Ou manualmente:
-npm install
-cd frontend && npm install
-cd ../server && npm install
-cd ../contracts && npm install
-```
-
-## ⚙️ Configuração
-
-### 1. Copie o arquivo de ambiente
-
-```bash
+# 3. Copy environment template
 cp .env.example .env
+
+# 4. Start development servers
+npm run dev
 ```
 
-### 2. Configure as variáveis de ambiente
+---
 
-Edite o arquivo `.env` e preencha:
+## ⚙️ Configuration
+
+### 1. Environment Variables
+
+Edit `.env` file with your credentials:
 
 ```bash
-# IA
-GEMINI_API_KEY=sua_chave_aqui  # https://makersuite.google.com/app/apikey
+# AI - Google Gemini
+GEMINI_API_KEY=your_key_here  # https://makersuite.google.com/app/apikey
 
 # Database
-DATABASE_URL=postgresql://...   # Vercel Postgres ou local
+DATABASE_URL=postgresql://...  # Vercel Postgres or local
 
 # Blockchain
-ETHEREUM_RPC_URL=https://sepolia.infura.io/v3/SEU_PROJECT_ID
-PRIVATE_KEY=0x...               # Gerar com: npm run generate:wallet
-CONTRACT_ADDRESS=0x...          # Após deploy
+ETHEREUM_RPC_URL=https://sepolia.infura.io/v3/YOUR_PROJECT_ID
+PRIVATE_KEY=0x...              # Generate with: npm run generate:wallet
+CONTRACT_ADDRESS=0x...         # After deployment
 
-# Auth
-JWT_SECRET=seu_secret_seguro    # openssl rand -base64 32
+# Authentication
+JWT_SECRET=your_secure_secret  # openssl rand -base64 32
 ```
 
-### 3. Gere uma wallet para o backend
+### 2. Generate Backend Wallet
 
 ```bash
 npm run generate:wallet
 ```
 
-**⚠️ IMPORTANTE:**
+> ⚠️ **IMPORTANT:** This wallet is for backend use only. Get testnet ETH from https://sepoliafaucet.com
 
-- Esta wallet é APENAS para o backend
-- Adicione o `PRIVATE_KEY` no `.env`
-- Obtenha ETH testnet: https://sepoliafaucet.com
-
-### 4. Deploy do Smart Contract
+### 3. Deploy Smart Contract
 
 ```bash
-# Certifique-se de ter ETH na wallet
+# Make sure wallet has Sepolia ETH
 npm run deploy:contract
 
-# Copie o endereço do contrato para .env
+# Copy contract address to .env
 # CONTRACT_ADDRESS=0x...
 
-# Verifique no Etherscan (opcional)
+# Verify on Etherscan (optional)
 npm run deploy:verify
 ```
 
-### 5. Configure o banco de dados
+### 4. Setup Database
 
 ```bash
-# Gerar migrations
+# Generate migrations
 npm run db:generate
 
-# Aplicar migrations
+# Apply migrations
 npm run db:push
 ```
 
-## 🎮 Uso
+---
 
-### Desenvolvimento Local
+## 🎮 Usage
+
+### Local Development
 
 ```bash
-# Iniciar frontend + backend simultaneamente
+# Start frontend + backend simultaneously
 npm run dev
 
-# Ou separadamente:
+# Or separately:
 npm run dev:frontend  # http://localhost:5173
 npm run dev:backend   # http://localhost:3000
 ```
 
-### Acessar a aplicação
+### Using the Application
 
-1. Abra http://localhost:5173
-2. Clique em "Conectar Carteira"
-3. Aprove a conexão no MetaMask
-4. Assine a mensagem de autenticação
-5. Comece a gerar módulos!
+1. Open http://localhost:5173
+2. Click "Connect Wallet"
+3. Approve MetaMask connection
+4. Sign the authentication message
+5. Start generating modules!
 
-## 🧪 Testes
+---
+
+## 🧪 Testing
 
 ```bash
-# Todos os testes
+# Run all tests
 npm run test
 
-# Smart contracts
+# Smart contract tests
 npm run test:contract
 
-# Backend
+# Backend tests
 npm run test:backend
 
-# E2E (Cypress)
+# E2E tests (Cypress)
 npm run test:e2e
 ```
 
-## 🌐 Deploy
+---
 
-### Deploy na Vercel
+## 🌐 Deployment
 
-1. Crie um projeto na Vercel
-2. Conecte o repositório GitHub
-3. Configure as variáveis de ambiente (todas do .env)
+### Deploy to Vercel
+
+1. Create a Vercel project
+2. Connect your GitHub repository
+3. Configure environment variables
 4. Deploy!
 
 ```bash
-# Ou via CLI
+# Or via CLI
 npx vercel --prod
 ```
 
-### Variáveis de ambiente necessárias na Vercel:
+### Required Environment Variables
 
-- `GEMINI_API_KEY`
-- `DATABASE_URL`
-- `ETHEREUM_RPC_URL`
-- `PRIVATE_KEY`
-- `CONTRACT_ADDRESS`
-- `JWT_SECRET`
-- `FRONTEND_URL` (URL da Vercel)
+| Variable           | Description                  |
+| ------------------ | ---------------------------- |
+| `GEMINI_API_KEY`   | Google Gemini API key        |
+| `DATABASE_URL`     | PostgreSQL connection string |
+| `ETHEREUM_RPC_URL` | Infura/Alchemy RPC URL       |
+| `PRIVATE_KEY`      | Backend wallet private key   |
+| `CONTRACT_ADDRESS` | Deployed contract address    |
+| `JWT_SECRET`       | JWT signing secret           |
+| `FRONTEND_URL`     | Vercel deployment URL        |
 
-## 📁 Estrutura do Projeto
+---
+
+## 📁 Project Structure
 
 ```
 ai-dlh/
-├── contracts/              # Smart contracts Solidity
+├── contracts/              # Solidity smart contracts
 │   ├── contracts/
 │   │   └── LearningProgress.sol
 │   ├── scripts/
@@ -311,83 +295,102 @@ ai-dlh/
 │   └── test/
 │       └── LearningProgress.test.ts
 │
-├── server/                 # Backend Node.js
+├── server/                 # Node.js backend
 │   ├── routers/           # tRPC routers
 │   ├── services/          # Business logic
 │   ├── db/                # Database schema
 │   ├── middleware/        # Auth, CORS
 │   └── index.ts           # Server entry
 │
-├── frontend/              # Frontend React
+├── frontend/              # React frontend
 │   ├── src/
-│   │   ├── components/    # UI components
+│   │   ├── components/    # UI components (Atomic Design)
 │   │   ├── pages/         # Route pages
 │   │   ├── hooks/         # Custom hooks
 │   │   ├── store/         # Zustand stores
-│   │   └── lib/           # Utils, tRPC
+│   │   └── lib/           # Utils, tRPC client
 │   └── index.html
 │
-├── .github/workflows/     # CI/CD
+├── docs/                  # Documentation
+│   ├── SETUP.md
+│   ├── ARCHITECTURE.md
+│   ├── API.md
+│   ├── DEPLOYMENT.md
+│   └── TROUBLESHOOTING.md
+│
+├── .github/workflows/     # CI/CD pipelines
 ├── .env.example          # Environment template
-├── vercel.json           # Vercel config
 └── package.json          # Root scripts
 ```
+
+---
 
 ## 🗺️ Roadmap
 
 - [x] Smart contract deployment
 - [x] Backend API (tRPC)
-- [x] Frontend básico
-- [x] Autenticação Web3
-- [x] Geração de módulos com IA
-- [x] Sistema de quiz
-- [x] Registro blockchain
-- [ ] Página de módulo individual
-- [ ] Sistema de quiz interativo completo
-- [ ] Perfil do usuário
-- [ ] Rankings e badges
-- [ ] Mobile responsivo
-- [ ] PWA
-- [ ] Internacionalização (i18n)
-
-## 📊 API Costs (Free Tier)
-
-| Serviço         | Tier         | Custo      |
-| --------------- | ------------ | ---------- |
-| Vercel          | Free         | $0         |
-| Vercel Postgres | 256MB        | $0         |
-| Gemini API      | 1500 req/dia | $0         |
-| Infura          | 100k req/dia | $0         |
-| Sepolia Testnet | -            | $0         |
-| **TOTAL**       |              | **$0/mês** |
-
-## 🤝 Contribuindo
-
-Contribuições são bem-vindas! Por favor:
-
-1. Fork o projeto
-2. Crie uma branch (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
-
-## 📄 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
-
-## 🙏 Agradecimentos
-
-- **Google Gemini** - IA Generativa
-- **OpenZeppelin** - Smart contract libraries
-- **Vercel** - Hospedagem
-- **Ethereum Foundation** - Blockchain
-- **React Team** - Framework
+- [x] Frontend base
+- [x] Web3 authentication
+- [x] AI module generation
+- [x] Quiz system
+- [x] Blockchain recording
+- [ ] Individual module page
+- [ ] Complete interactive quiz
+- [ ] User profile
+- [ ] Rankings and badges
+- [ ] Mobile responsive
+- [ ] PWA support
+- [ ] Internationalization (i18n)
 
 ---
 
-**Desenvolvido como projeto de portfólio demonstrando expertise em:**
-Frontend • Full Stack • IA Generativa • Web3 • Blockchain
+## 💰 API Costs (Free Tier)
 
-⭐ Se este projeto foi útil, considere dar uma estrela!
+| Service         | Tier         | Cost         |
+| --------------- | ------------ | ------------ |
+| Vercel          | Free         | $0           |
+| Vercel Postgres | 256MB        | $0           |
+| Gemini API      | 1500 req/day | $0           |
+| Infura          | 100k req/day | $0           |
+| Sepolia Testnet | -            | $0           |
+| **TOTAL**       |              | **$0/month** |
 
-📧 Contato: seu-email@example.com
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please:
+
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- **Google Gemini** - Generative AI
+- **OpenZeppelin** - Smart contract libraries
+- **Vercel** - Hosting platform
+- **Ethereum Foundation** - Blockchain infrastructure
+- **React Team** - UI framework
+
+---
+
+**Built as a portfolio project demonstrating expertise in:**
+
+`Frontend` • `Full Stack` • `Generative AI` • `Web3` • `Blockchain`
+
+⭐ If you found this project useful, please consider giving it a star!
+
+📧 Contact: your-email@example.com

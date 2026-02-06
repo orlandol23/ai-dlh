@@ -1,11 +1,11 @@
 import { z } from 'zod';
-import { router, protectedProcedure } from '../trpc';
-import { db } from '../db';
-import { modules, progressRecords, type QuizQuestion } from '../db/schema';
-import { web3Service } from '../services/web3.service';
+import { router, protectedProcedure } from '../trpc.js';
+import { db } from '../db/index.js';
+import { modules, progressRecords, type QuizQuestion } from '../db/schema.js';
+import { web3Service } from '../services/web3.service.js';
 import { eq, and, desc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { logger } from '../utils/logger';
+import { logger } from '../utils/logger.js';
 
 /**
  * Progress Router - Handles quiz submissions and progress tracking

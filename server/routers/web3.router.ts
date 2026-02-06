@@ -1,5 +1,5 @@
-import { router, protectedProcedure } from '../trpc';
-import { web3Service } from '../services/web3.service';
+import { router, protectedProcedure } from '../trpc.js';
+import { web3Service } from '../services/web3.service.js';
 import { TRPCError } from '@trpc/server';
 
 export const web3Router = router({

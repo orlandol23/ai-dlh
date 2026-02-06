@@ -1,8 +1,8 @@
 import { inferAsyncReturnType } from '@trpc/server';
 import { CreateExpressContextOptions } from '@trpc/server/adapters/express';
-import { authService } from './services/auth.service';
-import { logger } from './utils/logger';
-import { User } from './db/schema';
+import { authService } from './services/auth.service.js';
+import { logger } from './utils/logger.js';
+import { User } from './db/schema.js';
 
 /**
  * Creates context for tRPC requests

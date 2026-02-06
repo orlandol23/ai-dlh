@@ -1,8 +1,8 @@
-import { router } from '../trpc';
-import { authRouter } from './auth.router';
-import { aiRouter } from './ai.router';
-import { progressRouter } from './progress.router';
-import { web3Router } from './web3.router';
+import { router } from '../trpc.js';
+import { authRouter } from './auth.router.js';
+import { aiRouter } from './ai.router.js';
+import { progressRouter } from './progress.router.js';
+import { web3Router } from './web3.router.js';
 
 /**
  * Main application router

@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { z } from 'zod';
-import { config } from '../utils/env';
-import { logger } from '../utils/logger';
+import { config } from '../utils/env.js';
+import { logger } from '../utils/logger.js';
 
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(config.GEMINI_API_KEY);

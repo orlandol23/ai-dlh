@@ -2,6 +2,7 @@
   "name": "ai-dlh-server",
   "version": "1.0.0",
   "description": "Backend API for AI-Powered Decentralized Learning Hub",
+  "type": "module",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch index.ts",

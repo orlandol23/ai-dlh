@@ -1,5 +1,5 @@
 import cors from 'cors';
-import { config } from '../utils/env';
+import { config } from '../utils/env.js';
 
 /**
  * CORS configuration

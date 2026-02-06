@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
-import { config } from '../utils/env';
-import { logger } from '../utils/logger';
+import { config } from '../utils/env.js';
+import { logger } from '../utils/logger.js';
 
 // Learning Progress ABI (minimal - only what we need)
 const LEARNING_PROGRESS_ABI = [

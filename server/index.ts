@@ -1,13 +1,13 @@
 import express from 'express';
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
-import { appRouter } from './routers';
-import { createContext } from './context';
-import { corsMiddleware } from './middleware/cors.middleware';
-import { logger } from './utils/logger';
-import { config } from './utils/env';
-import { checkDatabaseConnection } from './db';
-import { web3Service } from './services/web3.service';
-import { aiService } from './services/ai.service';
+import { appRouter } from './routers/index.js';
+import { createContext } from './context.js';
+import { corsMiddleware } from './middleware/cors.middleware.js';
+import { logger } from './utils/logger.js';
+import { config } from './utils/env.js';
+import { checkDatabaseConnection } from './db/index.js';
+import { web3Service } from './services/web3.service.js';
+import { aiService } from './services/ai.service.js';
 
 // Create Express app
 const app = express();

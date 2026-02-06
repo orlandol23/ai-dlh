@@ -1,10 +1,10 @@
 import jwt from 'jsonwebtoken';
-import { config } from '../utils/env';
-import { logger } from '../utils/logger';
-import { db } from '../db';
-import { users, type User } from '../db/schema';
+import { config } from '../utils/env.js';
+import { logger } from '../utils/logger.js';
+import { db } from '../db/index.js';
+import { users, type User } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
-import { web3Service } from './web3.service';
+import { web3Service } from './web3.service.js';
 
 export interface JWTPayload {
   userId: number;

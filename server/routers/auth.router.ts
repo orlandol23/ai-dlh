@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { router, publicProcedure, protectedProcedure } from '../trpc';
-import { authService } from '../services/auth.service';
+import { router, publicProcedure, protectedProcedure } from '../trpc.js';
+import { authService } from '../services/auth.service.js';
 import { TRPCError } from '@trpc/server';
 
 export const authRouter = router({

@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { router, protectedProcedure } from '../trpc';
-import { aiService } from '../services/ai.service';
-import { db } from '../db';
-import { modules } from '../db/schema';
+import { router, protectedProcedure } from '../trpc.js';
+import { aiService } from '../services/ai.service.js';
+import { db } from '../db/index.js';
+import { modules } from '../db/schema.js';
 import { eq, desc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 

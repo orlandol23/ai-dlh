@@ -44,6 +44,7 @@ export class AIService {
       topP: 0.95,
       topK: 40,
       maxOutputTokens: 8192,
+      responseMimeType: 'application/json',
     },
   });
 
@@ -63,57 +64,10 @@ export class AIService {
 
       logger.debug('AI Response received');
       logger.debug('Response length:', text.length);
-      logger.debug('First 200 chars:', text.substring(0, 200));
 
-      // Try to extract and clean JSON from response
-      let jsonText = text;
-      
-      // Remove markdown code blocks if present
-      jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-      
-      // Find JSON object
-      const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        logger.error('No JSON found in AI response');
-        logger.error('Full response:', text);
-        throw new Error('No JSON found in AI response');
-      }
-      
-      logger.debug('JSON match found, length:', jsonMatch[0].length);
+      // With responseMimeType: 'application/json', Gemini returns valid JSON directly
+      const parsed = JSON.parse(text);
 
-      // Clean the JSON string - approach simples
-      let cleanJson = jsonMatch[0].trim();
-      
-      logger.debug('Attempting to parse JSON...');
-      logger.debug('JSON length:', cleanJson.length);
-      
-      let parsed;
-      
-      try {
-        // Try direct parse first
-        parsed = JSON.parse(cleanJson);
-      } catch (firstError: any) {
-        logger.warn('Direct JSON parse failed:', firstError.message);
-        logger.debug('Problematic JSON start:', cleanJson.substring(0, 500));
-        
-        // Try with basic cleaning
-        try {
-          cleanJson = cleanJson
-            .replace(/,(\s*[}\]])/g, '$1') // Remove trailing commas
-            .replace(/\r\n/g, '\\n') // Fix Windows newlines
-            .replace(/\n/g, '\\n') // Fix Unix newlines
-            .replace(/\t/g, ' ') // Replace tabs
-            .replace(/[\u0000-\u001F\u007F-\u009F]/g, ''); // Remove control chars
-          
-          parsed = JSON.parse(cleanJson);
-          logger.info('Cleaned JSON parsed successfully');
-        } catch (secondError: any) {
-          logger.error('Cleaned JSON parse also failed:', secondError.message);
-          logger.error('JSON sample (first 1000 chars):', cleanJson.substring(0, 1000));
-          throw new Error(`AI generated invalid JSON: ${secondError.message}`);
-        }
-      }
-      
       logger.debug('JSON parsed, validating schema...');
       const validated = ModuleContentSchema.parse(parsed);
 

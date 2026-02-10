@@ -64,6 +64,8 @@ export class AIService {
 
       logger.debug('AI Response received');
       logger.debug('Response length:', text.length);
+      const responseSample = text.slice(0, 500);
+      logger.debug(`AI response sample (first ${responseSample.length} chars): ${responseSample}`);
 
       // With responseMimeType: 'application/json', Gemini returns valid JSON directly
       const parsed = JSON.parse(text);

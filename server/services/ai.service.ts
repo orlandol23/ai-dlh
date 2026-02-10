@@ -17,7 +17,7 @@ export const QuizQuestionSchema = z.object({
 // Module content schema
 export const ModuleContentSchema = z.object({
   title: z.string().min(10).max(500, 'Title must be between 10-500 characters'),
-  content: z.string().min(500).max(5000, 'Content must be between 500-5000 characters'),
+  content: z.string().min(500).max(15000, 'Content must be between 500-15000 characters'),
   estimatedTime: z.number().min(5).max(60, 'Estimated time must be between 5-60 minutes'),
   quiz: z.array(QuizQuestionSchema).min(3).max(5, 'Must have 3-5 quiz questions'),
 });

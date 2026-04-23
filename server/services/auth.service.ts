@@ -95,8 +95,9 @@ export class AuthService {
 
     // Domain binding: reject messages signed for a different site (prevents
     // a signature captured elsewhere from being replayed against us).
-    const expectedDomain = new URL(config.FRONTEND_URL).host;
-    if (parsed.domain.trim() !== expectedDomain) {
+    // Hostnames are case-insensitive per RFC 3986; normalize both sides.
+    const expectedDomain = new URL(config.FRONTEND_URL).host.toLowerCase();
+    if (parsed.domain.trim().toLowerCase() !== expectedDomain) {
       logger.warn(`Domain mismatch: expected=${expectedDomain} got=${parsed.domain}`);
       throw new Error('Domain mismatch');
     }
@@ -158,12 +159,25 @@ export class AuthService {
 
     logger.info(`User authenticated: ${user.id}`);
 
+    // Opportunistic housekeeping. Serverless deploys (Vercel) have no
+    // long-running scheduler, so we trigger pruning probabilistically on
+    // login. Roughly 1% of logins pay the cost; the table stays bounded
+    // without needing an external cron.
+    if (Math.random() < 0.01) {
+      this.pruneExpiredNonces().catch((error) => {
+        logger.warn('Background nonce prune failed', error as Error);
+      });
+    }
+
     return { token, user };
   }
 
   /**
-   * Housekeeping: drop consumed nonces older than the max message age.
-   * Safe to call periodically; no-op if nothing to delete.
+   * Housekeeping: drop consumed nonces older than twice the max message
+   * age. The 2x grace window keeps a recently-used nonce around long
+   * enough that any in-flight retry of the same message still hits the
+   * unique-constraint check rather than silently being re-accepted after
+   * deletion. Safe to call concurrently; no-op if nothing to delete.
    */
   async pruneExpiredNonces(): Promise<void> {
     const cutoff = new Date(Date.now() - config.AUTH_MESSAGE_MAX_AGE_MS * 2);

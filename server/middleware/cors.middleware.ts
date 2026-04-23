@@ -8,15 +8,26 @@ import { config, allowedOrigins, allowedOriginSuffixes, isDevelopment } from '..
  * deployment (including unrelated ones) could call this API. That wildcard
  * is removed: origins must now match an explicit allowlist.
  *
- *  - `FRONTEND_URL`             → always allowed.
+ *  - `FRONTEND_URL`             → always allowed (normalized to URL origin).
  *  - `ALLOWED_ORIGINS`          → comma-separated exact origins.
  *  - `ALLOWED_ORIGIN_SUFFIXES`  → comma-separated host suffixes (e.g.
  *                                 "-myorg.vercel.app") for preview deploys.
  *  - In development, localhost is allowed.
+ *
+ * Disallowed origins are signalled with `callback(null, false)` (not an
+ * Error), so the request continues without CORS headers and the browser
+ * blocks it client-side. Throwing here would surface as HTTP 500 in the
+ * global Express error handler, polluting metrics/logs with fake 5xx.
  */
+function toOrigin(value: string): string {
+  // Tolerate values that include a trailing slash or path. Browsers send
+  // origins as scheme+host+port only.
+  return new URL(value).origin;
+}
+
 const alwaysAllowed = new Set<string>([
-  config.FRONTEND_URL,
-  ...allowedOrigins,
+  toOrigin(config.FRONTEND_URL),
+  ...allowedOrigins.map(toOrigin),
 ]);
 
 export const corsMiddleware = cors({
@@ -35,15 +46,15 @@ export const corsMiddleware = cors({
 
     let host: string;
     try {
-      host = new URL(origin).host;
+      host = new URL(origin).host.toLowerCase();
     } catch {
-      callback(new Error('Not allowed by CORS'));
+      callback(null, false);
       return;
     }
 
     // Preview deploys: host must end with one of the configured suffixes.
     for (const suffix of allowedOriginSuffixes) {
-      if (suffix && host.endsWith(suffix)) {
+      if (suffix && host.endsWith(suffix.toLowerCase())) {
         callback(null, true);
         return;
       }
@@ -54,7 +65,7 @@ export const corsMiddleware = cors({
       return;
     }
 
-    callback(new Error('Not allowed by CORS'));
+    callback(null, false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

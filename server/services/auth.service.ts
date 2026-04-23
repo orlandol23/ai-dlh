@@ -28,9 +28,12 @@ interface ParsedLoginMessage {
 }
 
 // Exact grammar the frontend must produce. We parse defensively because
-// the signed payload is attacker-controlled.
+// the signed payload is attacker-controlled. Timestamp is restricted to
+// exactly 13 digits (millisecond epoch, valid roughly 2001..2286) to
+// avoid silently accepting seconds-since-epoch which would always be
+// rejected as expired and confuse operators debugging logins.
 const LOGIN_MESSAGE_REGEX =
-  /^AI-DLH Authentication\nDomain: (?<domain>[^\n]+)\nAddress: (?<address>0x[a-fA-F0-9]{40})\nTimestamp: (?<timestamp>\d{10,16})\nNonce: (?<nonce>[A-Za-z0-9_-]{16,128})$/;
+  /^AI-DLH Authentication\nDomain: (?<domain>[^\n]+)\nAddress: (?<address>0x[a-fA-F0-9]{40})\nTimestamp: (?<timestamp>\d{13})\nNonce: (?<nonce>[A-Za-z0-9_-]{16,128})$/;
 
 function parseLoginMessage(message: string): ParsedLoginMessage | null {
   const match = LOGIN_MESSAGE_REGEX.exec(message);
@@ -52,7 +55,19 @@ export class AuthService {
     try {
       return jwt.verify(token, config.JWT_SECRET) as JWTPayload;
     } catch (error) {
-      logger.warn('Token verification failed');
+      // Stale/expired/invalid client tokens are normal traffic noise.
+      // Only escalate when the failure looks like a server-side problem
+      // (i.e. not one of the known jwt.* classes), since that may
+      // indicate a misconfigured JWT_SECRET or library breakage.
+      if (
+        error instanceof jwt.TokenExpiredError ||
+        error instanceof jwt.JsonWebTokenError ||
+        error instanceof jwt.NotBeforeError
+      ) {
+        logger.debug('Token verification failed');
+      } else {
+        logger.error('Unexpected token verification error', error as Error);
+      }
       return null;
     }
   }
@@ -113,54 +128,59 @@ export class AuthService {
       throw new Error('Message timestamp is in the future');
     }
 
-    // Atomically consume the nonce. The unique index on (nonce, wallet)
-    // means a replay attempt fails at the DB layer rather than relying on
-    // a read-then-write race window.
+    // Consume the nonce and upsert the user atomically inside a single
+    // transaction. The unique index on (nonce, wallet) makes concurrent
+    // replays fail at the DB layer; wrapping the rest of the flow in the
+    // same transaction means a transient failure during user upsert
+    // rolls the nonce back, so the client can retry the same signed
+    // message instead of being permanently locked out.
     //
-    // Non-unique-violation failures (connection errors, permission errors,
-    // driver-level bugs, etc.) are logged server-side and surfaced to the
-    // client as a generic message, because `auth.router.ts` forwards
-    // `error.message` verbatim via `TRPCError` — raw DB details must not
-    // reach the client.
-    try {
-      await db.insert(authNonces).values({
-        nonce: parsed.nonce,
-        walletAddress: normalizedWallet,
-      });
-    } catch (error: any) {
-      // Postgres unique-violation: 23505
-      if (error?.code === '23505' || /duplicate key|unique/i.test(String(error?.message))) {
-        logger.warn(`Nonce replay detected for ${normalizedWallet}`);
-        throw new Error('Nonce already used');
-      }
-      logger.error('Failed to consume authentication nonce', {
-        error,
-        walletAddress: normalizedWallet,
-      });
-      throw new Error('Authentication failed');
-    }
-
-    // Find or create user.
-    let user = await db.query.users.findFirst({
-      where: eq(users.walletAddress, normalizedWallet),
-    });
-
-    if (!user) {
-      logger.info(`Creating new user for ${normalizedWallet}`);
-      const [newUser] = await db
-        .insert(users)
-        .values({
+    // Non-unique-violation DB failures are logged server-side and
+    // surfaced to the client as a generic message, because
+    // `auth.router.ts` forwards `error.message` verbatim via `TRPCError`
+    // — raw DB details must not reach the client.
+    const user = await db.transaction(async (tx) => {
+      try {
+        await tx.insert(authNonces).values({
+          nonce: parsed.nonce,
           walletAddress: normalizedWallet,
-          lastLoginAt: new Date(),
-        })
-        .returning();
-      user = newUser;
-    } else {
-      await db
-        .update(users)
-        .set({ lastLoginAt: new Date() })
-        .where(eq(users.id, user.id));
-    }
+        });
+      } catch (error: any) {
+        // Postgres unique-violation: 23505
+        if (error?.code === '23505' || /duplicate key|unique/i.test(String(error?.message))) {
+          logger.warn(`Nonce replay detected for ${normalizedWallet}`);
+          throw new Error('Nonce already used');
+        }
+        logger.error('Failed to consume authentication nonce', {
+          error,
+          walletAddress: normalizedWallet,
+        });
+        throw new Error('Authentication failed');
+      }
+
+      let existing = await tx.query.users.findFirst({
+        where: eq(users.walletAddress, normalizedWallet),
+      });
+
+      if (!existing) {
+        logger.info(`Creating new user for ${normalizedWallet}`);
+        const [created] = await tx
+          .insert(users)
+          .values({
+            walletAddress: normalizedWallet,
+            lastLoginAt: new Date(),
+          })
+          .returning();
+        existing = created;
+      } else {
+        await tx
+          .update(users)
+          .set({ lastLoginAt: new Date() })
+          .where(eq(users.id, existing.id));
+      }
+
+      return existing;
+    });
 
     const token = this.generateToken({
       userId: user.id,

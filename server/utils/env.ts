@@ -44,8 +44,28 @@ const csvOriginsSchema = z
     return origins;
   });
 
+// Platform-wide hosting suffixes that, if accepted alone, would let any
+// tenant on that platform call this API — effectively re-enabling the
+// wildcard this PR removed. Operators must use a project-scoped suffix
+// (e.g. "-myorg.vercel.app") instead.
+const KNOWN_BROAD_SUFFIXES = new Set<string>([
+  'vercel.app',
+  'netlify.app',
+  'fly.dev',
+  'herokuapp.com',
+  'pages.dev',
+  'railway.app',
+  'onrender.com',
+  'workers.dev',
+  'web.app',
+  'firebaseapp.com',
+  'github.io',
+  'gitlab.io',
+]);
+
 // Parse a comma-separated list of host suffixes (e.g. "-myorg.vercel.app").
-// Restricted to hostname-safe characters plus optional port.
+// Restricted to hostname-safe characters plus optional port; entries that
+// match a known broad platform suffix are rejected at boot.
 const csvSuffixesSchema = z
   .string()
   .optional()
@@ -59,6 +79,16 @@ const csvSuffixesSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: `invalid host suffix: "${entry}" (expected e.g. "-myorg.vercel.app")`,
+        });
+        continue;
+      }
+      const naked = entry.replace(/^[.-]/, '').toLowerCase();
+      if (KNOWN_BROAD_SUFFIXES.has(naked)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            `host suffix "${entry}" matches an entire hosting platform; ` +
+            `use a project-scoped value like "-myorg.vercel.app" instead.`,
         });
       }
     }

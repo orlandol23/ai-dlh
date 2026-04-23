@@ -1,15 +1,36 @@
 import { z } from 'zod';
 import * as dotenv from 'dotenv';
 
-// Load environment variables
-dotenv.config({ path: '../.env' });
+// Only load .env from the filesystem in non-production environments.
+// In production (Vercel/Railway), env vars are injected by the platform
+// and reading a local .env would be both unnecessary and a potential
+// source of drift or accidental bundling.
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({ path: '../.env' });
+}
 
-// Environment schema
+// Values that must never be accepted in production. These are the
+// placeholders shipped in .env.example; if they reach production it
+// means the operator forgot to rotate the secret.
+const JWT_SECRET_FORBIDDEN = new Set<string>([
+  'your_super_secret_jwt_key_here_change_in_production',
+  'your_generated_secret_here',
+  'change_me',
+]);
+
 const envSchema = z.object({
   // Application
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.string().default('3000'),
   FRONTEND_URL: z.string().url().default('http://localhost:5173'),
+
+  // CORS: comma-separated list of exact origins (e.g. "https://app.example.com,https://staging.example.com").
+  // Preview/wildcard matching is opt-in via ALLOWED_ORIGIN_SUFFIXES below.
+  ALLOWED_ORIGINS: z.string().optional(),
+
+  // Comma-separated list of host suffixes allowed for preview deploys
+  // (e.g. "-myorg.vercel.app"). Leave unset to disable wildcard matching entirely.
+  ALLOWED_ORIGIN_SUFFIXES: z.string().optional(),
 
   // Database
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
@@ -25,9 +46,23 @@ const envSchema = z.object({
   // Auth
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   JWT_EXPIRES_IN: z.string().default('7d'),
+
+  // Max clock-skew / replay window for signed Web3 login messages (ms).
+  AUTH_MESSAGE_MAX_AGE_MS: z
+    .string()
+    .default('300000') // 5 min
+    .transform((v) => parseInt(v, 10))
+    .pipe(z.number().int().min(30_000).max(900_000)),
+}).superRefine((env, ctx) => {
+  if (env.NODE_ENV === 'production' && JWT_SECRET_FORBIDDEN.has(env.JWT_SECRET)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['JWT_SECRET'],
+      message: 'JWT_SECRET is a known placeholder. Rotate it before running in production.',
+    });
+  }
 });
 
-// Parse and validate environment variables
 let parsedEnv: z.infer<typeof envSchema>;
 
 try {
@@ -43,7 +78,17 @@ try {
 
 export const config = parsedEnv;
 
-// Helper to check if in production
+// Derived allowlists (parsed once at boot).
+export const allowedOrigins: string[] = (config.ALLOWED_ORIGINS ?? '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+export const allowedOriginSuffixes: string[] = (config.ALLOWED_ORIGIN_SUFFIXES ?? '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 export const isProduction = () => config.NODE_ENV === 'production';
 export const isDevelopment = () => config.NODE_ENV === 'development';
 export const isTest = () => config.NODE_ENV === 'test';

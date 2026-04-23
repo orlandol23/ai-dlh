@@ -31,8 +31,23 @@ export const useAuth = () => {
       const signer = await provider.getSigner();
       const address = await signer.getAddress();
 
-      // Create message to sign
-      const message = `AI-DLH Authentication\n\nSign this message to authenticate with AI-DLH.\n\nAddress: ${address}\nTimestamp: ${Date.now()}\n\nThis will not cost any gas.`;
+      // Build the exact grammar the backend parses. A fresh random nonce
+      // makes each login message unique; the backend records it to block
+      // replay. Domain binding prevents a signature captured on another
+      // site from being accepted here.
+      const nonceBytes = new Uint8Array(24);
+      crypto.getRandomValues(nonceBytes);
+      const nonce = btoa(String.fromCharCode(...nonceBytes))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+
+      const message =
+        `AI-DLH Authentication\n` +
+        `Domain: ${window.location.host}\n` +
+        `Address: ${address}\n` +
+        `Timestamp: ${Date.now()}\n` +
+        `Nonce: ${nonce}`;
 
       // Request signature
       const signature = await signer.signMessage(message);

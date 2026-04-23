@@ -1,48 +1,55 @@
 import cors from 'cors';
-import { config } from '../utils/env.js';
+import { config, allowedOrigins, allowedOriginSuffixes, isDevelopment } from '../utils/env.js';
 
 /**
- * CORS configuration
+ * CORS configuration.
+ *
+ * Previously we allowed any `*.vercel.app` host, which meant any Vercel
+ * deployment (including unrelated ones) could call this API. That wildcard
+ * is removed: origins must now match an explicit allowlist.
+ *
+ *  - `FRONTEND_URL`             → always allowed.
+ *  - `ALLOWED_ORIGINS`          → comma-separated exact origins.
+ *  - `ALLOWED_ORIGIN_SUFFIXES`  → comma-separated host suffixes (e.g.
+ *                                 "-myorg.vercel.app") for preview deploys.
+ *  - In development, localhost is allowed.
  */
+const alwaysAllowed = new Set<string>([
+  config.FRONTEND_URL,
+  ...allowedOrigins,
+]);
+
 export const corsMiddleware = cors({
   origin: (origin, callback) => {
-    // Allow requests from frontend URL or no origin (like mobile apps)
-    const allowedOrigins = [
-      config.FRONTEND_URL,
-      'http://localhost:5173',
-      'http://localhost:5174',
-      'http://localhost:3000',
-    ];
-
-    // In development, allow all localhost origins
-    const isDevelopment = config.NODE_ENV === 'development';
-    const isLocalhost = origin?.startsWith('http://localhost:');
-
-    // Allow when no origin (server-to-server requests, native apps)
+    // No origin (same-origin, curl, server-to-server). cors() will not set
+    // a permissive Access-Control-Allow-Origin header in that case.
     if (!origin) {
       callback(null, true);
       return;
     }
 
-    // Allow explicit origins
-    if (allowedOrigins.includes(origin)) {
+    if (alwaysAllowed.has(origin)) {
       callback(null, true);
       return;
     }
 
-    // Allow Vercel app domains (production and preview): *.vercel.app
+    let host: string;
     try {
-      const originHost = new URL(origin).host;
-      if (originHost.endsWith('.vercel.app')) {
+      host = new URL(origin).host;
+    } catch {
+      callback(new Error('Not allowed by CORS'));
+      return;
+    }
+
+    // Preview deploys: host must end with one of the configured suffixes.
+    for (const suffix of allowedOriginSuffixes) {
+      if (suffix && host.endsWith(suffix)) {
         callback(null, true);
         return;
       }
-    } catch (e) {
-      // ignore URL parse errors
     }
 
-    // Allow localhost in development
-    if (isDevelopment && isLocalhost) {
+    if (isDevelopment() && origin.startsWith('http://localhost:')) {
       callback(null, true);
       return;
     }

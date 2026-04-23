@@ -2,8 +2,8 @@ import jwt from 'jsonwebtoken';
 import { config } from '../utils/env.js';
 import { logger } from '../utils/logger.js';
 import { db } from '../db/index.js';
-import { users, type User } from '../db/schema.js';
-import { eq } from 'drizzle-orm';
+import { users, authNonces, type User } from '../db/schema.js';
+import { eq, lt } from 'drizzle-orm';
 import { web3Service } from './web3.service.js';
 
 export interface JWTPayload {
@@ -17,135 +17,175 @@ export interface AuthResult {
 }
 
 /**
- * Authentication Service for Web3-based user authentication.
- * 
- * Features:
- * - JWT token generation and verification
- * - Web3 signature validation
- * - User management (create, update, fetch)
- * - Session management with token expiration
- * 
- * @class AuthService
+ * Parsed login message produced by the frontend.
+ * The shape is enforced strictly: any deviation is rejected.
  */
+interface ParsedLoginMessage {
+  domain: string;
+  address: string;
+  timestamp: number;
+  nonce: string;
+}
+
+// Exact grammar the frontend must produce. We parse defensively because
+// the signed payload is attacker-controlled.
+const LOGIN_MESSAGE_REGEX =
+  /^AI-DLH Authentication\nDomain: (?<domain>[^\n]+)\nAddress: (?<address>0x[a-fA-F0-9]{40})\nTimestamp: (?<timestamp>\d{10,16})\nNonce: (?<nonce>[A-Za-z0-9_-]{16,128})$/;
+
+function parseLoginMessage(message: string): ParsedLoginMessage | null {
+  const match = LOGIN_MESSAGE_REGEX.exec(message);
+  if (!match || !match.groups) return null;
+  const { domain, address, timestamp, nonce } = match.groups;
+  const ts = parseInt(timestamp, 10);
+  if (!Number.isFinite(ts)) return null;
+  return { domain, address, timestamp: ts, nonce };
+}
+
 export class AuthService {
-  /**
-   * Generate JWT token with user payload
-   * @param {JWTPayload} payload - User ID and wallet address
-   * @returns {string} Signed JWT token
-   */
   generateToken(payload: JWTPayload): string {
     return jwt.sign(payload, config.JWT_SECRET, {
       expiresIn: config.JWT_EXPIRES_IN,
     } as jwt.SignOptions);
   }
 
-  /**
-   * Verify JWT token
-   */
   verifyToken(token: string): JWTPayload | null {
     try {
-      const payload = jwt.verify(token, config.JWT_SECRET) as JWTPayload;
-      return payload;
+      return jwt.verify(token, config.JWT_SECRET) as JWTPayload;
     } catch (error) {
-      logger.error('Token verification failed:', error);
+      logger.warn('Token verification failed');
       return null;
     }
   }
 
   /**
-   * Authenticate user with Web3 signature
+   * Authenticate user with Web3 signature.
+   *
+   * Security properties enforced here:
+   *  - Strict message grammar (domain, address, timestamp, nonce).
+   *  - Signature recovered address must match declared address.
+   *  - Declared address in the message must match the address used for lookup.
+   *  - Domain must match the server's expected origin (FRONTEND_URL host).
+   *  - Timestamp must be within AUTH_MESSAGE_MAX_AGE_MS and not in the future.
+   *  - Nonce is consumed atomically via a unique DB constraint: a reused
+   *    (nonce, wallet) pair will fail the insert and the login is rejected.
    */
   async authenticateWithSignature(
     walletAddress: string,
     message: string,
     signature: string
   ): Promise<AuthResult> {
-    logger.info(`Authenticating wallet: ${walletAddress}`);
+    const normalizedWallet = walletAddress.toLowerCase();
+    logger.info(`Authenticating wallet: ${normalizedWallet}`);
 
-    // Verify signature
-    const isValid = web3Service.verifySignature(message, signature, walletAddress);
+    const parsed = parseLoginMessage(message);
+    if (!parsed) {
+      throw new Error('Malformed login message');
+    }
 
+    if (parsed.address.toLowerCase() !== normalizedWallet) {
+      throw new Error('Address mismatch');
+    }
+
+    // Verify signature over the exact message we received.
+    const isValid = web3Service.verifySignature(message, signature, normalizedWallet);
     if (!isValid) {
-      logger.warn(`Invalid signature for ${walletAddress}`);
+      logger.warn(`Invalid signature for ${normalizedWallet}`);
       throw new Error('Invalid signature');
     }
 
-    // Check if message is recent (within 5 minutes)
-    const messageMatch = message.match(/Time: (\d+)/);
-    if (messageMatch) {
-      const timestamp = parseInt(messageMatch[1]);
-      const now = Date.now();
-      const fiveMinutes = 5 * 60 * 1000;
-
-      if (now - timestamp > fiveMinutes) {
-        throw new Error('Message expired');
-      }
+    // Domain binding: reject messages signed for a different site (prevents
+    // a signature captured elsewhere from being replayed against us).
+    const expectedDomain = new URL(config.FRONTEND_URL).host;
+    if (parsed.domain.trim() !== expectedDomain) {
+      logger.warn(`Domain mismatch: expected=${expectedDomain} got=${parsed.domain}`);
+      throw new Error('Domain mismatch');
     }
 
-    // Find or create user
+    // Time window.
+    const now = Date.now();
+    const age = now - parsed.timestamp;
+    if (age > config.AUTH_MESSAGE_MAX_AGE_MS) {
+      throw new Error('Message expired');
+    }
+    // 30s of tolerated forward clock skew; anything beyond that is suspect.
+    if (age < -30_000) {
+      throw new Error('Message timestamp is in the future');
+    }
+
+    // Atomically consume the nonce. The unique index on (nonce, wallet)
+    // means a replay attempt fails at the DB layer rather than relying on
+    // a read-then-write race window.
+    try {
+      await db.insert(authNonces).values({
+        nonce: parsed.nonce,
+        walletAddress: normalizedWallet,
+      });
+    } catch (error: any) {
+      // Postgres unique-violation: 23505
+      if (error?.code === '23505' || /duplicate key|unique/i.test(String(error?.message))) {
+        logger.warn(`Nonce replay detected for ${normalizedWallet}`);
+        throw new Error('Nonce already used');
+      }
+      throw error;
+    }
+
+    // Find or create user.
     let user = await db.query.users.findFirst({
-      where: eq(users.walletAddress, walletAddress.toLowerCase()),
+      where: eq(users.walletAddress, normalizedWallet),
     });
 
     if (!user) {
-      // Create new user
-      logger.info(`Creating new user for ${walletAddress}`);
+      logger.info(`Creating new user for ${normalizedWallet}`);
       const [newUser] = await db
         .insert(users)
         .values({
-          walletAddress: walletAddress.toLowerCase(),
+          walletAddress: normalizedWallet,
           lastLoginAt: new Date(),
         })
         .returning();
-
       user = newUser;
     } else {
-      // Update last login
       await db
         .update(users)
         .set({ lastLoginAt: new Date() })
         .where(eq(users.id, user.id));
     }
 
-    // Generate token
     const token = this.generateToken({
       userId: user.id,
       walletAddress: user.walletAddress,
     });
 
-    logger.info(`User authenticated: ${user.id} (${walletAddress})`);
+    logger.info(`User authenticated: ${user.id}`);
 
-    return {
-      token,
-      user,
-    };
+    return { token, user };
   }
 
   /**
-   * Get user by ID
+   * Housekeeping: drop consumed nonces older than the max message age.
+   * Safe to call periodically; no-op if nothing to delete.
    */
-  async getUserById(userId: number): Promise<User | null> {
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, userId),
-    });
+  async pruneExpiredNonces(): Promise<void> {
+    const cutoff = new Date(Date.now() - config.AUTH_MESSAGE_MAX_AGE_MS * 2);
+    try {
+      await db.delete(authNonces).where(lt(authNonces.usedAt, cutoff));
+    } catch (error) {
+      logger.warn('Failed to prune expired nonces', error as Error);
+    }
+  }
 
+  async getUserById(userId: number): Promise<User | null> {
+    const user = await db.query.users.findFirst({ where: eq(users.id, userId) });
     return user || null;
   }
 
-  /**
-   * Get user by wallet address
-   */
   async getUserByWallet(walletAddress: string): Promise<User | null> {
     const user = await db.query.users.findFirst({
       where: eq(users.walletAddress, walletAddress.toLowerCase()),
     });
-
     return user || null;
   }
 
-  /**
-   * Update user profile
-   */
   async updateUserProfile(
     userId: number,
     data: { name?: string; email?: string; avatar?: string }
@@ -156,13 +196,9 @@ export class AuthService {
       .where(eq(users.id, userId))
       .returning();
 
-    if (!updated) {
-      throw new Error('User not found');
-    }
-
+    if (!updated) throw new Error('User not found');
     return updated;
   }
 }
 
-// Export singleton instance
 export const authService = new AuthService();

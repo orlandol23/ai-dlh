@@ -116,6 +116,12 @@ export class AuthService {
     // Atomically consume the nonce. The unique index on (nonce, wallet)
     // means a replay attempt fails at the DB layer rather than relying on
     // a read-then-write race window.
+    //
+    // Non-unique-violation failures (connection errors, permission errors,
+    // driver-level bugs, etc.) are logged server-side and surfaced to the
+    // client as a generic message, because `auth.router.ts` forwards
+    // `error.message` verbatim via `TRPCError` — raw DB details must not
+    // reach the client.
     try {
       await db.insert(authNonces).values({
         nonce: parsed.nonce,
@@ -127,7 +133,11 @@ export class AuthService {
         logger.warn(`Nonce replay detected for ${normalizedWallet}`);
         throw new Error('Nonce already used');
       }
-      throw error;
+      logger.error('Failed to consume authentication nonce', {
+        error,
+        walletAddress: normalizedWallet,
+      });
+      throw new Error('Authentication failed');
     }
 
     // Find or create user.

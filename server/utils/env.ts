@@ -18,6 +18,53 @@ const JWT_SECRET_FORBIDDEN = new Set<string>([
   'change_me',
 ]);
 
+// Parse a comma-separated list of origins. Each entry is normalized via
+// `new URL(x).origin`, so trailing slashes or paths are tolerated. Invalid
+// entries produce a structured Zod error at boot (not a runtime crash in
+// whatever consumer happens to touch the list first).
+const csvOriginsSchema = z
+  .string()
+  .optional()
+  .transform((value, ctx) => {
+    const entries = (value ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const origins: string[] = [];
+    for (const entry of entries) {
+      try {
+        origins.push(new URL(entry).origin);
+      } catch {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `invalid origin: "${entry}" (expected e.g. "https://app.example.com")`,
+        });
+      }
+    }
+    return origins;
+  });
+
+// Parse a comma-separated list of host suffixes (e.g. "-myorg.vercel.app").
+// Restricted to hostname-safe characters plus optional port.
+const csvSuffixesSchema = z
+  .string()
+  .optional()
+  .transform((value, ctx) => {
+    const entries = (value ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    for (const entry of entries) {
+      if (!/^[A-Za-z0-9._\-]+(?::\d+)?$/.test(entry)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `invalid host suffix: "${entry}" (expected e.g. "-myorg.vercel.app")`,
+        });
+      }
+    }
+    return entries;
+  });
+
 const envSchema = z.object({
   // Application
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
@@ -26,11 +73,11 @@ const envSchema = z.object({
 
   // CORS: comma-separated list of exact origins (e.g. "https://app.example.com,https://staging.example.com").
   // Preview/wildcard matching is opt-in via ALLOWED_ORIGIN_SUFFIXES below.
-  ALLOWED_ORIGINS: z.string().optional(),
+  ALLOWED_ORIGINS: csvOriginsSchema,
 
   // Comma-separated list of host suffixes allowed for preview deploys
   // (e.g. "-myorg.vercel.app"). Leave unset to disable wildcard matching entirely.
-  ALLOWED_ORIGIN_SUFFIXES: z.string().optional(),
+  ALLOWED_ORIGIN_SUFFIXES: csvSuffixesSchema,
 
   // Database
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
@@ -78,16 +125,9 @@ try {
 
 export const config = parsedEnv;
 
-// Derived allowlists (parsed once at boot).
-export const allowedOrigins: string[] = (config.ALLOWED_ORIGINS ?? '')
-  .split(',')
-  .map((s) => s.trim())
-  .filter(Boolean);
-
-export const allowedOriginSuffixes: string[] = (config.ALLOWED_ORIGIN_SUFFIXES ?? '')
-  .split(',')
-  .map((s) => s.trim())
-  .filter(Boolean);
+// Allowlists already validated and normalized by the Zod schema above.
+export const allowedOrigins: string[] = config.ALLOWED_ORIGINS;
+export const allowedOriginSuffixes: string[] = config.ALLOWED_ORIGIN_SUFFIXES;
 
 export const isProduction = () => config.NODE_ENV === 'production';
 export const isDevelopment = () => config.NODE_ENV === 'development';

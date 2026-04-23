@@ -19,15 +19,19 @@ import { config, allowedOrigins, allowedOriginSuffixes, isDevelopment } from '..
  * blocks it client-side. Throwing here would surface as HTTP 500 in the
  * global Express error handler, polluting metrics/logs with fake 5xx.
  */
-function toOrigin(value: string): string {
-  // Tolerate values that include a trailing slash or path. Browsers send
-  // origins as scheme+host+port only.
-  return new URL(value).origin;
+function toOrigin(value: string): string | null {
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
 }
 
+// `allowedOrigins` is already normalized by the Zod env schema, and
+// `FRONTEND_URL` is a valid URL per the schema, so this never throws.
 const alwaysAllowed = new Set<string>([
-  toOrigin(config.FRONTEND_URL),
-  ...allowedOrigins.map(toOrigin),
+  new URL(config.FRONTEND_URL).origin,
+  ...allowedOrigins,
 ]);
 
 export const corsMiddleware = cors({
@@ -39,18 +43,20 @@ export const corsMiddleware = cors({
       return;
     }
 
-    if (alwaysAllowed.has(origin)) {
+    // Normalize the incoming Origin so casing / trailing-slash differences
+    // from non-browser clients don't cause false rejections.
+    const normalized = toOrigin(origin);
+    if (!normalized) {
+      callback(null, false);
+      return;
+    }
+
+    if (alwaysAllowed.has(normalized)) {
       callback(null, true);
       return;
     }
 
-    let host: string;
-    try {
-      host = new URL(origin).host.toLowerCase();
-    } catch {
-      callback(null, false);
-      return;
-    }
+    const host = new URL(normalized).host.toLowerCase();
 
     // Preview deploys: host must end with one of the configured suffixes.
     for (const suffix of allowedOriginSuffixes) {
@@ -60,7 +66,7 @@ export const corsMiddleware = cors({
       }
     }
 
-    if (isDevelopment() && origin.startsWith('http://localhost:')) {
+    if (isDevelopment() && normalized.startsWith('http://localhost:')) {
       callback(null, true);
       return;
     }

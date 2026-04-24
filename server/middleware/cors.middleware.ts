@@ -59,6 +59,9 @@ export const corsMiddleware = cors({
     const host = new URL(normalized).host.toLowerCase();
 
     // Preview deploys: host must end with one of the configured suffixes.
+    // Each suffix is required by the env schema to start with "-" or "."
+    // so that endsWith() matches on a label boundary — otherwise a
+    // suffix like "example.com" would also accept "evil-example.com".
     for (const suffix of allowedOriginSuffixes) {
       if (suffix && host.endsWith(suffix.toLowerCase())) {
         callback(null, true);

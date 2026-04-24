@@ -64,8 +64,11 @@ const KNOWN_BROAD_SUFFIXES = new Set<string>([
 ]);
 
 // Parse a comma-separated list of host suffixes (e.g. "-myorg.vercel.app").
-// Restricted to hostname-safe characters plus optional port; entries that
-// match a known broad platform suffix are rejected at boot.
+// Restricted to hostname-safe characters plus optional port. Entries
+// MUST start with "-" or "." so that `host.endsWith(suffix)` matches on
+// a label boundary — without that, a suffix like "example.com" would
+// also accept "evil-example.com". Entries that match a known broad
+// platform suffix are also rejected at boot.
 const csvSuffixesSchema = z
   .string()
   .optional()
@@ -79,6 +82,15 @@ const csvSuffixesSchema = z
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: `invalid host suffix: "${entry}" (expected e.g. "-myorg.vercel.app")`,
+        });
+        continue;
+      }
+      if (!entry.startsWith('-') && !entry.startsWith('.')) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            `host suffix "${entry}" must start with "-" or "." to enforce a ` +
+            `label boundary (e.g. "-myorg.vercel.app" or ".internal.example.com").`,
         });
         continue;
       }

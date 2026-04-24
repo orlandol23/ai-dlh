@@ -44,6 +44,21 @@ function parseLoginMessage(message: string): ParsedLoginMessage | null {
   return { domain, address, timestamp: ts, nonce };
 }
 
+/**
+ * Render a URL's host component with the default port for its scheme
+ * stripped. Browsers omit default ports from `window.location.host`,
+ * so we need the same normalization server-side to avoid spurious
+ * "Domain mismatch" errors when the operator writes FRONTEND_URL with
+ * an explicit `:443` / `:80`.
+ */
+function normalizeHostForProtocol(url: URL): string {
+  const defaultPort =
+    url.protocol === 'https:' ? '443' : url.protocol === 'http:' ? '80' : '';
+  return url.port && url.port !== defaultPort
+    ? `${url.hostname.toLowerCase()}:${url.port}`
+    : url.hostname.toLowerCase();
+}
+
 export class AuthService {
   generateToken(payload: JWTPayload): string {
     return jwt.sign(payload, config.JWT_SECRET, {
@@ -110,9 +125,21 @@ export class AuthService {
 
     // Domain binding: reject messages signed for a different site (prevents
     // a signature captured elsewhere from being replayed against us).
-    // Hostnames are case-insensitive per RFC 3986; normalize both sides.
-    const expectedDomain = new URL(config.FRONTEND_URL).host.toLowerCase();
-    if (parsed.domain.trim().toLowerCase() !== expectedDomain) {
+    // Hostnames are case-insensitive per RFC 3986. Default ports are also
+    // normalized so that a FRONTEND_URL of "https://x:443" matches a
+    // browser's `window.location.host` of "x" (which omits default ports).
+    const frontendUrl = new URL(config.FRONTEND_URL);
+    const expectedDomain = normalizeHostForProtocol(frontendUrl);
+
+    let actualDomain: string;
+    try {
+      const parsedDomainUrl = new URL(`${frontendUrl.protocol}//${parsed.domain.trim()}`);
+      actualDomain = normalizeHostForProtocol(parsedDomainUrl);
+    } catch {
+      throw new Error('Malformed login message');
+    }
+
+    if (actualDomain !== expectedDomain) {
       logger.warn(`Domain mismatch: expected=${expectedDomain} got=${parsed.domain}`);
       throw new Error('Domain mismatch');
     }
@@ -158,28 +185,33 @@ export class AuthService {
         throw new Error('Authentication failed');
       }
 
-      let existing = await tx.query.users.findFirst({
-        where: eq(users.walletAddress, normalizedWallet),
-      });
-
-      if (!existing) {
-        logger.info(`Creating new user for ${normalizedWallet}`);
-        const [created] = await tx
+      // Atomic upsert: two concurrent first-time logins for the same
+      // wallet would both observe no existing row under a naive
+      // SELECT-then-INSERT pattern and the second INSERT would trip the
+      // users.wallet_address unique constraint. Using ON CONFLICT DO
+      // UPDATE collapses that race into a single statement and always
+      // returns a row — existing or freshly created.
+      const now = new Date();
+      try {
+        const [upserted] = await tx
           .insert(users)
           .values({
             walletAddress: normalizedWallet,
-            lastLoginAt: new Date(),
+            lastLoginAt: now,
+          })
+          .onConflictDoUpdate({
+            target: users.walletAddress,
+            set: { lastLoginAt: now },
           })
           .returning();
-        existing = created;
-      } else {
-        await tx
-          .update(users)
-          .set({ lastLoginAt: new Date() })
-          .where(eq(users.id, existing.id));
+        return upserted;
+      } catch (error) {
+        logger.error('Failed to upsert authenticated user', {
+          error,
+          walletAddress: normalizedWallet,
+        });
+        throw new Error('Authentication failed');
       }
-
-      return existing;
     });
 
     const token = this.generateToken({

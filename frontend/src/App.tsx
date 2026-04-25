@@ -17,6 +17,14 @@ function App() {
       queries: {
         refetchOnWindowFocus: false,
         retry: 1,
+        // Treat data as fresh for 30s. Without this, the Dashboard's three
+        // parallel queries (modules / stats / progress) refire on every
+        // mount/router-transition even when the user is just navigating
+        // back from /module/:id. A short staleTime avoids the spinner
+        // flash and the redundant load on Postgres without staleness
+        // becoming user-visible (records only change after submitQuiz,
+        // which already invalidates via tRPC's mutation lifecycle).
+        staleTime: 30_000,
       },
     },
   }));

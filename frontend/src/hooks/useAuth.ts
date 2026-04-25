@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ethers } from 'ethers';
+import { toast } from '../components/molecules/Toaster';
 import { trpc } from '../lib/trpc';
 import { useAuthStore } from '../store/authStore';
 
@@ -19,7 +20,9 @@ export const useAuth = () => {
 
   const connectWallet = async () => {
     if (!window.ethereum) {
-      alert('MetaMask não detectado! Por favor, instale a extensão MetaMask.\n\nhttps://metamask.io');
+      toast.error('MetaMask não detectado', {
+        description: 'Instale a extensão MetaMask em metamask.io para continuar.',
+      });
       return;
     }
 
@@ -54,11 +57,15 @@ export const useAuth = () => {
       console.error('Connection error:', error);
 
       if (error.code === 4001) {
-        alert('Conexão cancelada pelo usuário');
+        toast('Conexão cancelada', { description: 'Você rejeitou a assinatura no MetaMask.' });
       } else if (error.code === -32002) {
-        alert('Já existe uma solicitação de conexão pendente no MetaMask');
+        toast.warning('Solicitação pendente', {
+          description: 'Já existe uma conexão pendente no MetaMask — abra a extensão.',
+        });
       } else {
-        alert('Erro ao conectar carteira: ' + (error.message || 'Erro desconhecido'));
+        toast.error('Erro ao conectar carteira', {
+          description: error.message || 'Erro desconhecido',
+        });
       }
     } finally {
       setIsConnecting(false);

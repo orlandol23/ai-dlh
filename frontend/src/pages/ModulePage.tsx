@@ -3,7 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/atoms/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/atoms/Card';
 import { Badge } from '@/components/atoms/Badge';
+import { Skeleton } from '@/components/atoms/Skeleton';
 import { ThemeToggle } from '@/components/atoms/ThemeToggle';
+import { toast } from '@/components/molecules/Toaster';
 import { trpc } from '@/lib/trpc';
 import { getEtherscanUrl } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
@@ -40,14 +42,28 @@ export const ModulePage = () => {
     },
     onError: (error) => {
       setIsSubmitting(false);
-      alert('Erro ao enviar quiz: ' + error.message);
+      toast.error('Erro ao enviar quiz', { description: error.message });
     },
   });
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="spinner"></div>
+      <div className="min-h-screen bg-background">
+        <header className="bg-card border-b border-border">
+          <div className="container mx-auto px-4 py-4">
+            <Skeleton className="h-10 w-32" />
+          </div>
+        </header>
+        <main className="container mx-auto px-4 py-8 max-w-4xl space-y-6">
+          <Skeleton className="h-12 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+          <div className="space-y-3 mt-8">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+            <Skeleton className="h-4 w-4/6" />
+          </div>
+        </main>
       </div>
     );
   }
@@ -95,7 +111,9 @@ export const ModulePage = () => {
 
   const handleSubmitQuiz = async () => {
     if (selectedAnswers.includes(-1)) {
-      alert('Por favor, responda todas as perguntas antes de finalizar.');
+      toast.warning('Quiz incompleto', {
+        description: 'Responda todas as perguntas antes de finalizar.',
+      });
       return;
     }
 

@@ -4,6 +4,7 @@ import { Input } from '@/components/atoms/Input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/atoms/Card';
 import { Badge } from '@/components/atoms/Badge';
 import { ThemeToggle } from '@/components/atoms/ThemeToggle';
+import { toast } from '@/components/molecules/Toaster';
 import { useAuth } from '@/hooks/useAuth';
 import { trpc } from '@/lib/trpc';
 import { formatAddress } from '@/lib/utils';
@@ -35,11 +36,11 @@ export const DashboardPage = () => {
       setIsGenerating(false);
       setTopic('');
       refetchModules();
-      alert('Módulo gerado com sucesso!');
+      toast.success('🎉 Módulo gerado com sucesso!');
     },
     onError: (error) => {
       setIsGenerating(false);
-      alert('Erro ao gerar módulo: ' + error.message);
+      toast.error('Erro ao gerar módulo', { description: error.message });
     },
   });
 
@@ -47,7 +48,9 @@ export const DashboardPage = () => {
     e.preventDefault();
 
     if (topic.length < 3) {
-      alert('O tópico deve ter pelo menos 3 caracteres');
+      toast.warning('Tópico muito curto', {
+        description: 'O tópico deve ter pelo menos 3 caracteres.',
+      });
       return;
     }
 

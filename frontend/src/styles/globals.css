@@ -314,3 +314,23 @@
   -webkit-text-fill-color: transparent;
   color: transparent;
 }
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 0%,
+    hsl(var(--background)) 50%,
+    hsl(var(--muted)) 100%
+  );
+  background-size: 200px 100%;
+  background-repeat: no-repeat;
+  animation: shimmer 1.5s linear infinite;
+}

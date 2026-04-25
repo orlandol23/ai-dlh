@@ -28,15 +28,13 @@ export const HomePage = () => {
   }, [isAuthenticated, navigate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen hero-gradient">
       {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm">
+      <header className="border-b border-border bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white font-bold">
-                AI
-              </div>
+              <img src="/logo.svg" alt="AI-DLH" className="w-10 h-10" />
               <h1 className="text-xl font-bold">AI-DLH</h1>
             </div>
             <Button
@@ -50,8 +48,9 @@ export const HomePage = () => {
       </header>
 
       {/* Hero Section */}
-      <main className="container mx-auto px-4 py-16">
-        <div className="max-w-4xl mx-auto text-center space-y-8">
+      <main className="container mx-auto px-4 py-16 relative">
+        <div className="absolute inset-0 hash-grid opacity-70 pointer-events-none" aria-hidden="true" />
+        <div className="max-w-4xl mx-auto text-center space-y-8 relative">
           <div className="space-y-4">
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900">
               Aprenda com <span className="text-primary">IA</span>

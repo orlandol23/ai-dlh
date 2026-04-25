@@ -61,9 +61,7 @@ export const DashboardPage = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white font-bold">
-                AI
-              </div>
+              <img src="/logo.svg" alt="AI-DLH" className="w-10 h-10" />
               <div>
                 <h1 className="text-xl font-bold">Dashboard</h1>
                 <p className="text-sm text-gray-600">{formatAddress(user?.walletAddress || '')}</p>

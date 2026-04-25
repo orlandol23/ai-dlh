@@ -307,7 +307,7 @@ export const ModulePage = () => {
                   )}
 
                   {quizResult.transactionHash && (
-                    <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-6">
+                    <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-6 hash-grid">
                       <p className="font-semibold text-blue-800 mb-2">
                         ⛓️ Registrado na Blockchain!
                       </p>

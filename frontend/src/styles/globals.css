@@ -228,3 +228,89 @@
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+/* =========================================================
+   Helper classes — motivo gráfico v2 "Circuit & Ink"
+   ========================================================= */
+
+/* Hash grid — fundo pontilhado roxo, motivo da marca */
+.hash-grid {
+  background-image:
+    linear-gradient(to right, hsl(var(--grid-color) / var(--grid-alpha)) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(var(--grid-color) / var(--grid-alpha)) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+}
+
+/* Fallback caso navegador não suporte hsl() com slash alpha */
+@supports not (color: hsl(0 0% 0% / 0.1)) {
+  .hash-grid {
+    background-image:
+      linear-gradient(to right, rgba(124, 58, 237, 0.08) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(124, 58, 237, 0.08) 1px, transparent 1px);
+  }
+  .dark .hash-grid {
+    background-image:
+      linear-gradient(to right, rgba(167, 139, 250, 0.10) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(167, 139, 250, 0.10) 1px, transparent 1px);
+  }
+}
+
+/* Display font helper (Space Grotesk) */
+.sg {
+  font-family: theme('fontFamily.display');
+  letter-spacing: -0.02em;
+}
+
+/* Eyebrow — rótulo mono pequeno em maiúsculas */
+.eyebrow {
+  font-family: theme('fontFamily.mono');
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Stat — números grandes display */
+.stat-number {
+  font-family: theme('fontFamily.display');
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Circuit trace — linha pontilhada divisor expressivo */
+.circuit-trace {
+  background-image: repeating-linear-gradient(
+    90deg,
+    hsl(var(--primary-400)) 0 8px,
+    transparent 8px 14px
+  );
+  height: 2px;
+}
+
+/* Hero gradient — único gradiente do produto, roxo→ciano diagonal */
+.hero-gradient {
+  background: linear-gradient(135deg,
+    hsl(var(--primary-50)) 0%,
+    hsl(var(--primary-100)) 40%,
+    hsl(var(--accent-100)) 100%);
+}
+
+.dark .hero-gradient {
+  background: linear-gradient(135deg,
+    hsl(var(--neutral-950)) 0%,
+    hsl(var(--primary-900)) 55%,
+    hsl(var(--info-fg)) 100%);
+}
+
+/* Text gradient utility — para destaques tipográficos (IA, Blockchain) */
+.text-gradient-brand {
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}

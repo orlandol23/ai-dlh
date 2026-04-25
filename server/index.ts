@@ -25,15 +25,15 @@ import { aiService } from './services/ai.service.js';
  * separate one-off job during release).
  */
 async function runMigrations(): Promise<void> {
-  if (process.env.SKIP_MIGRATIONS === 'true') {
+  if (config.SKIP_MIGRATIONS) {
     logger.info('Migrations skipped (SKIP_MIGRATIONS=true)');
     return;
   }
 
   // Resolve relative to *this* compiled module so the path stays correct
   // regardless of CWD (Railway's start command, local `node dist/...`, etc.).
-  // At runtime this file is server/dist/index.js → migrations live two
-  // levels up: ../db/migrations.
+  // At runtime this file is server/dist/index.js → migrations are one
+  // level up: ../db/migrations.
   const moduleDir = path.dirname(fileURLToPath(import.meta.url));
   const migrationsFolder = path.resolve(moduleDir, '..', 'db', 'migrations');
 
@@ -109,7 +109,7 @@ const HOST = '0.0.0.0'; // Listen on all interfaces for Railway
 try {
   await runMigrations();
 } catch (error) {
-  logger.error('Failed to apply migrations; refusing to start server', error as Error);
+  logger.error('Failed to apply migrations; refusing to start server', { error });
   process.exit(1);
 }
 

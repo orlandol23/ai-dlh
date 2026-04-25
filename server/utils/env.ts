@@ -142,6 +142,16 @@ const envSchema = z.object({
     .default('300000') // 5 min
     .transform((v) => parseInt(v, 10))
     .pipe(z.number().int().min(30_000).max(900_000)),
+
+  // Operations
+  // Skip drizzle migrate() on boot. Use when migrations are run by a
+  // dedicated release-phase job and the running container should never
+  // touch DDL. Any value other than the literal "true" leaves migrations
+  // enabled, so typos fail closed (apply migrations).
+  SKIP_MIGRATIONS: z
+    .string()
+    .optional()
+    .transform((v) => v === 'true'),
 }).superRefine((env, ctx) => {
   if (env.NODE_ENV === 'production' && JWT_SECRET_FORBIDDEN.has(env.JWT_SECRET)) {
     ctx.addIssue({

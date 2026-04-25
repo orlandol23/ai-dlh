@@ -56,11 +56,12 @@ export const OnChainTimeline = ({
   }
 
   return (
-    <ol className={cn('relative space-y-3', className)}>
-      <span
-        className="absolute left-[15px] top-2 bottom-2 w-px bg-border"
-        aria-hidden="true"
-      />
+    <ol
+      className={cn(
+        'relative space-y-3 before:content-[""] before:absolute before:left-[15px] before:top-2 before:bottom-2 before:w-px before:bg-border',
+        className
+      )}
+    >
       {sorted.map((r) => {
         const isOnChain = r.blockchainStatus === 'confirmed' && !!r.transactionHash;
         const passed = r.score >= 70;

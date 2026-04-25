@@ -1,3 +1,4 @@
+import type { ComponentPropsWithoutRef, ReactNode } from 'react';
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { cn } from '@/lib/utils';
 
@@ -6,7 +7,7 @@ export const TooltipRoot = TooltipPrimitive.Root;
 export const TooltipTrigger = TooltipPrimitive.Trigger;
 
 interface TooltipContentProps
-  extends React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content> {}
+  extends ComponentPropsWithoutRef<typeof TooltipPrimitive.Content> {}
 
 export const TooltipContent = ({
   className,
@@ -27,8 +28,8 @@ export const TooltipContent = ({
 );
 
 interface TooltipProps {
-  content: React.ReactNode;
-  children: React.ReactNode;
+  content: ReactNode;
+  children: ReactNode;
   side?: 'top' | 'bottom' | 'left' | 'right';
 }
 

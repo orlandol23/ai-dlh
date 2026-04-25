@@ -1,3 +1,4 @@
+import type { FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/atoms/Button';
@@ -80,7 +81,7 @@ export const DashboardPage = () => {
     },
   });
 
-  const handleGenerateModule = async (e: React.FormEvent) => {
+  const handleGenerateModule = async (e: FormEvent) => {
     e.preventDefault();
     if (topic.length < 3) {
       toast.warning('Tópico muito curto', {

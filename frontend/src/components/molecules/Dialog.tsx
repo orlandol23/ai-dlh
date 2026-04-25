@@ -1,3 +1,4 @@
+import type { ComponentPropsWithoutRef, HTMLAttributes } from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { cn } from '@/lib/utils';
 
@@ -6,7 +7,7 @@ export const DialogTrigger = DialogPrimitive.Trigger;
 export const DialogClose = DialogPrimitive.Close;
 
 interface DialogContentProps
-  extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> {}
+  extends ComponentPropsWithoutRef<typeof DialogPrimitive.Content> {}
 
 export const DialogContent = ({
   className,
@@ -28,14 +29,14 @@ export const DialogContent = ({
   </DialogPrimitive.Portal>
 );
 
-interface DialogHeaderProps extends React.HTMLAttributes<HTMLDivElement> {}
+interface DialogHeaderProps extends HTMLAttributes<HTMLDivElement> {}
 
 export const DialogHeader = ({ className, ...props }: DialogHeaderProps) => (
   <div className={cn('flex flex-col gap-1.5', className)} {...props} />
 );
 
 interface DialogTitleProps
-  extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title> {}
+  extends ComponentPropsWithoutRef<typeof DialogPrimitive.Title> {}
 
 export const DialogTitle = ({ className, ...props }: DialogTitleProps) => (
   <DialogPrimitive.Title
@@ -45,7 +46,7 @@ export const DialogTitle = ({ className, ...props }: DialogTitleProps) => (
 );
 
 interface DialogDescriptionProps
-  extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description> {}
+  extends ComponentPropsWithoutRef<typeof DialogPrimitive.Description> {}
 
 export const DialogDescription = ({
   className,
@@ -57,7 +58,7 @@ export const DialogDescription = ({
   />
 );
 
-interface DialogFooterProps extends React.HTMLAttributes<HTMLDivElement> {}
+interface DialogFooterProps extends HTMLAttributes<HTMLDivElement> {}
 
 export const DialogFooter = ({ className, ...props }: DialogFooterProps) => (
   <div

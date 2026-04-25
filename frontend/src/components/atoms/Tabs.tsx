@@ -1,10 +1,11 @@
+import type { ComponentPropsWithoutRef } from 'react';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
 import { cn } from '@/lib/utils';
 
 export const Tabs = TabsPrimitive.Root;
 
 interface TabsListProps
-  extends React.ComponentPropsWithoutRef<typeof TabsPrimitive.List> {}
+  extends ComponentPropsWithoutRef<typeof TabsPrimitive.List> {}
 
 export const TabsList = ({ className, ...props }: TabsListProps) => (
   <TabsPrimitive.List
@@ -17,7 +18,7 @@ export const TabsList = ({ className, ...props }: TabsListProps) => (
 );
 
 interface TabsTriggerProps
-  extends React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger> {}
+  extends ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger> {}
 
 export const TabsTrigger = ({ className, ...props }: TabsTriggerProps) => (
   <TabsPrimitive.Trigger
@@ -34,7 +35,7 @@ export const TabsTrigger = ({ className, ...props }: TabsTriggerProps) => (
 );
 
 interface TabsContentProps
-  extends React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content> {}
+  extends ComponentPropsWithoutRef<typeof TabsPrimitive.Content> {}
 
 export const TabsContent = ({ className, ...props }: TabsContentProps) => (
   <TabsPrimitive.Content

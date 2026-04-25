@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/atoms/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/atoms/Card';
 import { Badge } from '@/components/atoms/Badge';
@@ -327,8 +328,17 @@ export const ModulePage = () => {
                   )}
 
                   {quizResult.transactionHash && (
-                    <div className="mt-6 bg-onchain-bg border border-onchain-border rounded-lg p-6 hash-grid">
-                      <p className="font-semibold text-onchain-fg mb-2">
+                    <div className="relative mt-6 bg-onchain-bg border border-onchain-border rounded-lg p-6 hash-grid overflow-hidden">
+                      <motion.div
+                        initial={{ opacity: 0, scale: 2, rotate: -12 }}
+                        animate={{ opacity: 1, scale: 1, rotate: -8 }}
+                        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                        className="absolute -top-2 right-4 px-3 py-1 rounded-md border-2 border-primary/60 bg-card font-mono text-[11px] font-bold tracking-widest text-primary uppercase shadow-md"
+                        aria-hidden="true"
+                      >
+                        ⛓ ON-CHAIN
+                      </motion.div>
+                      <p className="font-semibold text-onchain-fg mb-2 mt-4">
                         ⛓️ Registrado na Blockchain!
                       </p>
                       <p className="text-sm text-onchain-fg/80 mb-3">

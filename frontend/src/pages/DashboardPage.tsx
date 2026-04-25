@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/atoms/Button';
 import { Input } from '@/components/atoms/Input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/atoms/Card';
@@ -25,6 +25,26 @@ export const DashboardPage = () => {
   const [topic, setTopic] = useState('');
   const [level, setLevel] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [streamStage, setStreamStage] = useState(0);
+
+  const STREAM_STAGES = [
+    'Analisando o tópico',
+    'Estruturando o módulo',
+    'Gerando conteúdo personalizado',
+    'Montando o quiz',
+    'Quase lá',
+  ];
+
+  useEffect(() => {
+    if (!isGenerating) {
+      setStreamStage(0);
+      return;
+    }
+    const id = window.setInterval(() => {
+      setStreamStage((s) => Math.min(s + 1, STREAM_STAGES.length - 1));
+    }, 2200);
+    return () => window.clearInterval(id);
+  }, [isGenerating]);
 
   // Queries
   const { data: modules, refetch: refetchModules } = trpc.ai.getUserModules.useQuery();
@@ -184,9 +204,12 @@ export const DashboardPage = () => {
                   </Button>
 
                   {isGenerating && (
-                    <p className="text-sm text-muted-foreground text-center animate-pulse">
-                      ⏳ A IA está criando…
-                    </p>
+                    <div className="rounded-md border border-primary/20 bg-primary/5 p-4">
+                      <p className="eyebrow mb-2">IA trabalhando</p>
+                      <p className="font-mono text-sm text-foreground caret">
+                        {STREAM_STAGES[streamStage]}
+                      </p>
+                    </div>
                   )}
                 </form>
               </CardContent>

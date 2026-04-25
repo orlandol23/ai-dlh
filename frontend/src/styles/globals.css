@@ -334,3 +334,15 @@
   background-repeat: no-repeat;
   animation: shimmer 1.5s linear infinite;
 }
+
+/* AI streaming caret — pisca após o texto enquanto a IA "escreve" */
+@keyframes caret-blink {
+  50% { opacity: 0; }
+}
+
+.caret::after {
+  content: '▋';
+  color: hsl(var(--primary));
+  margin-left: 2px;
+  animation: caret-blink 1s steps(1) infinite;
+}

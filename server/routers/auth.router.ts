@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { router, publicProcedure, protectedProcedure } from '../trpc.js';
 import { authService } from '../services/auth.service.js';
 import { TRPCError } from '@trpc/server';
+import { getErrorMessage } from '../utils/errors.js';
 
 export const authRouter = router({
   /**
@@ -24,10 +25,10 @@ export const authRouter = router({
         );
 
         return result;
-      } catch (error: any) {
+      } catch (error) {
         throw new TRPCError({
           code: 'UNAUTHORIZED',
-          message: error.message || 'Authentication failed',
+          message: getErrorMessage(error, 'Authentication failed'),
         });
       }
     }),

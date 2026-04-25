@@ -6,6 +6,7 @@ import { web3Service } from '../services/web3.service.js';
 import { eq, and, desc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { logger } from '../utils/logger.js';
+import { getErrorMessage } from '../utils/errors.js';
 
 /**
  * Progress Router - Handles quiz submissions and progress tracking
@@ -96,9 +97,9 @@ export const progressRouter = router({
             .where(eq(progressRecords.id, record.id));
 
           logger.info(`Blockchain transaction confirmed: ${txHash}`);
-        } catch (error: any) {
-          logger.error('Blockchain recording failed:', error);
-          blockchainError = error.message;
+        } catch (error) {
+          logger.error('Blockchain recording failed', { error });
+          blockchainError = getErrorMessage(error, 'Blockchain recording failed');
 
           // Update status to failed
           await db
@@ -119,12 +120,19 @@ export const progressRouter = router({
     }),
 
   /**
-   * Get user's progress records
+   * Get user's progress records (most recent first).
+   *
+   * Capped at 50 to keep payload bounded. The frontend's Sparkline only
+   * uses the last 12, OnChainTimeline / AchievementsGrid show recent
+   * activity, and `limit` prevents an unintentional N×JOIN explosion if
+   * a power-user accumulates thousands of attempts. Pagination can be
+   * added later behind a cursor input if needed.
    */
   getUserProgress: protectedProcedure.query(async ({ ctx }) => {
     const records = await db.query.progressRecords.findMany({
       where: eq(progressRecords.userId, ctx.user.id),
       orderBy: [desc(progressRecords.completedAt)],
+      limit: 50,
       with: {
         module: true,
       },

@@ -1,5 +1,6 @@
 import { createTRPCReact } from '@trpc/react-query';
 import { httpBatchLink } from '@trpc/client';
+import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server';
 import type { AppRouter } from '../../../server/routers';
 import superjson from 'superjson';
 
@@ -7,6 +8,10 @@ import superjson from 'superjson';
  * Create tRPC React hooks
  */
 export const trpc = createTRPCReact<AppRouter>();
+
+/** Helpers to extract input/output types from any procedure on the server. */
+export type RouterInputs = inferRouterInputs<AppRouter>;
+export type RouterOutputs = inferRouterOutputs<AppRouter>;
 
 /**
  * Create tRPC client

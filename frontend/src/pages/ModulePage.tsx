@@ -7,7 +7,7 @@ import { Badge } from '@/components/atoms/Badge';
 import { Skeleton } from '@/components/atoms/Skeleton';
 import { ThemeToggle } from '@/components/atoms/ThemeToggle';
 import { toast } from '@/components/molecules/Toaster';
-import { trpc } from '@/lib/trpc';
+import { trpc, type RouterOutputs } from '@/lib/trpc';
 import { getEtherscanUrl } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 
@@ -18,6 +18,14 @@ interface QuizQuestion {
   explanation?: string;
 }
 
+/**
+ * Quiz submission result. Inferred from tRPC instead of redeclared so any
+ * change to the backend mutation shape (new fields, type tightening,
+ * removed properties) surfaces here as a compile error rather than a
+ * silent runtime mismatch.
+ */
+type QuizResult = RouterOutputs['progress']['submitQuiz'];
+
 export const ModulePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -27,7 +35,7 @@ export const ModulePage = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   const [showResults, setShowResults] = useState(false);
-  const [quizResult, setQuizResult] = useState<any>(null);
+  const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Queries

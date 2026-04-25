@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { config } from '../utils/env.js';
 import { logger } from '../utils/logger.js';
+import { getErrorCode, getErrorMessage } from '../utils/errors.js';
 import { db } from '../db/index.js';
 import { users, authNonces, type User } from '../db/schema.js';
 import { eq, lt } from 'drizzle-orm';
@@ -172,9 +173,9 @@ export class AuthService {
           nonce: parsed.nonce,
           walletAddress: normalizedWallet,
         });
-      } catch (error: any) {
+      } catch (error) {
         // Postgres unique-violation: 23505
-        if (error?.code === '23505' || /duplicate key|unique/i.test(String(error?.message))) {
+        if (getErrorCode(error) === '23505' || /duplicate key|unique/i.test(getErrorMessage(error, ''))) {
           logger.warn(`Nonce replay detected for ${normalizedWallet}`);
           throw new Error('Nonce already used');
         }

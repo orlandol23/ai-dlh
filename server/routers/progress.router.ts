@@ -3,7 +3,7 @@ import { router, protectedProcedure } from '../trpc.js';
 import { db } from '../db/index.js';
 import { modules, progressRecords, type QuizQuestion } from '../db/schema.js';
 import { web3Service } from '../services/web3.service.js';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { logger } from '../utils/logger.js';
 import { getErrorMessage } from '../utils/errors.js';
@@ -122,11 +122,16 @@ export const progressRouter = router({
   /**
    * Get user's progress records (most recent first).
    *
-   * Capped at 50 to keep payload bounded. The frontend's Sparkline only
-   * uses the last 12, OnChainTimeline / AchievementsGrid show recent
-   * activity, and `limit` prevents an unintentional N×JOIN explosion if
-   * a power-user accumulates thousands of attempts. Pagination can be
-   * added later behind a cursor input if needed.
+   * Capped at 50 to keep the query result and response payload bounded.
+   * The frontend's Sparkline only uses the last 12, and OnChainTimeline
+   * shows recent activity, so returning full history would mostly add
+   * unnecessary result size and sort cost for power users with thousands
+   * of attempts (it's a single JOIN — not N×JOIN — but it's still O(n)
+   * in rows scanned and serialized). Pagination can be added later
+   * behind a cursor input if a "view all" UI shows up.
+   *
+   * Long-tail aggregates the achievements panel needs are computed in
+   * `getStatistics` so they stay correct regardless of this cap.
    */
   getUserProgress: protectedProcedure.query(async ({ ctx }) => {
     const records = await db.query.progressRecords.findMany({
@@ -144,59 +149,68 @@ export const progressRouter = router({
   /**
    * Get statistics for current user.
    *
-   * Returns all-time aggregates (no `limit` here) so the Dashboard's
-   * achievement panel sees an accurate picture even when a power-user
-   * has thousands of records — getUserProgress is capped at 50 for
-   * payload size, but achievements need to count over the full history.
-   * Aggregating once on the server is also cheaper than shipping every
-   * row to the client just so it can `.filter().length`.
+   * All counts/sums are pushed into Postgres via `COUNT(*) FILTER (...)`
+   * and a separate `COUNT(DISTINCT modules.topic)` join, instead of
+   * shipping every record to Node and folding in JS. For a power-user
+   * with thousands of attempts this is the difference between O(n)
+   * memory + a sort, and a couple of indexed scans returning a single
+   * row each.
+   *
+   * Streak still needs the recent score sequence (it's order-dependent
+   * and the threshold can change), so we fetch only the last 50 score
+   * values — the longest realistic streak is bounded well below that.
    */
   getStatistics: protectedProcedure.query(async ({ ctx }) => {
-    const records = await db.query.progressRecords.findMany({
-      where: eq(progressRecords.userId, ctx.user.id),
-      orderBy: [desc(progressRecords.completedAt)],
-      with: { module: true },
-    });
+    const userId = ctx.user.id;
 
-    const total = records.length;
-    const passed = records.filter((r) => r.score >= 70).length;
-    const avgScore =
-      total > 0
-        ? Math.round(records.reduce((sum, r) => sum + r.score, 0) / total)
-        : 0;
+    // Single round-trip for the additive aggregates.
+    const [aggregates] = await db
+      .select({
+        total: sql<number>`COUNT(*)::int`,
+        passed: sql<number>`COUNT(*) FILTER (WHERE ${progressRecords.score} >= 70)::int`,
+        onChain: sql<number>`COUNT(*) FILTER (WHERE ${progressRecords.blockchainStatus} = 'confirmed')::int`,
+        highScore: sql<number>`COUNT(*) FILTER (WHERE ${progressRecords.score} >= 90)::int`,
+        hasPerfect: sql<boolean>`COALESCE(bool_or(${progressRecords.score} = 100), false)`,
+        avgScore: sql<number>`COALESCE(ROUND(AVG(${progressRecords.score}))::int, 0)`,
+      })
+      .from(progressRecords)
+      .where(eq(progressRecords.userId, userId));
 
-    const onChain = records.filter(
-      (r) => r.blockchainStatus === 'confirmed'
-    ).length;
+    // Distinct topics needs the join — kept as its own query so the
+    // first aggregate above stays a single-table scan.
+    const [topics] = await db
+      .select({ count: sql<number>`COUNT(DISTINCT ${modules.topic})::int` })
+      .from(progressRecords)
+      .innerJoin(modules, eq(progressRecords.moduleId, modules.id))
+      .where(eq(progressRecords.userId, userId));
 
-    // Aggregates the achievements panel needs — see deriveAchievements
-    // on the frontend. Counted server-side because the client view is
-    // capped at the most recent 50 records.
-    const highScoreCount = records.filter((r) => r.score >= 90).length;
-    const hasPerfectScore = records.some((r) => r.score === 100);
-    const distinctTopics = new Set(
-      records
-        .map((r) => r.module?.topic)
-        .filter((t): t is string => typeof t === 'string' && t.length > 0)
-    );
+    // Streak is order-dependent (consecutive passes from the most
+    // recent backwards). Fetching only the columns we need keeps the
+    // payload tiny; cap at 50 because no realistic streak survives
+    // that long without hitting a sub-70 score.
+    const recentScores = await db
+      .select({ score: progressRecords.score })
+      .from(progressRecords)
+      .where(eq(progressRecords.userId, userId))
+      .orderBy(desc(progressRecords.completedAt))
+      .limit(50);
 
-    // Records are already sorted desc by completedAt, so we can just
-    // walk forward and stop on the first failure.
     let currentStreak = 0;
-    for (const r of records) {
+    for (const r of recentScores) {
       if (r.score >= 70) currentStreak += 1;
       else break;
     }
 
+    const total = aggregates.total;
     return {
       totalModules: total,
-      passedModules: passed,
-      avgScore,
-      completionRate: total > 0 ? Math.round((passed / total) * 100) : 0,
-      onChainRecords: onChain,
-      highScoreCount,
-      hasPerfectScore,
-      distinctTopicsCount: distinctTopics.size,
+      passedModules: aggregates.passed,
+      avgScore: aggregates.avgScore,
+      completionRate: total > 0 ? Math.round((aggregates.passed / total) * 100) : 0,
+      onChainRecords: aggregates.onChain,
+      highScoreCount: aggregates.highScore,
+      hasPerfectScore: aggregates.hasPerfect,
+      distinctTopicsCount: topics.count,
       currentStreak,
     };
   }),

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { ethers } from 'ethers';
-import { toast } from '../components/molecules/Toaster';
-import { trpc } from '../lib/trpc';
-import { useAuthStore } from '../store/authStore';
+import { toast } from '@/components/molecules/Toaster';
+import { trpc } from '@/lib/trpc';
+import { useAuthStore } from '@/store/authStore';
 
 declare global {
   interface Window {

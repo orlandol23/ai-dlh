@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import { TooltipProvider } from '@radix-ui/react-tooltip';
@@ -55,7 +56,7 @@ function App() {
 }
 
 // Protected route component
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuthStore();
 
   if (!isAuthenticated) {

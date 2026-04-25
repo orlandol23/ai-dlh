@@ -28,7 +28,6 @@ export interface Achievement {
  * Backend has no /achievements endpoint yet — this is the source of truth.
  */
 export function deriveAchievements(records: ProgressLike[]): Achievement[] {
-  const passed = records.filter((r) => r.score >= 70).length;
   const onChain = records.filter((r) => r.blockchainStatus === 'confirmed').length;
   const perfect = records.some((r) => r.score === 100);
   const high = records.filter((r) => r.score >= 90).length;

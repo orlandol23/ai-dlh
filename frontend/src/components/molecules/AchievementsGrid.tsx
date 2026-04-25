@@ -25,12 +25,15 @@ export const AchievementsGrid = ({ achievements, className }: AchievementsGridPr
             </div>
           }
         >
-          <div
+          <button
+            type="button"
+            aria-label={`${a.label}${a.unlocked ? ' (desbloqueada)' : ''}: ${a.description}`}
             className={cn(
-              'flex flex-col items-center gap-1 p-3 rounded-md border transition-colors cursor-help',
+              'flex flex-col items-center gap-1 p-3 rounded-md border transition-colors text-center w-full',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
               a.unlocked
-                ? 'border-primary/30 bg-primary/5 text-foreground'
-                : 'border-border bg-muted text-muted-foreground opacity-70'
+                ? 'border-primary/30 bg-primary/5 text-foreground hover:bg-primary/10'
+                : 'border-border bg-muted text-muted-foreground opacity-70 hover:opacity-90'
             )}
           >
             <span
@@ -42,7 +45,7 @@ export const AchievementsGrid = ({ achievements, className }: AchievementsGridPr
             >
               {a.emoji}
             </span>
-            <span className="text-[11px] font-semibold text-center leading-tight">
+            <span className="text-[11px] font-semibold leading-tight">
               {a.label}
             </span>
             {a.progress && !a.unlocked && (
@@ -50,7 +53,7 @@ export const AchievementsGrid = ({ achievements, className }: AchievementsGridPr
                 {a.progress.current}/{a.progress.target}
               </span>
             )}
-          </div>
+          </button>
         </Tooltip>
       ))}
     </div>

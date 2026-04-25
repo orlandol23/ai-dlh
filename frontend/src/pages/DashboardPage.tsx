@@ -64,13 +64,15 @@ export const DashboardPage = () => {
       setIsGenerating(false);
       setTopic('');
       refetchModules();
-      toast.success('🎉 Módulo gerado!', {
-        description: 'Abrindo o conteúdo…',
-      });
-      const newId = (data as { id?: number } | undefined)?.id;
-      if (typeof newId === 'number') {
-        navigate(`/module/${newId}`);
+      if (typeof data?.id === 'number') {
+        toast.success('🎉 Módulo gerado!', { description: 'Abrindo o conteúdo…' });
+        navigate(`/module/${data.id}`);
+        return;
       }
+      toast.error('Resposta inesperada ao gerar módulo', {
+        description:
+          'O módulo foi criado, mas não foi possível abri-lo automaticamente.',
+      });
     },
     onError: (error) => {
       setIsGenerating(false);
@@ -170,7 +172,9 @@ export const DashboardPage = () => {
               <p className="eyebrow">Histórico</p>
               <CardTitle className="font-display tracking-tight">Evolução de score</CardTitle>
               <CardDescription>
-                Últimos {sparklinePoints.length || 12} quizzes — linha tracejada marca o limiar de 70%
+                {sparklinePoints.length === 0
+                  ? 'Nenhum quiz concluído ainda — a linha tracejada marca o limiar de 70%'
+                  : `Últimos ${sparklinePoints.length} quizzes — linha tracejada marca o limiar de 70%`}
               </CardDescription>
             </CardHeader>
             <CardContent>

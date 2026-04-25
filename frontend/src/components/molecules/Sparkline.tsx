@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import type { SparklinePoint } from '@/lib/achievements';
 
@@ -12,6 +12,9 @@ const PAD_X = 6;
 const PAD_Y = 8;
 
 export const Sparkline = ({ points, height = 96, className }: SparklineProps) => {
+  const reactId = useId();
+  const strokeId = `spark-stroke-${reactId}`;
+  const fillId = `spark-fill-${reactId}`;
   const width = 480;
   const usableW = width - PAD_X * 2;
   const usableH = height - PAD_Y * 2;
@@ -58,11 +61,11 @@ export const Sparkline = ({ points, height = 96, className }: SparklineProps) =>
       aria-label="Histórico de scores"
     >
       <defs>
-        <linearGradient id="spark-stroke" x1="0" y1="0" x2="1" y2="0">
+        <linearGradient id={strokeId} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stopColor="hsl(var(--primary))" />
           <stop offset="100%" stopColor="hsl(var(--accent))" />
         </linearGradient>
-        <linearGradient id="spark-fill" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.25" />
           <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
         </linearGradient>
@@ -79,10 +82,10 @@ export const Sparkline = ({ points, height = 96, className }: SparklineProps) =>
         strokeWidth="1"
       />
 
-      <path d={area} fill="url(#spark-fill)" />
+      <path d={area} fill={`url(#${fillId})`} />
       <path
         d={path}
-        stroke="url(#spark-stroke)"
+        stroke={`url(#${strokeId})`}
         strokeWidth="2.5"
         fill="none"
         strokeLinecap="round"

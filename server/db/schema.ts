@@ -104,10 +104,11 @@ export type NewProgressRecord = typeof progressRecords.$inferInsert;
  * `references()` on a column declares a SQL foreign key but does NOT teach
  * the relational query API (`db.query.X.findMany({ with: { ... } })`) how
  * to traverse it — that requires explicit `relations()` definitions, one
- * per side of the join. Without them, the query builder fails at build
- * time with "Cannot read properties of undefined (reading
- * 'referencedTable')" inside drizzle-orm/relations.js, which is exactly
- * the runtime error progress.getUserProgress was hitting in production.
+ * per side of the join. Without them, the query builder fails at runtime
+ * when constructing the relational query with "Cannot read properties of
+ * undefined (reading 'referencedTable')" inside drizzle-orm/relations.js,
+ * which is exactly the error progress.getUserProgress was hitting in
+ * production.
  */
 export const usersRelations = relations(users, ({ many }) => ({
   modules: many(modules),

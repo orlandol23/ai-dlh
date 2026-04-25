@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { cn, getEtherscanUrl } from '@/lib/utils';
 import type { ProgressLike } from '@/lib/achievements';
 
@@ -39,6 +39,7 @@ export const OnChainTimeline = ({
   className,
   emptyHint = 'Nenhum módulo ainda — gere seu primeiro com IA ←',
 }: OnChainTimelineProps) => {
+  const navigate = useNavigate();
   const sorted = [...records].sort(
     (a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
   );
@@ -81,9 +82,10 @@ export const OnChainTimeline = ({
             >
               {isOnChain ? '⛓' : passed ? '✓' : '·'}
             </span>
-            <Link
-              to={`/module/${r.moduleId}`}
-              className="flex items-start justify-between gap-3 rounded-md border border-border bg-card p-3 hover:border-primary/40 hover:bg-muted/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            <button
+              type="button"
+              onClick={() => navigate(`/module/${r.moduleId}`)}
+              className="w-full flex items-start justify-between gap-3 rounded-md border border-border bg-card p-3 text-left hover:border-primary/40 hover:bg-muted/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               aria-label={`Abrir ${r.module?.title ?? `módulo ${r.moduleId}`} (score ${r.score}%)`}
             >
               <div className="min-w-0 flex-1">
@@ -124,7 +126,7 @@ export const OnChainTimeline = ({
                   {shortHash(r.transactionHash!)} ↗
                 </a>
               )}
-            </Link>
+            </button>
           </li>
         );
       })}

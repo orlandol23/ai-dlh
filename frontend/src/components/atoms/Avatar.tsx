@@ -27,10 +27,15 @@ export const Avatar = ({ seed, size = 40, className, label }: AvatarProps) => {
     return `conic-gradient(from ${h % 360}deg, hsl(${a} 80% 60%), hsl(${b} 80% 55%), hsl(${c} 80% 60%), hsl(${a} 80% 60%))`;
   }, [seed]);
 
+  // When no explicit label is provided, the avatar is decorative — the wallet
+  // address is rendered next to it, so announcing "Avatar for 0x…" is redundant.
+  const isDecorative = !label;
+
   return (
     <span
-      role="img"
-      aria-label={label ?? `Avatar for ${seed}`}
+      role={isDecorative ? 'presentation' : 'img'}
+      aria-hidden={isDecorative ? true : undefined}
+      aria-label={label}
       className={cn(
         'inline-block rounded-full border border-border shadow-sm',
         className

@@ -1,13 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { RouterOutputs } from '@/lib/trpc';
 
-interface User {
-  id: number;
-  walletAddress: string;
-  name?: string | null;
-  email?: string | null;
-  avatar?: string | null;
-}
+/**
+ * The authenticated user. Derived from the tRPC `auth.login` mutation
+ * output instead of redeclared, so any change in the backend's `User`
+ * shape (added/renamed fields, type tightening) shows up here as a
+ * compile error rather than silently drifting.
+ */
+export type User = RouterOutputs['auth']['login']['user'];
 
 interface AuthState {
   user: User | null;

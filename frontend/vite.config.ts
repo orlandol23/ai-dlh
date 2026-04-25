@@ -22,5 +22,12 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    // Surface bundle-bloat regressions early. The current main JS bundle
+    // sits ~880 KB pre-gzip (~290 KB gzipped) — heavy contributors are
+    // ethers, framer-motion, and react-markdown. The 1100 KB ceiling
+    // gives ~25 % headroom before failing the build, so a stray new
+    // dependency or accidentally-imported module shows up as a CI
+    // signal instead of silently drifting bigger.
+    chunkSizeWarningLimit: 1100,
   },
 })

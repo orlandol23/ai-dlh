@@ -143,8 +143,8 @@ export const ModulePage = () => {
           {!showQuiz && !showResults && (
             <>
               <div className="mb-8">
-                <h1 className="text-4xl font-bold mb-4">{module.title}</h1>
-                <p className="text-gray-600">Tópico: {module.topic}</p>
+                <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight mb-4">{module.title}</h1>
+                <p className="text-muted-foreground">Tópico: {module.topic}</p>
               </div>
 
               <Card className="mb-8">
@@ -275,13 +275,13 @@ export const ModulePage = () => {
                 <CardContent className="pt-8 pb-8">
                   <div className="mb-6">
                     <div
-                      className={`text-6xl font-bold mb-2 ${
-                        quizResult.passed ? 'text-green-600' : 'text-red-600'
+                      className={`font-display text-7xl font-bold tracking-tighter tabular-nums mb-2 ${
+                        quizResult.passed ? 'text-success' : 'text-error'
                       }`}
                     >
                       {quizResult.score}%
                     </div>
-                    <p className="text-xl text-gray-600">
+                    <p className="text-xl text-muted-foreground">
                       {quizResult.correct} de {quizResult.total} corretas
                     </p>
                   </div>

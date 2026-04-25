@@ -63,8 +63,8 @@ export const DashboardPage = () => {
             <div className="flex items-center space-x-4">
               <img src="/logo.svg" alt="AI-DLH" className="w-10 h-10" />
               <div>
-                <h1 className="text-xl font-bold">Dashboard</h1>
-                <p className="text-sm text-gray-600">{formatAddress(user?.walletAddress || '')}</p>
+                <h1 className="font-display text-xl font-bold tracking-tight">Dashboard</h1>
+                <p className="font-mono text-sm text-muted-foreground">{formatAddress(user?.walletAddress || '')}</p>
               </div>
             </div>
             <Button variant="outline" onClick={logout}>
@@ -80,8 +80,8 @@ export const DashboardPage = () => {
           <Card>
             <CardContent className="pt-6">
               <div className="text-center">
-                <p className="text-3xl font-bold text-primary">{stats?.totalModules || 0}</p>
-                <p className="text-sm text-gray-600 mt-1">Total Módulos</p>
+                <p className="font-display text-5xl font-bold text-primary tabular-nums leading-none">{stats?.totalModules || 0}</p>
+                <p className="text-sm text-muted-foreground mt-2">Total Módulos</p>
               </div>
             </CardContent>
           </Card>
@@ -89,8 +89,8 @@ export const DashboardPage = () => {
           <Card>
             <CardContent className="pt-6">
               <div className="text-center">
-                <p className="text-3xl font-bold text-green-600">{stats?.passedModules || 0}</p>
-                <p className="text-sm text-gray-600 mt-1">Aprovados</p>
+                <p className="font-display text-5xl font-bold text-success tabular-nums leading-none">{stats?.passedModules || 0}</p>
+                <p className="text-sm text-muted-foreground mt-2">Aprovados</p>
               </div>
             </CardContent>
           </Card>
@@ -98,8 +98,8 @@ export const DashboardPage = () => {
           <Card>
             <CardContent className="pt-6">
               <div className="text-center">
-                <p className="text-3xl font-bold text-blue-600">{stats?.avgScore || 0}%</p>
-                <p className="text-sm text-gray-600 mt-1">Score Médio</p>
+                <p className="font-display text-5xl font-bold text-info tabular-nums leading-none">{stats?.avgScore || 0}%</p>
+                <p className="text-sm text-muted-foreground mt-2">Score Médio</p>
               </div>
             </CardContent>
           </Card>
@@ -107,8 +107,8 @@ export const DashboardPage = () => {
           <Card>
             <CardContent className="pt-6">
               <div className="text-center">
-                <p className="text-3xl font-bold text-purple-600">{stats?.onChainRecords || 0}</p>
-                <p className="text-sm text-gray-600 mt-1">Na Blockchain</p>
+                <p className="font-display text-5xl font-bold text-onchain tabular-nums leading-none">{stats?.onChainRecords || 0}</p>
+                <p className="text-sm text-muted-foreground mt-2">Na Blockchain</p>
               </div>
             </CardContent>
           </Card>

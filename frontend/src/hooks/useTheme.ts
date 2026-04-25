@@ -1,27 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useThemeStore, type Theme } from '@/store/themeStore';
 
-export type Theme = 'light' | 'dark';
+export type { Theme };
 
-const STORAGE_KEY = 'aidlh_theme';
-
-function getInitialTheme(): Theme {
-  if (typeof window === 'undefined') return 'light';
-  const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
-  if (stored === 'light' || stored === 'dark') return stored;
-  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}
-
+/**
+ * Compatibility wrapper around the shared theme store.
+ * All consumers (ThemeToggle, Toaster, etc.) read from the same source,
+ * so toggling the theme re-renders every observer.
+ */
 export function useTheme() {
-  const [theme, setTheme] = useState<Theme>(getInitialTheme);
-
-  useEffect(() => {
-    const root = document.documentElement;
-    root.classList.toggle('dark', theme === 'dark');
-    root.dataset.theme = theme;
-    localStorage.setItem(STORAGE_KEY, theme);
-  }, [theme]);
-
-  const toggle = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
-
+  const theme = useThemeStore((s) => s.theme);
+  const setTheme = useThemeStore((s) => s.setTheme);
+  const toggle = useThemeStore((s) => s.toggle);
   return { theme, setTheme, toggle };
 }

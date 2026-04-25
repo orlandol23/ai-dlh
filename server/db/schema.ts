@@ -1,4 +1,4 @@
-import { pgTable, serial, varchar, text, integer, timestamp, json, index } from 'drizzle-orm/pg-core';
+import { pgTable, serial, varchar, text, integer, timestamp, json, index, uniqueIndex } from 'drizzle-orm/pg-core';
 
 /**
  * Users table - stores wallet addresses and user information
@@ -68,9 +68,28 @@ export const progressRecords = pgTable('progress_records', {
   };
 });
 
+/**
+ * Auth nonces - prevents replay of Web3 signature messages.
+ * Each nonce can only be consumed once within its validity window.
+ */
+export const authNonces = pgTable('auth_nonces', {
+  id: serial('id').primaryKey(),
+  nonce: varchar('nonce', { length: 128 }).notNull(),
+  walletAddress: varchar('wallet_address', { length: 42 }).notNull(),
+  usedAt: timestamp('used_at').defaultNow().notNull(),
+}, (table) => {
+  return {
+    nonceWalletUnique: uniqueIndex('auth_nonces_nonce_wallet_idx').on(table.nonce, table.walletAddress),
+    usedAtIdx: index('auth_nonces_used_at_idx').on(table.usedAt),
+  };
+});
+
 // Type exports
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+
+export type AuthNonce = typeof authNonces.$inferSelect;
+export type NewAuthNonce = typeof authNonces.$inferInsert;
 
 export type Module = typeof modules.$inferSelect;
 export type NewModule = typeof modules.$inferInsert;

@@ -3,6 +3,7 @@ import { Button } from '@/components/atoms/Button';
 import { Input } from '@/components/atoms/Input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/atoms/Card';
 import { Badge } from '@/components/atoms/Badge';
+import { ThemeToggle } from '@/components/atoms/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
 import { trpc } from '@/lib/trpc';
 import { formatAddress } from '@/lib/utils';
@@ -55,9 +56,9 @@ export const DashboardPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-white border-b">
+      <header className="bg-card border-b border-border">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -67,9 +68,12 @@ export const DashboardPage = () => {
                 <p className="font-mono text-sm text-muted-foreground">{formatAddress(user?.walletAddress || '')}</p>
               </div>
             </div>
-            <Button variant="outline" onClick={logout}>
-              Desconectar
-            </Button>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Button variant="outline" onClick={logout}>
+                Desconectar
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -201,14 +205,14 @@ export const DashboardPage = () => {
                     {modules.map((module) => (
                       <div
                         key={module.id}
-                        className="border rounded-lg p-4 hover:bg-gray-50 transition"
+                        className="border border-border rounded-lg p-4 hover:bg-muted transition-colors"
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <h3 className="font-semibold text-lg mb-1">
                               {module.title}
                             </h3>
-                            <p className="text-sm text-gray-600 mb-2">
+                            <p className="text-sm text-muted-foreground mb-2">
                               {module.topic}
                             </p>
                             <div className="flex items-center gap-2">
@@ -223,7 +227,7 @@ export const DashboardPage = () => {
                               >
                                 {module.level}
                               </Badge>
-                              <span className="text-sm text-gray-500">
+                              <span className="text-sm text-muted-foreground">
                                 {module.estimatedTime} min
                               </span>
                             </div>

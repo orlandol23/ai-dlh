@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/atoms/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/atoms/Card';
 import { Badge } from '@/components/atoms/Badge';
+import { ThemeToggle } from '@/components/atoms/ThemeToggle';
 import { trpc } from '@/lib/trpc';
 import { getEtherscanUrl } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
@@ -45,7 +46,7 @@ export const ModulePage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="spinner"></div>
       </div>
     );
@@ -53,7 +54,7 @@ export const ModulePage = () => {
 
   if (!module) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Módulo não encontrado</h1>
           <Button onClick={() => navigate('/dashboard')}>
@@ -109,9 +110,9 @@ export const ModulePage = () => {
   const currentQ = quizData[currentQuestion];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-white border-b">
+      <header className="bg-card border-b border-border">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Button variant="outline" onClick={() => navigate('/dashboard')}>
@@ -129,9 +130,10 @@ export const ModulePage = () => {
               >
                 {module.level}
               </Badge>
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-muted-foreground">
                 {module.estimatedTime} min
               </span>
+              <ThemeToggle />
             </div>
           </div>
         </div>

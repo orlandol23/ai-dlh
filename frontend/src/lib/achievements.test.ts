@@ -1,76 +1,90 @@
 import { describe, expect, it } from 'vitest';
-import { buildSparklinePoints, deriveAchievements, type ProgressLike } from './achievements';
+import {
+  buildSparklinePoints,
+  deriveAchievements,
+  type AchievementsStats,
+  type ProgressLike,
+} from './achievements';
 
-const record = (overrides: Partial<ProgressLike> & { score: number; daysAgo: number }): ProgressLike => ({
+const makeStats = (overrides: Partial<AchievementsStats> = {}): AchievementsStats => ({
+  totalModules: 0,
+  passedModules: 0,
+  onChainRecords: 0,
+  highScoreCount: 0,
+  hasPerfectScore: false,
+  distinctTopicsCount: 0,
+  currentStreak: 0,
+  ...overrides,
+});
+
+const record = (overrides: { score: number; daysAgo: number }): ProgressLike => ({
   score: overrides.score,
-  blockchainStatus: overrides.blockchainStatus ?? 'none',
-  transactionHash: overrides.transactionHash ?? null,
-  module: overrides.module ?? { topic: 'TypeScript' },
+  blockchainStatus: 'none',
+  transactionHash: null,
+  module: { topic: 'TypeScript' },
   completedAt: new Date(Date.now() - overrides.daysAgo * 86_400_000).toISOString(),
 });
 
 describe('deriveAchievements', () => {
-  it('locks every achievement when there is no progress yet', () => {
-    const out = deriveAchievements([]);
+  it('locks every achievement on the empty/zero stats', () => {
+    const out = deriveAchievements(makeStats());
 
     expect(out).toHaveLength(6);
     expect(out.every((a) => !a.unlocked)).toBe(true);
   });
 
-  it('unlocks first-step the moment any record exists', () => {
-    const out = deriveAchievements([record({ score: 50, daysAgo: 0 })]);
+  it('unlocks first-step at totalModules >= 1', () => {
+    const out = deriveAchievements(makeStats({ totalModules: 1 }));
 
     expect(out.find((a) => a.id === 'first-step')?.unlocked).toBe(true);
   });
 
-  it('unlocks on-chain only when at least one record is confirmed', () => {
-    const passedButNotOnChain = record({ score: 90, daysAgo: 0 });
-    const passedAndOnChain = record({
-      score: 90,
-      daysAgo: 0,
-      blockchainStatus: 'confirmed',
-      transactionHash: '0xabc',
-    });
+  it('unlocks on-chain only when onChainRecords >= 1', () => {
+    const noOnChain = deriveAchievements(makeStats({ totalModules: 1 }));
+    const oneOnChain = deriveAchievements(
+      makeStats({ totalModules: 1, onChainRecords: 1 })
+    );
 
-    expect(deriveAchievements([passedButNotOnChain]).find((a) => a.id === 'on-chain')?.unlocked).toBe(false);
-    expect(deriveAchievements([passedAndOnChain]).find((a) => a.id === 'on-chain')?.unlocked).toBe(true);
+    expect(noOnChain.find((a) => a.id === 'on-chain')?.unlocked).toBe(false);
+    expect(oneOnChain.find((a) => a.id === 'on-chain')?.unlocked).toBe(true);
   });
 
-  it('only unlocks perfectionist on a 100% score', () => {
-    const ninetyNine = deriveAchievements([record({ score: 99, daysAgo: 0 })]);
-    const hundred = deriveAchievements([record({ score: 100, daysAgo: 0 })]);
+  it('only unlocks perfectionist when hasPerfectScore is true', () => {
+    const noPerfect = deriveAchievements(makeStats({ highScoreCount: 4 }));
+    const perfect = deriveAchievements(makeStats({ hasPerfectScore: true }));
 
-    expect(ninetyNine.find((a) => a.id === 'perfectionist')?.unlocked).toBe(false);
-    expect(hundred.find((a) => a.id === 'perfectionist')?.unlocked).toBe(true);
+    expect(noPerfect.find((a) => a.id === 'perfectionist')?.unlocked).toBe(false);
+    expect(perfect.find((a) => a.id === 'perfectionist')?.unlocked).toBe(true);
   });
 
-  it('streak counts only consecutive passes from the most recent record', () => {
-    // Most recent first: pass, pass, fail, pass — fail breaks the chain.
-    const records: ProgressLike[] = [
-      record({ score: 80, daysAgo: 0 }),
-      record({ score: 90, daysAgo: 1 }),
-      record({ score: 50, daysAgo: 2 }), // <— breaks streak
-      record({ score: 100, daysAgo: 3 }),
-    ];
+  it('high-flyer needs 5 high scores; below that it stays locked with progress', () => {
+    const four = deriveAchievements(makeStats({ highScoreCount: 4 }));
+    const five = deriveAchievements(makeStats({ highScoreCount: 5 }));
 
-    const streak = deriveAchievements(records).find((a) => a.id === 'streak');
+    const fourHF = four.find((a) => a.id === 'high-flyer');
+    const fiveHF = five.find((a) => a.id === 'high-flyer');
 
-    expect(streak?.progress?.current).toBe(2);
-    expect(streak?.unlocked).toBe(false); // target is 3
+    expect(fourHF?.unlocked).toBe(false);
+    expect(fourHF?.progress).toEqual({ current: 4, target: 5 });
+    expect(fiveHF?.unlocked).toBe(true);
   });
 
-  it('counts polymath topics by distinct module.topic, ignoring missing values', () => {
-    const records: ProgressLike[] = [
-      record({ score: 80, daysAgo: 0, module: { topic: 'TypeScript' } }),
-      record({ score: 80, daysAgo: 1, module: { topic: 'React' } }),
-      record({ score: 80, daysAgo: 2, module: { topic: 'TypeScript' } }), // duplicate
-      record({ score: 80, daysAgo: 3, module: null }), // ignored
-    ];
+  it('polymath needs 3 distinct topics', () => {
+    const two = deriveAchievements(makeStats({ distinctTopicsCount: 2 }));
+    const three = deriveAchievements(makeStats({ distinctTopicsCount: 3 }));
 
-    const polymath = deriveAchievements(records).find((a) => a.id === 'polymath');
+    expect(two.find((a) => a.id === 'polymath')?.unlocked).toBe(false);
+    expect(three.find((a) => a.id === 'polymath')?.unlocked).toBe(true);
+  });
 
-    expect(polymath?.progress?.current).toBe(2);
-    expect(polymath?.unlocked).toBe(false);
+  it('streak unlocks at currentStreak >= 3 and caps progress display at 3', () => {
+    const two = deriveAchievements(makeStats({ currentStreak: 2 }));
+    const three = deriveAchievements(makeStats({ currentStreak: 3 }));
+    const ten = deriveAchievements(makeStats({ currentStreak: 10 }));
+
+    expect(two.find((a) => a.id === 'streak')?.unlocked).toBe(false);
+    expect(three.find((a) => a.id === 'streak')?.unlocked).toBe(true);
+    expect(ten.find((a) => a.id === 'streak')?.progress).toEqual({ current: 3, target: 3 });
   });
 });
 
@@ -87,13 +101,12 @@ describe('buildSparklinePoints', () => {
     const points = buildSparklinePoints(records, 12);
 
     expect(points).toHaveLength(12);
-    // Oldest first: completedAt ascending.
     for (let i = 1; i < points.length; i++) {
       expect(points[i].completedAt.getTime()).toBeGreaterThanOrEqual(
         points[i - 1].completedAt.getTime()
       );
     }
-    // The last 12 of a 20-record stream are scores 40..95 (i = 8..19).
+    // Last 12 of a 20-record stream are scores 40..95 (i = 8..19).
     expect(points[0].score).toBe(40);
     expect(points[points.length - 1].score).toBe(95);
   });

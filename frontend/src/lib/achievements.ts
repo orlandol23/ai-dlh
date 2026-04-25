@@ -24,73 +24,74 @@ export interface Achievement {
 }
 
 /**
- * Derives the achievement set client-side from progress records.
- * Backend has no /achievements endpoint yet — this is the source of truth.
+ * All-time aggregates the achievement panel needs. Server computes these
+ * once over the full progress_records table (see progress.getStatistics)
+ * because getUserProgress is capped at 50 records — counting client-side
+ * over a truncated view would lock achievements for power users.
  */
-export function deriveAchievements(records: ProgressLike[]): Achievement[] {
-  const onChain = records.filter((r) => r.blockchainStatus === 'confirmed').length;
-  const perfect = records.some((r) => r.score === 100);
-  const high = records.filter((r) => r.score >= 90).length;
-  const topics = new Set(
-    records.map((r) => r.module?.topic).filter((t): t is string => !!t)
-  );
+export interface AchievementsStats {
+  totalModules: number;
+  passedModules: number;
+  onChainRecords: number;
+  highScoreCount: number;
+  hasPerfectScore: boolean;
+  distinctTopicsCount: number;
+  currentStreak: number;
+}
 
-  const sortedDesc = [...records].sort(
-    (a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
-  );
-  let streak = 0;
-  for (const r of sortedDesc) {
-    if (r.score >= 70) streak += 1;
-    else break;
-  }
-
+/**
+ * Derives the achievement set from server-aggregated stats. Pure
+ * function over numbers — no record traversal here, so the result is
+ * correct regardless of how many records exist on the backend.
+ */
+export function deriveAchievements(stats: AchievementsStats): Achievement[] {
   return [
     {
       id: 'first-step',
       label: 'Primeiro Passo',
       emoji: '🎯',
       description: 'Complete seu primeiro módulo',
-      unlocked: records.length >= 1,
-      progress: { current: Math.min(records.length, 1), target: 1 },
+      unlocked: stats.totalModules >= 1,
+      progress: { current: Math.min(stats.totalModules, 1), target: 1 },
     },
     {
       id: 'on-chain',
       label: 'Certificado On-chain',
       emoji: '⛓️',
       description: '1 certificado registrado na blockchain',
-      unlocked: onChain >= 1,
-      progress: { current: Math.min(onChain, 1), target: 1 },
+      unlocked: stats.onChainRecords >= 1,
+      progress: { current: Math.min(stats.onChainRecords, 1), target: 1 },
     },
     {
       id: 'perfectionist',
       label: 'Perfeccionista',
       emoji: '🏆',
       description: 'Score de 100% em algum quiz',
-      unlocked: perfect,
+      unlocked: stats.hasPerfectScore,
     },
     {
       id: 'high-flyer',
       label: 'Voo Alto',
       emoji: '🔥',
       description: '5 quizzes com score ≥90%',
-      unlocked: high >= 5,
-      progress: { current: Math.min(high, 5), target: 5 },
+      unlocked: stats.highScoreCount >= 5,
+      progress: { current: Math.min(stats.highScoreCount, 5), target: 5 },
     },
     {
       id: 'polymath',
       label: 'Polímata',
       emoji: '📊',
       description: 'Estude 3 tópicos diferentes',
-      unlocked: topics.size >= 3,
-      progress: { current: Math.min(topics.size, 3), target: 3 },
+      unlocked: stats.distinctTopicsCount >= 3,
+      progress: { current: Math.min(stats.distinctTopicsCount, 3), target: 3 },
     },
     {
       id: 'streak',
       label: 'Sequência',
       emoji: '🎉',
       description: '3 aprovações consecutivas',
-      unlocked: streak >= 3,
-      progress: { current: Math.min(streak, 3), target: 3 },
+      unlocked: stats.currentStreak >= 3,
+      progress: { current: Math.min(stats.currentStreak, 3), target: 3 },
     },
   ];
 }

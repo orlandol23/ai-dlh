@@ -52,8 +52,19 @@ export const DashboardPage = () => {
     [progress]
   );
   const achievements = useMemo(
-    () => deriveAchievements(progress ?? []),
-    [progress]
+    () =>
+      deriveAchievements(
+        stats ?? {
+          totalModules: 0,
+          passedModules: 0,
+          onChainRecords: 0,
+          highScoreCount: 0,
+          hasPerfectScore: false,
+          distinctTopicsCount: 0,
+          currentStreak: 0,
+        }
+      ),
+    [stats]
   );
   const pendingModules = useMemo(() => {
     // Wait for both queries to resolve. Otherwise progress=undefined makes

@@ -142,11 +142,20 @@ export const progressRouter = router({
   }),
 
   /**
-   * Get statistics for current user
+   * Get statistics for current user.
+   *
+   * Returns all-time aggregates (no `limit` here) so the Dashboard's
+   * achievement panel sees an accurate picture even when a power-user
+   * has thousands of records — getUserProgress is capped at 50 for
+   * payload size, but achievements need to count over the full history.
+   * Aggregating once on the server is also cheaper than shipping every
+   * row to the client just so it can `.filter().length`.
    */
   getStatistics: protectedProcedure.query(async ({ ctx }) => {
     const records = await db.query.progressRecords.findMany({
       where: eq(progressRecords.userId, ctx.user.id),
+      orderBy: [desc(progressRecords.completedAt)],
+      with: { module: true },
     });
 
     const total = records.length;
@@ -160,12 +169,35 @@ export const progressRouter = router({
       (r) => r.blockchainStatus === 'confirmed'
     ).length;
 
+    // Aggregates the achievements panel needs — see deriveAchievements
+    // on the frontend. Counted server-side because the client view is
+    // capped at the most recent 50 records.
+    const highScoreCount = records.filter((r) => r.score >= 90).length;
+    const hasPerfectScore = records.some((r) => r.score === 100);
+    const distinctTopics = new Set(
+      records
+        .map((r) => r.module?.topic)
+        .filter((t): t is string => typeof t === 'string' && t.length > 0)
+    );
+
+    // Records are already sorted desc by completedAt, so we can just
+    // walk forward and stop on the first failure.
+    let currentStreak = 0;
+    for (const r of records) {
+      if (r.score >= 70) currentStreak += 1;
+      else break;
+    }
+
     return {
       totalModules: total,
       passedModules: passed,
       avgScore,
       completionRate: total > 0 ? Math.round((passed / total) * 100) : 0,
       onChainRecords: onChain,
+      highScoreCount,
+      hasPerfectScore,
+      distinctTopicsCount: distinctTopics.size,
+      currentStreak,
     };
   }),
 

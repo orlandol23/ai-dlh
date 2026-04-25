@@ -177,8 +177,8 @@ export const DashboardPage = () => {
                   </Button>
 
                   {isGenerating && (
-                    <p className="text-sm text-gray-600 text-center animate-pulse">
-                      ⏳ A IA está criando seu módulo personalizado...
+                    <p className="text-sm text-muted-foreground text-center animate-pulse">
+                      ⏳ A IA está criando…
                     </p>
                   )}
                 </form>
@@ -240,10 +240,10 @@ export const DashboardPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-12 text-gray-500">
+                  <div className="text-center py-12 text-muted-foreground">
                     <p className="text-lg mb-2">Nenhum módulo ainda</p>
                     <p className="text-sm">
-                      Gere seu primeiro módulo com IA! ←
+                      Gere seu primeiro módulo com IA ←
                     </p>
                   </div>
                 )}

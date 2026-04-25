@@ -156,14 +156,14 @@ export const ModulePage = () => {
               </Card>
 
               {progress && (
-                <Card className="mb-4 bg-blue-50 border-blue-200">
+                <Card className="mb-4 bg-info-bg border-info-border">
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-semibold">
+                        <p className="font-semibold text-info-fg">
                           Você já completou este módulo
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-info-fg/80">
                           Score: {progress.score}% -{' '}
                           {progress.score >= 70 ? 'Aprovado ✅' : 'Reprovado ❌'}
                         </p>
@@ -173,7 +173,7 @@ export const ModulePage = () => {
                           href={getEtherscanUrl(progress.transactionHash)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline text-sm"
+                          className="text-primary hover:underline text-sm font-mono"
                         >
                           Ver na Blockchain →
                         </a>
@@ -196,13 +196,13 @@ export const ModulePage = () => {
             <Card>
               <CardHeader>
                 <div className="mb-4">
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-muted rounded-full h-2">
                     <div
-                      className="bg-blue-600 h-2 rounded-full transition-all"
+                      className="bg-primary h-2 rounded-full transition-all"
                       style={{ width: `${progressPercentage}%` }}
                     />
                   </div>
-                  <p className="text-sm text-gray-600 mt-2">
+                  <p className="text-sm text-muted-foreground mt-2">
                     Questão {currentQuestion + 1} de {quizData.length}
                   </p>
                 </div>
@@ -216,8 +216,8 @@ export const ModulePage = () => {
                       onClick={() => handleSelectAnswer(index)}
                       className={`w-full text-left px-4 py-3 border rounded-lg transition ${
                         selectedAnswers[currentQuestion] === index
-                          ? 'bg-blue-100 border-blue-500 ring-2 ring-blue-200'
-                          : 'hover:bg-gray-50 border-gray-300'
+                          ? 'bg-primary/10 border-primary ring-2 ring-primary/20'
+                          : 'hover:bg-muted border-border'
                       }`}
                     >
                       <span className="font-medium mr-2">
@@ -287,31 +287,31 @@ export const ModulePage = () => {
                   </div>
 
                   {quizResult.passed ? (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                      <p className="text-xl font-semibold text-green-800 mb-2">
+                    <div className="bg-success-bg border border-success-border rounded-lg p-6">
+                      <p className="text-xl font-semibold text-success-fg mb-2">
                         🎉 Parabéns! Você foi aprovado!
                       </p>
-                      <p className="text-green-700">
+                      <p className="text-success-fg/80">
                         Você atingiu a pontuação mínima de 70%
                       </p>
                     </div>
                   ) : (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-                      <p className="text-xl font-semibold text-red-800 mb-2">
+                    <div className="bg-error-bg border border-error-border rounded-lg p-6">
+                      <p className="text-xl font-semibold text-error-fg mb-2">
                         Não foi desta vez
                       </p>
-                      <p className="text-red-700">
+                      <p className="text-error-fg/80">
                         Você precisa de 70% para ser aprovado. Tente novamente!
                       </p>
                     </div>
                   )}
 
                   {quizResult.transactionHash && (
-                    <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-6 hash-grid">
-                      <p className="font-semibold text-blue-800 mb-2">
+                    <div className="mt-6 bg-onchain-bg border border-onchain-border rounded-lg p-6 hash-grid">
+                      <p className="font-semibold text-onchain-fg mb-2">
                         ⛓️ Registrado na Blockchain!
                       </p>
-                      <p className="text-sm text-blue-700 mb-3">
+                      <p className="text-sm text-onchain-fg/80 mb-3">
                         Seu certificado foi registrado permanentemente na blockchain
                         Ethereum
                       </p>
@@ -319,7 +319,7 @@ export const ModulePage = () => {
                         href={getEtherscanUrl(quizResult.transactionHash)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+                        className="inline-block bg-primary text-primary-foreground font-mono text-sm px-4 py-2 rounded-md hover:opacity-90 transition"
                       >
                         Ver no Etherscan →
                       </a>
@@ -327,11 +327,11 @@ export const ModulePage = () => {
                   )}
 
                   {quizResult.blockchainError && (
-                    <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-                      <p className="font-semibold text-yellow-800 mb-2">
+                    <div className="mt-6 bg-warning-bg border border-warning-border rounded-lg p-6">
+                      <p className="font-semibold text-warning-fg mb-2">
                         ⚠️ Registro blockchain pendente
                       </p>
-                      <p className="text-sm text-yellow-700">
+                      <p className="text-sm text-warning-fg/80">
                         Seu progresso foi salvo, mas houve um problema ao registrar na
                         blockchain: {quizResult.blockchainError}
                       </p>

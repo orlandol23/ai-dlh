@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Iconography (v2)</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;padding:0;font-family:var(--font-sans);background:#fff;}
+  .wrap{padding:18px 24px;display:grid;gap:14px;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .tile{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;border:1px solid;}
+  .violet{background:#ede9fe;border-color:#c4b5fd;}
+  .cyan{background:#cffafe;border-color:#67e8f9;}
+  .amber{background:#fffbeb;border-color:#fde68a;}
+  .glyph{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;font-size:15px;color:#3a3632;border:1px solid #e2ddd6;border-radius:8px;}
+  .meta{font-family:var(--font-mono);font-size:11px;color:var(--muted-foreground);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="row">
+    <div class="tile violet">🤖</div>
+    <div class="tile cyan">⛓️</div>
+    <div class="tile amber">📊</div>
+    <span class="meta">Feature tiles — emoji em quadrado tintado (violet·cyan·amber).</span>
+  </div>
+  <div class="row">
+    <span class="glyph">←</span><span class="glyph">→</span><span class="glyph">✅</span><span class="glyph">❌</span><span class="glyph">🎉</span><span class="glyph">⏳</span><span class="glyph">⚠️</span><span class="glyph">🔥</span><span class="glyph">🏆</span>
+    <span class="meta">State &amp; chevron glyphs — unicode + emoji.</span>
+  </div>
+</div>
+</body></html>

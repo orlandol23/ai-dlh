@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Spacing scale (v2)</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;padding:0;font-family:var(--font-sans);background:#fff;}
+  .wrap{padding:18px 24px;display:grid;gap:8px;}
+  .row{display:grid;grid-template-columns:60px 1fr 120px;align-items:center;gap:12px;}
+  .bar{height:16px;background:#7c3aed;border-radius:3px;}
+  .key{font-family:var(--font-mono);font-size:12px;font-weight:600;}
+  .val{font-family:var(--font-mono);font-size:11px;color:var(--muted-foreground);text-align:right;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="row"><span class="key">1</span><div class="bar" style="width:4px"></div><span class="val">4px</span></div>
+  <div class="row"><span class="key">2</span><div class="bar" style="width:8px"></div><span class="val">8px</span></div>
+  <div class="row"><span class="key">3</span><div class="bar" style="width:12px"></div><span class="val">12px</span></div>
+  <div class="row"><span class="key">4</span><div class="bar" style="width:16px"></div><span class="val">16px · px-4</span></div>
+  <div class="row"><span class="key">6</span><div class="bar" style="width:24px"></div><span class="val">24px · card p-6</span></div>
+  <div class="row"><span class="key">8</span><div class="bar" style="width:32px"></div><span class="val">32px</span></div>
+  <div class="row"><span class="key">16</span><div class="bar" style="width:64px"></div><span class="val">64px · section</span></div>
+  <div class="row"><span class="key">24</span><div class="bar" style="width:96px"></div><span class="val">96px · hero</span></div>
+</div>
+</body></html>

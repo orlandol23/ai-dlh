@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>State messages (v2)</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;padding:0;font-family:var(--font-sans);background:#fff;}
+  .wrap{padding:18px 24px;display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .msg{border-radius:10px;padding:14px 16px;border:1px solid;border-left-width:3px;}
+  .t{font-weight:600;font-size:14px;margin:0 0 4px;}
+  .d{font-size:13px;margin:0;}
+  .success{background:#f0fdf4;border-color:#bbf7d0;border-left-color:#16a34a;} .success .t,.success .d{color:#14532d;}
+  .error{background:#fef2f2;border-color:#fecaca;border-left-color:#dc2626;} .error .t,.error .d{color:#7f1d1d;}
+  .onchain{background:#f5f3ff;border-color:#ddd6fe;border-left-color:#7c3aed;} .onchain .t,.onchain .d{color:#4c1d95;}
+  .warn{background:#fffbeb;border-color:#fde68a;border-left-color:#d97706;} .warn .t,.warn .d{color:#78350f;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="msg success"><p class="t">🎉 Parabéns! Você foi aprovado!</p><p class="d">Você atingiu a pontuação mínima de 70%</p></div>
+  <div class="msg error"><p class="t">Não foi desta vez</p><p class="d">Você precisa de 70% para ser aprovado. Tente novamente!</p></div>
+  <div class="msg onchain"><p class="t">⛓️ Registrado na Blockchain!</p><p class="d">Seu certificado foi registrado permanentemente.</p></div>
+  <div class="msg warn"><p class="t">⚠️ Registro pendente</p><p class="d">Seu progresso foi salvo, mas houve um problema on-chain.</p></div>
+</div>
+</body></html>

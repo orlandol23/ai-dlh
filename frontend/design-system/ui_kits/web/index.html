@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>AI-DLH — UI Kit demo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  body { font-family: var(--font-sans); }
+  .prose p { margin: 0 0 1em; }
+</style>
+</head>
+<body class="bg-white text-slate-900">
+<div id="root"></div>
+
+<script type="text/babel" src="./atoms.jsx"></script>
+<script type="text/babel" src="./screens.jsx"></script>
+<script type="text/babel" src="./quiz.jsx"></script>
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const SAMPLE_MODULES = [
+  { id: 1, title: 'Introdução ao TypeScript', topic: 'TypeScript', level: 'beginner',     estimatedTime: 30 },
+  { id: 2, title: 'React Hooks Avançados',    topic: 'React Hooks', level: 'intermediate', estimatedTime: 45 },
+  { id: 3, title: 'Smart Contracts Seguros',  topic: 'Solidity',    level: 'advanced',     estimatedTime: 60 },
+];
+
+const SAMPLE_MODULE_FULL = {
+  id: 2, title: 'React Hooks Avançados', topic: 'React Hooks', level: 'intermediate', estimatedTime: 45,
+  content:
+`React Hooks let you use state and other React features without writing a class. This module walks through useState, useEffect, and useMemo in depth.
+
+useState is the foundational hook — it returns a tuple of [value, setter]. Every call creates an isolated slot of state attached to the component instance.
+
+useEffect runs after commit. Its dependency array controls when the effect re-runs; an empty array means "mount only".
+
+useMemo memoizes expensive computations. Reach for it only when profiling shows a bottleneck — premature memoization is the root of much evil.`,
+  quiz: [
+    { question: 'What does useState return?', options: ['A single value', 'A tuple of value + setter', 'A promise', 'Nothing'] },
+    { question: 'When does useEffect run by default?', options: ['Before render', 'During render', 'After commit', 'Only on unmount'] },
+    { question: 'useMemo is best used for...', options: ['Every value', 'Expensive computations', 'Replacing useState', 'Side effects'] },
+  ],
+};
+
+function App() {
+  const [route, setRoute] = useState('landing'); // landing | dashboard | module | quiz | result
+  const [connecting, setConnecting] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [modules, setModules] = useState(SAMPLE_MODULES);
+  const [activeModule, setActiveModule] = useState(null);
+  const [completedProgress, setCompletedProgress] = useState(null);
+  const [quizResult, setQuizResult] = useState(null);
+
+  // persist route
+  useEffect(() => { const r = localStorage.getItem('aidlh_route'); if (r) setRoute(r); }, []);
+  useEffect(() => { localStorage.setItem('aidlh_route', route); }, [route]);
+
+  const connect = () => {
+    setConnecting(true);
+    setTimeout(() => { setConnecting(false); setRoute('dashboard'); }, 700);
+  };
+  const logout = () => setRoute('landing');
+
+  const generate = ({ topic, level }) => {
+    setGenerating(true);
+    setTimeout(() => {
+      const m = { id: Date.now(), title: `Introdução a ${topic}`, topic, level, estimatedTime: 30 };
+      setModules([m, ...modules]);
+      setGenerating(false);
+    }, 1200);
+  };
+
+  const openModule = (m) => { setActiveModule({ ...SAMPLE_MODULE_FULL, ...m, content: SAMPLE_MODULE_FULL.content }); setCompletedProgress(null); setRoute('module'); };
+  const startQuiz = () => setRoute('quiz');
+  const submitQuiz = (answers) => {
+    setSubmitting(true);
+    setTimeout(() => {
+      const correct = answers.filter((a, i) => a === [1,2,1][i]).length;
+      const total = answers.length;
+      const score = Math.round((correct/total)*100);
+      setQuizResult({ correct, total, score, passed: score >= 70, transactionHash: score >= 70 ? '0xabc' : null });
+      setCompletedProgress({ score });
+      setSubmitting(false);
+      setRoute('result');
+    }, 900);
+  };
+
+  const address = '0x742d35Cc6634C0532925a3b844Bc9e7595f4Bb12';
+  const stats = { totalModules: modules.length, passedModules: 2, avgScore: 84, onChainRecords: 2 };
+
+  if (route === 'landing') return (
+    <div className="min-h-screen" style={{background:'linear-gradient(to bottom right,#eff6ff,#e0e7ff)'}}>
+      <LandingHeader onConnect={connect} connecting={connecting} />
+      <main className="max-w-[1280px] mx-auto px-4 py-16">
+        <Hero onConnect={connect} connecting={connecting} />
+        <FeaturesGrid />
+        <HowItWorks />
+      </main>
+      <footer className="border-t border-slate-200 bg-white mt-20">
+        <div className="max-w-[1280px] mx-auto px-4 py-8 text-center text-slate-600">
+          <p>© 2024 AI-DLH. Projeto de portfólio demonstrando Frontend, Full Stack, IA Generativa e Web3.</p>
+          <p className="text-sm mt-2">Powered by React, TypeScript, Gemini AI, Ethereum & Solidity</p>
+        </div>
+      </footer>
+    </div>
+  );
+
+  if (route === 'dashboard') return (
+    <div className="min-h-screen bg-slate-50">
+      <AppHeader address={address} onLogout={logout} />
+      <main className="max-w-[1280px] mx-auto px-4 py-8">
+        <div className="grid md:grid-cols-4 gap-4 mb-8">
+          <StatTile n={stats.totalModules} label="Total Módulos" color="#2463eb" />
+          <StatTile n={stats.passedModules} label="Aprovados" color="#16a34a" />
+          <StatTile n={stats.avgScore + '%'} label="Score Médio" color="#2563eb" />
+          <StatTile n={stats.onChainRecords} label="Na Blockchain" color="#9333ea" />
+        </div>
+        <div className="grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-1">
+            <GenerateForm onGenerate={generate} generating={generating} />
+          </div>
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Meus Módulos</CardTitle>
+                <CardDescription>{modules.length} módulos gerados</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {modules.map(m => <ModuleRow key={m.id} mod={m} onOpen={openModule} />)}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+
+  if (route === 'module') return (
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-white border-b border-slate-200">
+        <div className="max-w-[1280px] mx-auto px-4 py-4 flex items-center justify-between">
+          <Button variant="outline" onClick={() => setRoute('dashboard')}>← Voltar</Button>
+          <div className="flex items-center gap-2">
+            <Badge variant={activeModule.level === 'beginner' ? 'success' : activeModule.level === 'intermediate' ? 'warning' : 'error'}>{activeModule.level}</Badge>
+            <span className="text-sm text-slate-600">{activeModule.estimatedTime} min</span>
+          </div>
+        </div>
+      </header>
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        <ModuleContent mod={activeModule} onStart={startQuiz} completedProgress={completedProgress} />
+      </main>
+    </div>
+  );
+
+  if (route === 'quiz') return (
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-white border-b border-slate-200">
+        <div className="max-w-[1280px] mx-auto px-4 py-4 flex items-center justify-between">
+          <Button variant="outline" onClick={() => setRoute('module')}>← Voltar</Button>
+          <h2 className="font-semibold">{activeModule.title}</h2>
+          <span></span>
+        </div>
+      </header>
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        <Quiz questions={SAMPLE_MODULE_FULL.quiz} onSubmit={submitQuiz} submitting={submitting} />
+      </main>
+    </div>
+  );
+
+  if (route === 'result') return (
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-white border-b border-slate-200">
+        <div className="max-w-[1280px] mx-auto px-4 py-4 flex items-center justify-between">
+          <Button variant="outline" onClick={() => setRoute('dashboard')}>← Voltar</Button>
+        </div>
+      </header>
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        <QuizResult result={quizResult} onBack={() => setRoute('dashboard')} onRetry={() => setRoute('quiz')} />
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

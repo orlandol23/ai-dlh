@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Buttons (v2)</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;padding:0;font-family:var(--font-sans);background:#fff;}
+  .wrap{padding:18px 24px;display:grid;gap:12px;}
+  .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  button{font-family:inherit;cursor:pointer;border:0;border-radius:10px;font-weight:600;transition:all 200ms cubic-bezier(.22,1,.36,1);}
+  .primary{background:#7c3aed;color:#fff;height:44px;padding:0 20px;}
+  .primary:hover{box-shadow:0 0 0 4px rgba(124,58,237,.12),0 0 24px 0 rgba(124,58,237,.20);transform:translateY(-1px);}
+  .primary.sm{height:36px;padding:0 14px;font-size:14px;}
+  .outline{background:transparent;color:#161514;border:1px solid #e2ddd6;height:44px;padding:0 20px;}
+  .outline:hover{border-color:#7c3aed;color:#7c3aed;}
+  .ghost{background:transparent;color:#161514;height:36px;padding:0 12px;border-radius:6px;}
+  .ghost:hover{background:#efece8;}
+  .destructive{background:#dc2626;color:#fff;height:44px;padding:0 20px;}
+  .disabled{opacity:.5;pointer-events:none;}
+  .meta{font-family:var(--font-mono);font-size:10px;color:var(--muted-foreground);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="row">
+    <button class="primary">Começar Agora</button>
+    <button class="primary sm">Estudar</button>
+    <button class="outline">Saiba Mais</button>
+    <button class="ghost">Voltar</button>
+  </div>
+  <div class="row">
+    <button class="destructive">Desconectar</button>
+    <button class="primary disabled">Disabled</button>
+  </div>
+  <div class="meta">primary hover = glow roxo + translateY(-1px) · radius 10 · Inter 600</div>
+</div>
+</body></html>

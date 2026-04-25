@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Quiz option (v2)</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;padding:0;font-family:var(--font-sans);background:#fff;color:#161514;}
+  .wrap{padding:18px 24px;display:grid;gap:10px;}
+  .opt{text-align:left;padding:12px 16px;border:1px solid #e2ddd6;border-radius:10px;font-size:14px;background:#fff;cursor:pointer;transition:all 150ms cubic-bezier(.22,1,.36,1);}
+  .opt:hover{background:#f7f5f3;border-color:#c9c2b8;}
+  .opt.sel{background:#f5f3ff;border-color:#7c3aed;box-shadow:0 0 0 2px #ddd6fe;}
+  .letter{font-family:"JetBrains Mono",monospace;font-weight:600;margin-right:8px;color:#7c3aed;}
+  .prog{height:8px;background:#efece8;border-radius:999px;overflow:hidden;}
+  .prog > div{height:100%;background:linear-gradient(90deg,#7c3aed,#22d3ee);width:60%;transition:width .3s;}
+  .meta{font-family:"JetBrains Mono",monospace;font-size:11px;color:#766e63;letter-spacing:0.08em;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="prog"><div></div></div>
+  <div class="meta">QUESTÃO 3 DE 5 · 60%</div>
+  <div class="opt"><span class="letter">A.</span> useState stores a value across renders</div>
+  <div class="opt sel"><span class="letter">B.</span> useState returns a tuple of value and setter</div>
+  <div class="opt"><span class="letter">C.</span> useState can only hold primitives</div>
+</div>
+</body></html>

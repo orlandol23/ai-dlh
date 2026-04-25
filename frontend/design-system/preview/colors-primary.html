@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Color — Primary (v2)</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;padding:0;background:#fff;font-family:var(--font-sans);color:var(--foreground);}
+  .wrap{padding:20px 24px;}
+  .row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:12px;}
+  .swatch{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+  .chip{height:64px;}
+  .meta{padding:8px 10px;display:flex;flex-direction:column;gap:2px;}
+  .name{font-size:12px;font-weight:600;letter-spacing:-0.01em;}
+  .hex{font-family:var(--font-mono);font-size:11px;color:var(--muted-foreground);}
+  .eyebrow{font-family:var(--font-mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.18em;color:var(--muted-foreground);margin-bottom:8px;}
+  .accent-row .chip{height:44px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Primary · roxo elétrico — #7c3aed canonical</div>
+  <div class="row">
+    <div class="swatch"><div class="chip" style="background:#7c3aed"></div><div class="meta"><span class="name">Primary 600</span><span class="hex">#7C3AED</span></div></div>
+    <div class="swatch"><div class="chip" style="background:#6d28d9"></div><div class="meta"><span class="name">Primary 700</span><span class="hex">#6D28D9</span></div></div>
+    <div class="swatch"><div class="chip" style="background:#8b5cf6"></div><div class="meta"><span class="name">Primary 500</span><span class="hex">#8B5CF6</span></div></div>
+    <div class="swatch"><div class="chip" style="background:#ede9fe"></div><div class="meta"><span class="name">Primary 100</span><span class="hex">#EDE9FE</span></div></div>
+    <div class="swatch"><div class="chip" style="background:#f5f3ff"></div><div class="meta"><span class="name">Primary 50</span><span class="hex">#F5F3FF</span></div></div>
+  </div>
+  <div class="eyebrow" style="margin-top:16px">Accent · ciano — #22d3ee</div>
+  <div class="row accent-row">
+    <div class="swatch"><div class="chip" style="background:#22d3ee"></div><div class="meta"><span class="name">Accent</span><span class="hex">#22D3EE</span></div></div>
+    <div class="swatch"><div class="chip" style="background:#06b6d4"></div><div class="meta"><span class="name">Accent 500</span><span class="hex">#06B6D4</span></div></div>
+    <div class="swatch"><div class="chip" style="background:#67e8f9"></div><div class="meta"><span class="name">Accent 300</span><span class="hex">#67E8F9</span></div></div>
+    <div class="swatch"><div class="chip" style="background:#cffafe"></div><div class="meta"><span class="name">Accent 100</span><span class="hex">#CFFAFE</span></div></div>
+    <div class="swatch"><div class="chip" style="background:#ecfeff"></div><div class="meta"><span class="name">Accent 50</span><span class="hex">#ECFEFF</span></div></div>
+  </div>
+</div>
+</body></html>

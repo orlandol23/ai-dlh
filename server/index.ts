@@ -1,4 +1,5 @@
 import path from 'node:path';
+import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
@@ -30,12 +31,17 @@ async function runMigrations(): Promise<void> {
     return;
   }
 
-  // Resolve relative to *this* compiled module so the path stays correct
-  // regardless of CWD (Railway's start command, local `node dist/...`, etc.).
-  // At runtime this file is server/dist/index.js → migrations are one
-  // level up: ../db/migrations.
+  // Resolve relative to *this* module so the path stays correct
+  // regardless of CWD. The compiled binary lives at server/dist/index.js
+  // (migrations are one level up: ../db/migrations); when running via
+  // `tsx watch index.ts` this file IS at server/index.ts, so migrations
+  // sit beside it (./db/migrations). Probe both and use whichever exists.
   const moduleDir = path.dirname(fileURLToPath(import.meta.url));
-  const migrationsFolder = path.resolve(moduleDir, '..', 'db', 'migrations');
+  const candidates = [
+    path.resolve(moduleDir, '..', 'db', 'migrations'), // compiled (dist/)
+    path.resolve(moduleDir, 'db', 'migrations'),       // dev (tsx watch)
+  ];
+  const migrationsFolder = candidates.find((p) => fs.existsSync(p)) ?? candidates[0];
 
   logger.info(`Applying migrations from ${migrationsFolder}`);
   await migrate(db, { migrationsFolder });

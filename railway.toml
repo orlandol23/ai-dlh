@@ -9,7 +9,7 @@
 
 [build]
 builder = "RAILPACK"
-buildCommand = "npm install && npm run build:backend"
+buildCommand = "npm ci && npm run build:backend"
 
 [deploy]
 startCommand = "node server/dist/index.js"

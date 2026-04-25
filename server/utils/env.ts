@@ -146,11 +146,12 @@ const envSchema = z.object({
   // Operations
   // Skip drizzle migrate() on boot. Use when migrations are run by a
   // dedicated release-phase job and the running container should never
-  // touch DDL. Any value other than the literal "true" leaves migrations
+  // touch DDL. Default: false (apply migrations). Keep `.env.example`
+  // in sync. Any value other than the literal "true" leaves migrations
   // enabled, so typos fail closed (apply migrations).
   SKIP_MIGRATIONS: z
     .string()
-    .optional()
+    .default('false')
     .transform((v) => v === 'true'),
 }).superRefine((env, ctx) => {
   if (env.NODE_ENV === 'production' && JWT_SECRET_FORBIDDEN.has(env.JWT_SECRET)) {

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { cn, getEtherscanUrl } from '@/lib/utils';
 import type { ProgressLike } from '@/lib/achievements';
 
@@ -17,13 +18,13 @@ interface OnChainTimelineProps {
 }
 
 function relativeTime(date: Date): string {
-  const diffMs = Date.now() - date.getTime();
-  const diffMin = Math.round(diffMs / 60_000);
+  const diffMs = Math.max(0, Date.now() - date.getTime());
+  const diffMin = Math.floor(diffMs / 60_000);
   if (diffMin < 1) return 'agora';
   if (diffMin < 60) return `${diffMin}m atrás`;
-  const diffH = Math.round(diffMin / 60);
+  const diffH = Math.floor(diffMin / 60);
   if (diffH < 24) return `${diffH}h atrás`;
-  const diffD = Math.round(diffH / 24);
+  const diffD = Math.floor(diffH / 24);
   if (diffD < 7) return `${diffD}d atrás`;
   return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
 }
@@ -80,7 +81,11 @@ export const OnChainTimeline = ({
             >
               {isOnChain ? '⛓' : passed ? '✓' : '·'}
             </span>
-            <div className="flex items-start justify-between gap-3 rounded-md border border-border bg-card p-3 hover:border-primary/40 transition-colors">
+            <Link
+              to={`/module/${r.moduleId}`}
+              className="flex items-start justify-between gap-3 rounded-md border border-border bg-card p-3 hover:border-primary/40 hover:bg-muted/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              aria-label={`Abrir ${r.module?.title ?? `módulo ${r.moduleId}`} (score ${r.score}%)`}
+            >
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-sm truncate">
@@ -112,13 +117,14 @@ export const OnChainTimeline = ({
                   href={getEtherscanUrl(r.transactionHash!)}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
                   className="font-mono text-[11px] text-primary hover:underline shrink-0"
                   title="Ver no Etherscan"
                 >
                   {shortHash(r.transactionHash!)} ↗
                 </a>
               )}
-            </div>
+            </Link>
           </li>
         );
       })}

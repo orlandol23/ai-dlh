@@ -55,8 +55,10 @@ export const DashboardPage = () => {
     [progress]
   );
   const pendingModules = useMemo(() => {
-    if (!modules) return [];
-    const completedIds = new Set((progress ?? []).map((p) => p.moduleId));
+    // Wait for both queries to resolve. Otherwise progress=undefined makes
+    // every module flicker as "pending" until getUserProgress returns.
+    if (!modules || progress === undefined) return [];
+    const completedIds = new Set(progress.map((p) => p.moduleId));
     return modules.filter((m) => !completedIds.has(m.id));
   }, [modules, progress]);
 

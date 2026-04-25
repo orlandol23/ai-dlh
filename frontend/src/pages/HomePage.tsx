@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/atoms/Button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/atoms/Card';
+import { ThemeToggle } from '@/components/atoms/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
 
 /**
@@ -37,12 +38,15 @@ export const HomePage = () => {
               <img src="/logo.svg" alt="" aria-hidden="true" className="w-10 h-10" />
               <h1 className="text-xl font-bold">AI-DLH</h1>
             </div>
-            <Button
-              onClick={connectWallet}
-              disabled={isConnecting}
-            >
-              {isConnecting ? 'Conectando...' : 'Conectar Carteira'}
-            </Button>
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <Button
+                onClick={connectWallet}
+                disabled={isConnecting}
+              >
+                {isConnecting ? 'Conectando...' : 'Conectar Carteira'}
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -52,7 +56,7 @@ export const HomePage = () => {
         <div className="absolute inset-0 hash-grid opacity-70 pointer-events-none" aria-hidden="true" />
         <div className="max-w-4xl mx-auto text-center space-y-8 relative">
           <div className="space-y-4">
-            <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-foreground tracking-tighter leading-[1.02]">
+            <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-foreground tracking-tighter leading-[1.02] mt-8">
               Aprenda com <span className="text-gradient-brand">IA</span>
               <br />
               Certifique em <span className="text-gradient-brand">cadeia</span>
@@ -86,7 +90,7 @@ export const HomePage = () => {
           <div className="grid md:grid-cols-3 gap-6 mt-16">
             <Card>
               <CardHeader>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                <div className="w-12 h-12 bg-info-bg border border-info-border rounded-lg flex items-center justify-center mb-4">
                   <span className="text-2xl">🤖</span>
                 </div>
                 <CardTitle className="text-lg">IA Generativa</CardTitle>
@@ -98,7 +102,7 @@ export const HomePage = () => {
 
             <Card>
               <CardHeader>
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                <div className="w-12 h-12 bg-onchain-bg border border-onchain-border rounded-lg flex items-center justify-center mb-4">
                   <span className="text-2xl">⛓️</span>
                 </div>
                 <CardTitle className="text-lg">Blockchain</CardTitle>
@@ -110,7 +114,7 @@ export const HomePage = () => {
 
             <Card>
               <CardHeader>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                <div className="w-12 h-12 bg-success-bg border border-success-border rounded-lg flex items-center justify-center mb-4">
                   <span className="text-2xl">📊</span>
                 </div>
                 <CardTitle className="text-lg">Progresso</CardTitle>
@@ -131,7 +135,7 @@ export const HomePage = () => {
                     1
                   </div>
                   <h3 className="font-semibold mb-2">Conecte sua Carteira</h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Use MetaMask para autenticar via Web3
                   </p>
                 </CardContent>
@@ -143,7 +147,7 @@ export const HomePage = () => {
                     2
                   </div>
                   <h3 className="font-semibold mb-2">Escolha um Tópico</h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Digite o que deseja aprender e o nível de dificuldade
                   </p>
                 </CardContent>
@@ -155,7 +159,7 @@ export const HomePage = () => {
                     3
                   </div>
                   <h3 className="font-semibold mb-2">Estude e Pratique</h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Leia o conteúdo gerado e complete o quiz
                   </p>
                 </CardContent>
@@ -167,7 +171,7 @@ export const HomePage = () => {
                     4
                   </div>
                   <h3 className="font-semibold mb-2">Ganhe Certificado</h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Score ≥ 70% registra na blockchain
                   </p>
                 </CardContent>
@@ -178,9 +182,9 @@ export const HomePage = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t bg-white mt-20">
+      <footer className="border-t border-border bg-card mt-20">
         <div className="container mx-auto px-4 py-8">
-          <div className="text-center text-gray-600">
+          <div className="text-center text-muted-foreground">
             <p>© 2024 AI-DLH. Projeto de portfólio demonstrando Frontend, Full Stack, IA Generativa e Web3.</p>
             <p className="text-sm mt-2">
               Powered by React, TypeScript, Gemini AI, Ethereum & Solidity

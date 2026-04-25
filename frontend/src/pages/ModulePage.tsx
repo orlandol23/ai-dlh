@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/atoms/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/atoms/Card';
 import { Badge } from '@/components/atoms/Badge';
+import { Skeleton } from '@/components/atoms/Skeleton';
+import { ThemeToggle } from '@/components/atoms/ThemeToggle';
+import { toast } from '@/components/molecules/Toaster';
 import { trpc } from '@/lib/trpc';
 import { getEtherscanUrl } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
@@ -39,21 +43,35 @@ export const ModulePage = () => {
     },
     onError: (error) => {
       setIsSubmitting(false);
-      alert('Erro ao enviar quiz: ' + error.message);
+      toast.error('Erro ao enviar quiz', { description: error.message });
     },
   });
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="spinner"></div>
+      <div className="min-h-screen bg-background">
+        <header className="bg-card border-b border-border">
+          <div className="container mx-auto px-4 py-4">
+            <Skeleton className="h-10 w-32" />
+          </div>
+        </header>
+        <main className="container mx-auto px-4 py-8 max-w-4xl space-y-6">
+          <Skeleton className="h-12 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+          <div className="space-y-3 mt-8">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+            <Skeleton className="h-4 w-4/6" />
+          </div>
+        </main>
       </div>
     );
   }
 
   if (!module) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Módulo não encontrado</h1>
           <Button onClick={() => navigate('/dashboard')}>
@@ -94,7 +112,9 @@ export const ModulePage = () => {
 
   const handleSubmitQuiz = async () => {
     if (selectedAnswers.includes(-1)) {
-      alert('Por favor, responda todas as perguntas antes de finalizar.');
+      toast.warning('Quiz incompleto', {
+        description: 'Responda todas as perguntas antes de finalizar.',
+      });
       return;
     }
 
@@ -109,9 +129,9 @@ export const ModulePage = () => {
   const currentQ = quizData[currentQuestion];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-white border-b">
+      <header className="bg-card border-b border-border">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Button variant="outline" onClick={() => navigate('/dashboard')}>
@@ -129,9 +149,10 @@ export const ModulePage = () => {
               >
                 {module.level}
               </Badge>
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-muted-foreground">
                 {module.estimatedTime} min
               </span>
+              <ThemeToggle />
             </div>
           </div>
         </div>
@@ -307,8 +328,17 @@ export const ModulePage = () => {
                   )}
 
                   {quizResult.transactionHash && (
-                    <div className="mt-6 bg-onchain-bg border border-onchain-border rounded-lg p-6 hash-grid">
-                      <p className="font-semibold text-onchain-fg mb-2">
+                    <div className="relative mt-6 bg-onchain-bg border border-onchain-border rounded-lg p-6 hash-grid overflow-hidden">
+                      <motion.div
+                        initial={{ opacity: 0, scale: 2, rotate: -12 }}
+                        animate={{ opacity: 1, scale: 1, rotate: -8 }}
+                        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                        className="absolute -top-2 right-4 px-3 py-1 rounded-md border-2 border-primary/60 bg-card font-mono text-[11px] font-bold tracking-widest text-primary uppercase shadow-md"
+                        aria-hidden="true"
+                      >
+                        ⛓ ON-CHAIN
+                      </motion.div>
+                      <p className="font-semibold text-onchain-fg mb-2 mt-4">
                         ⛓️ Registrado na Blockchain!
                       </p>
                       <p className="text-sm text-onchain-fg/80 mb-3">

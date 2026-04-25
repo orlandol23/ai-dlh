@@ -34,7 +34,7 @@ export const HomePage = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <img src="/logo.svg" alt="AI-DLH" className="w-10 h-10" />
+              <img src="/logo.svg" alt="" aria-hidden="true" className="w-10 h-10" />
               <h1 className="text-xl font-bold">AI-DLH</h1>
             </div>
             <Button

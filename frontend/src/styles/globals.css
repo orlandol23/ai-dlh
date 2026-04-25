@@ -102,8 +102,8 @@
 
     --radius: 0.625rem;
 
-    /* Hash grid */
-    --grid-color: 124 58 237;
+    /* Hash grid — token HSL para usar com hsl(var(--grid-color) / alpha) */
+    --grid-color: 262 83% 58%;
     --grid-alpha: 0.08;
     --grid-size: 24px;
   }
@@ -157,7 +157,7 @@
     --onchain-border: 262 83% 58% / 0.38;
     --onchain-fg: 252 95% 85%;
 
-    --grid-color: 167 139 250;
+    --grid-color: 255 92% 76%;
     --grid-alpha: 0.10;
   }
 }

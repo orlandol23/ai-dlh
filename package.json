@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "AI-Powered Decentralized Learning Hub - Portfolio project showcasing Frontend, Full Stack, Generative AI, and Web3 expertise",
   "private": true,
+  "type": "module",
   "workspaces": [
     "frontend",
     "server",

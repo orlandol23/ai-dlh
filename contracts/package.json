@@ -2,6 +2,7 @@
   "name": "ai-dlh-contracts",
   "version": "1.0.0",
   "description": "Smart contracts for AI-Powered Decentralized Learning Hub",
+  "type": "commonjs",
   "main": "index.js",
   "scripts": {
     "test": "hardhat test",

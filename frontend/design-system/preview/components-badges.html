@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Badges (v2)</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;padding:0;font-family:var(--font-sans);background:#fff;}
+  .wrap{padding:22px 24px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .badge{display:inline-flex;align-items:center;gap:6px;border-radius:9999px;padding:4px 10px;font-size:11px;font-weight:600;}
+  .mono{font-family:"JetBrains Mono",monospace;text-transform:uppercase;letter-spacing:0.1em;}
+  .primary{background:#7c3aed;color:#fff;}
+  .onchain{background:#f5f3ff;color:#4c1d95;border:1px solid #ddd6fe;}
+  .success{background:#f0fdf4;color:#14532d;border:1px solid #bbf7d0;}
+  .warning{background:#fffbeb;color:#78350f;border:1px solid #fde68a;}
+  .error{background:#fef2f2;color:#7f1d1d;border:1px solid #fecaca;}
+  .info{background:#ecfeff;color:#164e63;border:1px solid #cffafe;}
+  .outline{background:#fff;color:#24221f;border:1px solid #e2ddd6;}
+  .dot{width:7px;height:7px;border-radius:999px;background:currentColor;}
+  .meta{width:100%;margin-top:6px;font-family:var(--font-mono);font-size:10px;color:var(--muted-foreground);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="badge onchain mono"><span class="dot"></span>⛓ ON-CHAIN</span>
+  <span class="badge info mono">Sepolia</span>
+  <span class="badge success">beginner</span>
+  <span class="badge warning">intermediate</span>
+  <span class="badge error">advanced</span>
+  <span class="badge primary">New</span>
+  <span class="badge outline">outline</span>
+  <div class="meta">On-chain pill usa JetBrains Mono caixa alta + dot pulse — o padrão "live" do produto.</div>
+</div>
+</body></html>

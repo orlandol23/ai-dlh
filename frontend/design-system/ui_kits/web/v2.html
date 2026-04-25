@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>AI-DLH v2 — Design System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  body { font-family: var(--font-sans); background: var(--background); color: var(--foreground); }
+  .sg { font-family: var(--font-display); letter-spacing: -0.02em; }
+  .mono { font-family: var(--font-mono); }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm); }
+  .btn-primary { background: var(--primary); color: var(--primary-foreground); height: 44px; padding: 0 20px; border-radius: var(--radius); font-weight: 600; transition: all var(--duration) var(--ease-out); border: 0; cursor: pointer; }
+  .btn-primary:hover { box-shadow: var(--shadow-glow); transform: translateY(-1px); }
+  .btn-outline { background: transparent; color: var(--foreground); height: 44px; padding: 0 20px; border-radius: var(--radius); font-weight: 600; border: 1px solid var(--border); cursor: pointer; transition: all var(--duration); }
+  .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+  .btn-ghost { background: transparent; color: var(--foreground); height: 36px; padding: 0 12px; border-radius: var(--radius-sm); border: 0; cursor: pointer; }
+  .btn-ghost:hover { background: var(--muted); }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-family: var(--font-mono); font-size: 11px; font-weight: 600; background: var(--onchain-bg); color: var(--onchain-fg); border: 1px solid var(--onchain-border); text-transform: uppercase; letter-spacing: 0.1em; }
+  .pill-accent { background: var(--info-bg); color: var(--info-fg); border-color: var(--info-border); }
+  .dot-pulse { width: 8px; height: 8px; border-radius: 999px; background: currentColor; animation: pulse-dot 1.4s var(--ease-out) infinite; }
+  @keyframes pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(.7); } }
+
+  /* AI streaming caret */
+  .caret::after { content: '▋'; color: var(--primary); animation: blink 1s steps(1) infinite; margin-left: 2px; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* Blockchain stamp animation */
+  @keyframes stamp-in {
+    0% { opacity: 0; transform: scale(2) rotate(-12deg); }
+    50% { opacity: 1; transform: scale(0.95) rotate(-8deg); }
+    100% { opacity: 1; transform: scale(1) rotate(-8deg); }
+  }
+  .stamp { animation: stamp-in 600ms var(--ease-out) both; }
+
+  /* Skeleton shimmer */
+  @keyframes shimmer { 0% { background-position: -200px 0; } 100% { background-position: calc(200px + 100%) 0; } }
+  .skeleton {
+    background: linear-gradient(90deg, var(--muted) 0%, rgba(255,255,255,0.5) 50%, var(--muted) 100%);
+    background-size: 200px 100%;
+    animation: shimmer 1.5s linear infinite;
+    border-radius: var(--radius-sm);
+  }
+  .dark .skeleton { background: linear-gradient(90deg, #24221f 0%, #3a3632 50%, #24221f 100%); }
+
+  /* Sparkline grid */
+  .spark path { stroke-dasharray: 400; stroke-dashoffset: 400; animation: draw 2s var(--ease-out) forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+
+  section { padding: 72px 24px; max-width: 1280px; margin: 0 auto; }
+  .section-head { display: flex; align-items: baseline; gap: 16px; margin-bottom: 32px; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+  .section-head .num { font-family: var(--font-mono); font-size: 13px; color: var(--muted-foreground); letter-spacing: 0.1em; }
+  .section-head h2 { margin: 0; font-size: 36px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+// ======================= Theme toggle =======================
+function useTheme() {
+  const [theme, setTheme] = useState(() => localStorage.getItem('aidlh_theme') || 'light');
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    localStorage.setItem('aidlh_theme', theme);
+  }, [theme]);
+  return [theme, setTheme];
+}
+
+// ======================= Nav =======================
+function TopNav({ theme, setTheme }) {
+  return (
+    <header className="sticky top-0 z-50 backdrop-blur" style={{background:'color-mix(in srgb, var(--background) 80%, transparent)', borderBottom:'1px solid var(--border)'}}>
+      <div className="max-w-[1280px] mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Logo size={32}/>
+          <span className="sg font-bold text-xl">AI-DLH</span>
+          <span className="eyebrow ml-2" style={{color:'var(--muted-foreground)'}}>Design System · v2</span>
+        </div>
+        <div className="flex gap-2">
+          <a href="#tokens" className="btn-ghost">Tokens</a>
+          <a href="#components" className="btn-ghost">Componentes</a>
+          <a href="#states" className="btn-ghost">Estados</a>
+          <a href="#dashboard" className="btn-ghost">Dashboard</a>
+          <button className="btn-outline" style={{height:36, padding:'0 14px'}} onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+            {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// ======================= Logo =======================
+function Logo({ size = 40 }) {
+  const s = size;
+  return (
+    <svg width={s} height={s} viewBox="0 0 64 64">
+      <defs>
+        <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#7c3aed"/>
+          <stop offset="100%" stopColor="#22d3ee"/>
+        </linearGradient>
+      </defs>
+      <path d="M32 3 L56 17 L56 47 L32 61 L8 47 L8 17 Z" fill="url(#lg)"/>
+      <circle cx="32" cy="32" r="5" fill="#fff"/>
+      <circle cx="20" cy="24" r="2.5" fill="#fff" opacity=".85"/>
+      <circle cx="44" cy="24" r="2.5" fill="#fff" opacity=".85"/>
+      <circle cx="20" cy="40" r="2.5" fill="#fff" opacity=".85"/>
+      <circle cx="44" cy="40" r="2.5" fill="#fff" opacity=".85"/>
+      <g stroke="#fff" strokeWidth="1.5" opacity=".7">
+        <line x1="22" y1="25" x2="29" y2="30"/>
+        <line x1="42" y1="25" x2="35" y2="30"/>
+        <line x1="22" y1="39" x2="29" y2="34"/>
+        <line x1="42" y1="39" x2="35" y2="34"/>
+      </g>
+    </svg>
+  );
+}
+
+// ======================= Hero =======================
+function Hero() {
+  return (
+    <section className="relative overflow-hidden" style={{paddingTop:96, paddingBottom:96}}>
+      <div className="absolute inset-0 hash-grid opacity-70 pointer-events-none"/>
+      <div className="absolute inset-0 pointer-events-none" style={{background:'var(--hero-gradient)', opacity:0.55}}/>
+      <div className="relative grid md:grid-cols-[1.3fr_1fr] gap-12 items-center">
+        <div>
+          <div className="pill mb-6"><span className="dot-pulse"/> v2 · Circuit &amp; Ink</div>
+          <h1 className="sg" style={{fontSize:'clamp(48px, 8vw, 88px)', fontWeight:700, lineHeight:1.02, letterSpacing:'-0.04em', margin:0}}>
+            Aprenda com <span style={{background:'linear-gradient(135deg,#7c3aed,#22d3ee)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent'}}>IA</span>.<br/>
+            Certifique em <span style={{background:'linear-gradient(135deg,#7c3aed,#22d3ee)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent'}}>cadeia</span>.
+          </h1>
+          <p className="body-lg mt-6 max-w-xl">Um design system próprio para a plataforma AI-DLH — roxo elétrico, grid pontilhado e tipografia Space Grotesk. Nada de shadcn genérico.</p>
+          <div className="flex gap-3 mt-8">
+            <button className="btn-primary">Começar Agora</button>
+            <button className="btn-outline">Ver componentes</button>
+          </div>
+        </div>
+        <div className="panel p-6 hash-grid" style={{background:'var(--card)'}}>
+          <div className="eyebrow">on-chain receipt</div>
+          <div className="mono text-sm mt-3 break-all" style={{color:'var(--muted-foreground)'}}>0xabc123…9f4e2d</div>
+          <div className="sg mt-4" style={{fontSize:56, fontWeight:700, background:'linear-gradient(135deg,#7c3aed,#22d3ee)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent'}}>92%</div>
+          <div className="text-sm mt-2" style={{color:'var(--muted-foreground)'}}>TypeScript · Intermediate · aprovado</div>
+          <div className="circuit-trace mt-4"/>
+          <div className="mt-4 flex items-center justify-between">
+            <span className="pill">⛓️ Sepolia</span>
+            <a className="mono text-xs" style={{color:'var(--primary)'}}>Ver no Etherscan →</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ======================= Tokens: Colors =======================
+function ColorGrid() {
+  const row = (title, vars) => (
+    <div className="mb-6">
+      <div className="eyebrow mb-3">{title}</div>
+      <div className="grid grid-cols-5 md:grid-cols-10 gap-2">
+        {vars.map(([name, val]) => (
+          <div key={name} className="panel overflow-hidden" style={{padding:0}}>
+            <div style={{height:56, background:val}}/>
+            <div className="px-2 py-1.5">
+              <div className="text-[11px] font-semibold">{name}</div>
+              <div className="mono text-[10px]" style={{color:'var(--muted-foreground)'}}>{val}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+  return (
+    <div>
+      {row('Primary — roxo elétrico', [
+        ['50','#f5f3ff'],['100','#ede9fe'],['200','#ddd6fe'],['300','#c4b5fd'],['400','#a78bfa'],
+        ['500','#8b5cf6'],['600','#7c3aed'],['700','#6d28d9'],['800','#5b21b6'],['900','#4c1d95'],
+      ])}
+      {row('Accent — ciano', [
+        ['50','#ecfeff'],['100','#cffafe'],['300','#67e8f9'],['accent','#22d3ee'],['500','#06b6d4'],['600','#0891b2'],
+      ])}
+      {row('Neutros warm', [
+        ['0','#ffffff'],['25','#fbfaf9'],['50','#f7f5f3'],['100','#efece8'],['200','#e2ddd6'],
+        ['400','#a29a8f'],['600','#55504a'],['700','#3a3632'],['800','#24221f'],['900','#161514'],
+      ])}
+      <div className="eyebrow mb-3">Estados semânticos — todas distintas do primary</div>
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        {[
+          {n:'Success', c:'#16a34a', bg:'#f0fdf4', fg:'#14532d', copy:'Aprovado ✅'},
+          {n:'Warning', c:'#d97706', bg:'#fffbeb', fg:'#78350f', copy:'Pendente ⚠️'},
+          {n:'Error',   c:'#dc2626', bg:'#fef2f2', fg:'#7f1d1d', copy:'Reprovado ❌'},
+          {n:'Info (ciano)', c:'#06b6d4', bg:'#ecfeff', fg:'#164e63', copy:'Já completou'},
+          {n:'On-chain (roxo)', c:'#7c3aed', bg:'#f5f3ff', fg:'#4c1d95', copy:'⛓️ Na blockchain'},
+        ].map(s => (
+          <div key={s.n} className="panel">
+            <div className="flex items-center gap-2 px-4 pt-4"><span style={{width:12,height:12,borderRadius:999,background:s.c}}/><span className="font-semibold text-sm">{s.n}</span></div>
+            <div className="m-3 rounded px-3 py-2 text-xs" style={{background:s.bg, color:s.fg, border:`1px solid ${s.c}22`}}>{s.copy}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ======================= Tokens: Type =======================
+function TypeSpec() {
+  return (
+    <div className="grid md:grid-cols-2 gap-6">
+      <div className="panel p-6">
+        <div className="eyebrow mb-3">Display — Space Grotesk</div>
+        <div className="sg" style={{fontSize:72, fontWeight:700, lineHeight:1, letterSpacing:'-0.04em'}}>Aa Bb 01</div>
+        <div className="sg mt-4" style={{fontSize:28, fontWeight:600}}>Aprenda com IA</div>
+        <div className="caption mt-3">Usar em: heros, títulos de seção (h1/h2), stat numbers.</div>
+      </div>
+      <div className="panel p-6">
+        <div className="eyebrow mb-3">UI — Inter</div>
+        <div style={{fontSize:28, fontWeight:600}}>Dashboard · Meus Módulos</div>
+        <div className="mt-3 body">React Hooks te permitem usar estado e ciclo de vida sem classes.</div>
+        <div className="caption mt-3">Usar em: body, labels, card titles, nav.</div>
+      </div>
+      <div className="panel p-6">
+        <div className="eyebrow mb-3">Mono — JetBrains Mono (expressivo)</div>
+        <div className="mono" style={{fontSize:20}}>0x742d35…f4Bb</div>
+        <div className="mono mt-2" style={{fontSize:14, color:'var(--muted-foreground)'}}>block 5_234_891 · sepolia</div>
+        <div className="caption mt-3">Usar em: endereços, tx hashes, labels "ON-CHAIN", stats numéricos opcionais.</div>
+      </div>
+      <div className="panel p-6">
+        <div className="eyebrow mb-3">Escala</div>
+        <div className="space-y-1">
+          {[['8xl','96','Hero'],['5xl','48','H1'],['4xl','36','H2'],['2xl','24','CardTitle'],['base','16','Body'],['sm','14','Small'],['xs','12','Caption']].map(([k,px,use]) => (
+            <div key={k} className="flex items-baseline gap-3 text-sm">
+              <span className="mono" style={{color:'var(--muted-foreground)',width:48}}>{k}</span>
+              <span className="mono" style={{color:'var(--muted-foreground)',width:36}}>{px}px</span>
+              <span style={{fontSize:`${Math.min(28,parseInt(px))}px`}}>{use}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ======================= Components =======================
+function ButtonsRow() {
+  return (
+    <div className="panel p-6">
+      <div className="eyebrow mb-4">Buttons</div>
+      <div className="flex gap-3 flex-wrap">
+        <button className="btn-primary">Começar Agora</button>
+        <button className="btn-outline">Saiba Mais</button>
+        <button className="btn-ghost">Voltar</button>
+        <button className="btn-primary" style={{background:'var(--error)'}}>Desconectar</button>
+        <button className="btn-primary" disabled style={{opacity:.5}}>Disabled</button>
+      </div>
+      <div className="caption mt-4">Hover no primário aplica box-shadow glow roxo + translateY(-1px) — é o detalhe que diferencia.</div>
+    </div>
+  );
+}
+
+function NewComponents() {
+  const [tab, setTab] = useState('toast');
+  return (
+    <div className="panel p-6">
+      <div className="eyebrow mb-4">Novos componentes (v2)</div>
+      <div className="flex gap-1 mb-5 border-b" style={{borderColor:'var(--border)'}}>
+        {['toast','dialog','tabs','avatar','skeleton','tooltip'].map(t => (
+          <button key={t} onClick={()=>setTab(t)} className="px-3 py-2 text-sm font-medium relative" style={{color: tab===t?'var(--primary)':'var(--muted-foreground)'}}>
+            {t}
+            {tab===t && <span style={{position:'absolute',left:0,right:0,bottom:-1,height:2,background:'var(--primary)'}}/>}
+          </button>
+        ))}
+      </div>
+
+      {tab==='toast' && (
+        <div className="space-y-3 max-w-md">
+          <div className="panel flex items-start gap-3 p-3" style={{borderLeft:'3px solid var(--success)'}}>
+            <div style={{fontSize:20}}>✅</div>
+            <div className="flex-1">
+              <div className="font-semibold text-sm">Módulo gerado com sucesso</div>
+              <div className="caption">"Introdução a TypeScript" está pronto pra estudar.</div>
+            </div>
+            <button className="btn-ghost" style={{height:24,padding:'0 6px'}}>✕</button>
+          </div>
+          <div className="panel flex items-start gap-3 p-3" style={{borderLeft:'3px solid var(--primary)'}}>
+            <div style={{fontSize:20}}>⛓️</div>
+            <div className="flex-1">
+              <div className="font-semibold text-sm">Certificado on-chain</div>
+              <div className="caption mono">tx 0xabc…9f4e2d · block 5_234_891</div>
+            </div>
+          </div>
+          <div className="panel flex items-start gap-3 p-3" style={{borderLeft:'3px solid var(--error)'}}>
+            <div style={{fontSize:20}}>❌</div>
+            <div className="flex-1">
+              <div className="font-semibold text-sm">Erro ao conectar MetaMask</div>
+              <div className="caption">Verifique se a extensão está desbloqueada.</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tab==='dialog' && (
+        <div className="max-w-md panel p-6" style={{boxShadow:'var(--shadow-lg)'}}>
+          <div className="flex items-start gap-4">
+            <div style={{width:40,height:40,borderRadius:10,background:'var(--onchain-bg)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}>⛓️</div>
+            <div className="flex-1">
+              <h3 style={{margin:0,fontSize:18,fontWeight:600}}>Assinar com MetaMask</h3>
+              <p className="caption mt-1">Assine a mensagem pra autenticar via Web3. Nenhum gás é cobrado.</p>
+              <div className="panel mono text-xs p-3 mt-3" style={{background:'var(--muted)'}}>
+                Login AI-DLH · nonce 48b2…<br/>
+                wallet 0x742d35…f4Bb
+              </div>
+              <div className="flex gap-2 mt-5 justify-end">
+                <button className="btn-ghost">Cancelar</button>
+                <button className="btn-primary" style={{height:36}}>Assinar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tab==='tabs' && (
+        <div>
+          <div className="flex gap-1 border-b" style={{borderColor:'var(--border)'}}>
+            {['Módulos','Certificados','Estatísticas'].map((t,i) => (
+              <div key={t} className="px-4 py-2 text-sm font-medium relative" style={{color: i===0?'var(--foreground)':'var(--muted-foreground)'}}>
+                {t}
+                {i===0 && <span style={{position:'absolute',left:8,right:8,bottom:-1,height:2,background:'var(--primary)',borderRadius:2}}/>}
+              </div>
+            ))}
+          </div>
+          <div className="caption mt-3">Sublinhado animado em roxo. Tamanho padrão: h-10, padding lateral 16.</div>
+        </div>
+      )}
+
+      {tab==='avatar' && (
+        <div className="flex items-center gap-4 flex-wrap">
+          {['#7c3aed','#22d3ee','#f472b6','#fbbf24','#34d399'].map((c,i) => (
+            <div key={i} style={{width:48,height:48,borderRadius:'50%',background:`conic-gradient(from ${i*72}deg, ${c}, var(--primary), ${c})`, border:'2px solid var(--card)', boxShadow:'var(--shadow-sm)'}}/>
+          ))}
+          <div className="flex items-center gap-3 ml-4">
+            <div style={{width:40,height:40,borderRadius:'50%',background:'conic-gradient(from 90deg, #7c3aed, #22d3ee, #7c3aed)', border:'2px solid var(--card)'}}/>
+            <div>
+              <div className="font-semibold text-sm">Carteira conectada</div>
+              <div className="mono text-xs" style={{color:'var(--muted-foreground)'}}>0x742d35…f4Bb</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tab==='skeleton' && (
+        <div className="space-y-2 max-w-md">
+          <div className="skeleton" style={{height:24,width:'60%'}}/>
+          <div className="skeleton" style={{height:14,width:'100%'}}/>
+          <div className="skeleton" style={{height:14,width:'85%'}}/>
+          <div className="skeleton" style={{height:14,width:'72%'}}/>
+          <div className="flex gap-2 mt-4">
+            <div className="skeleton" style={{height:44,width:120}}/>
+            <div className="skeleton" style={{height:44,width:100}}/>
+          </div>
+        </div>
+      )}
+
+      {tab==='tooltip' && (
+        <div className="flex items-center gap-8 py-6">
+          <div className="relative">
+            <button className="btn-outline" style={{height:36}}>Hover me</button>
+            <div className="panel absolute" style={{bottom:'calc(100% + 8px)',left:'50%',transform:'translateX(-50%)',padding:'6px 10px',fontSize:12,whiteSpace:'nowrap', boxShadow:'var(--shadow-md)'}}>
+              Registra score ≥ 70% na blockchain
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ======================= Special states =======================
+function AIStreaming() {
+  const [text, setText] = useState('');
+  const full = 'React Hooks te permitem usar estado e efeitos colaterais sem classes. O hook mais fundamental é o useState — ele devolve uma tupla com o valor atual e uma função de atualização.';
+  useEffect(() => {
+    let i = 0;
+    const id = setInterval(() => {
+      setText(full.slice(0, i));
+      i += 2;
+      if (i > full.length) i = 0;
+    }, 40);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div className="panel p-6 hash-grid">
+      <div className="flex items-center justify-between mb-3">
+        <span className="pill-accent pill"><span className="dot-pulse"/> IA gerando</span>
+        <span className="mono text-xs" style={{color:'var(--muted-foreground)'}}>gemini-2.0-flash</span>
+      </div>
+      <div className="sg mb-2" style={{fontSize:20,fontWeight:600}}>React Hooks Avançados</div>
+      <p className="body caret">{text}</p>
+    </div>
+  );
+}
+
+function BlockchainStamp() {
+  const [stamped, setStamped] = useState(false);
+  useEffect(() => {
+    const id = setInterval(() => setStamped(s => !s), 2400);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div className="panel p-6 relative hash-grid" style={{minHeight:220}}>
+      <div className="eyebrow">certificado</div>
+      <div className="sg mt-2" style={{fontSize:32,fontWeight:700}}>React Hooks Avançados</div>
+      <div className="mt-2 text-sm" style={{color:'var(--muted-foreground)'}}>Score 92% · aprovado</div>
+      <div className="mono mt-3 text-xs break-all" style={{color:'var(--muted-foreground)'}}>0xabc123ef4567…9f4e2d</div>
+      {stamped && (
+        <div className="stamp absolute" style={{right:24,top:24,padding:'8px 14px',border:'3px solid var(--primary)',borderRadius:10,color:'var(--primary)',fontFamily:'var(--font-mono)',fontWeight:700,fontSize:13,letterSpacing:'0.1em',background:'var(--onchain-bg)'}}>
+          ⛓ ON-CHAIN
+        </div>
+      )}
+      <button className="btn-ghost mt-4" onClick={() => setStamped(false) || setTimeout(()=>setStamped(true),80)}>Replay animação</button>
+    </div>
+  );
+}
+
+// ======================= Dashboard redesign =======================
+function StatTile({ label, value, hint, accent, mono }) {
+  return (
+    <div className="panel p-5">
+      <div className="eyebrow">{label}</div>
+      <div className={`stat-number ${mono?'mono':''}`} style={{color:accent||'var(--foreground)', marginTop:8}}>{value}</div>
+      {hint && <div className="caption mt-1">{hint}</div>}
+    </div>
+  );
+}
+
+function Sparkline() {
+  const points = [20,28,26,45,52,50,68,72,70,82,80,92];
+  const pts = points.map((p,i)=>`${i*(340/(points.length-1))},${100-p}`).join(' ');
+  return (
+    <svg viewBox="0 0 340 100" className="spark" style={{width:'100%',height:100,overflow:'visible'}}>
+      <defs>
+        <linearGradient id="fillG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.3"/>
+          <stop offset="100%" stopColor="#7c3aed" stopOpacity="0"/>
+        </linearGradient>
+        <linearGradient id="strokeG" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#7c3aed"/>
+          <stop offset="100%" stopColor="#22d3ee"/>
+        </linearGradient>
+      </defs>
+      <polygon points={`0,100 ${pts} 340,100`} fill="url(#fillG)"/>
+      <polyline points={pts} fill="none" stroke="url(#strokeG)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+      {points.map((p,i)=> i===points.length-1 && <circle key={i} cx={i*(340/(points.length-1))} cy={100-p} r="4" fill="#22d3ee" stroke="#fff" strokeWidth="2"/>)}
+    </svg>
+  );
+}
+
+function Timeline() {
+  const items = [
+    { t: 'Há 2h',  title: 'React Hooks Avançados', score: 92, level: 'Intermediate', hash: '0xabc…9f4e' },
+    { t: 'Ontem',  title: 'TypeScript Essentials', score: 84, level: 'Beginner',     hash: '0xdef…7a2c' },
+    { t: '3 dias', title: 'Solidity Patterns',     score: 76, level: 'Advanced',     hash: '0x123…5e8f' },
+  ];
+  return (
+    <div className="panel p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div className="eyebrow">Certificados on-chain</div>
+        <span className="mono text-xs" style={{color:'var(--muted-foreground)'}}>sepolia</span>
+      </div>
+      <div className="relative">
+        <div className="absolute" style={{left:11,top:8,bottom:8,width:2,background:'linear-gradient(to bottom,var(--primary),var(--accent))',opacity:.4}}/>
+        {items.map((it,i) => (
+          <div key={i} className="flex gap-4 py-3 relative">
+            <div style={{width:24,height:24,borderRadius:999,background:'var(--onchain-bg)',border:'2px solid var(--primary)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,flexShrink:0,zIndex:1}}>⛓</div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <div className="font-semibold text-sm truncate">{it.title}</div>
+                <div className="mono text-xs" style={{color:'var(--muted-foreground)'}}>{it.t}</div>
+              </div>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="mono text-xs" style={{color:'var(--primary)'}}>{it.score}%</span>
+                <span className="caption">{it.level}</span>
+                <a className="mono text-xs ml-auto" style={{color:'var(--accent-600)'}}>{it.hash} ↗</a>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AchievementBadges() {
+  const b = [
+    { e:'🔥', t:'Streak 7 dias', c:'#d97706' },
+    { e:'🎯', t:'3× 90%+', c:'#7c3aed' },
+    { e:'⛓️', t:'5 on-chain', c:'#22d3ee' },
+    { e:'🏆', t:'Advanced pass', c:'#16a34a' },
+  ];
+  return (
+    <div className="panel p-6">
+      <div className="eyebrow mb-4">Conquistas</div>
+      <div className="grid grid-cols-4 gap-3">
+        {b.map(x => (
+          <div key={x.t} className="text-center">
+            <div style={{width:56,height:56,margin:'0 auto',borderRadius:14,background:`${x.c}12`,border:`1px solid ${x.c}40`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:26}}>{x.e}</div>
+            <div className="text-xs font-semibold mt-2">{x.t}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DashboardV2() {
+  return (
+    <div className="grid md:grid-cols-12 gap-5">
+      <div className="md:col-span-3"><StatTile label="Total Módulos" value="12" hint="+3 esta semana"/></div>
+      <div className="md:col-span-3"><StatTile label="Aprovados" value="9" accent="var(--success)"/></div>
+      <div className="md:col-span-3"><StatTile label="Score Médio" value="84" mono accent="var(--accent-600)" hint="de 100"/></div>
+      <div className="md:col-span-3"><StatTile label="On-chain" value="7" mono accent="var(--primary)"/></div>
+
+      <div className="md:col-span-8 panel p-6">
+        <div className="flex items-center justify-between mb-2">
+          <div className="eyebrow">Progresso · últimas 12 semanas</div>
+          <span className="pill-accent pill">+14% vs anterior</span>
+        </div>
+        <Sparkline/>
+      </div>
+      <div className="md:col-span-4"><AchievementBadges/></div>
+
+      <div className="md:col-span-8"><Timeline/></div>
+      <div className="md:col-span-4 panel p-6">
+        <div className="eyebrow mb-3">Gerar com IA</div>
+        <label className="caption">Tópico</label>
+        <input className="mt-1 w-full" placeholder="Ex: TypeScript, React Hooks" style={{height:40,padding:'0 12px',borderRadius:'var(--radius-sm)',border:'1px solid var(--input)',background:'var(--background)',color:'var(--foreground)',fontFamily:'inherit',fontSize:14}}/>
+        <label className="caption mt-3 block">Nível</label>
+        <select className="mt-1 w-full" style={{height:40,padding:'0 12px',borderRadius:'var(--radius-sm)',border:'1px solid var(--input)',background:'var(--background)',color:'var(--foreground)',fontFamily:'inherit',fontSize:14}}>
+          <option>Iniciante</option><option>Intermediário</option><option>Avançado</option>
+        </select>
+        <button className="btn-primary mt-4 w-full">🤖 Gerar módulo</button>
+      </div>
+    </div>
+  );
+}
+
+// ======================= Copy dictionary =======================
+function CopyDict() {
+  const entries = [
+    ['CTA primária',   'Começar Agora',            'Title Case, pt-BR, verbo imperativo'],
+    ['CTA secundária', 'Saiba Mais',               'mesma regra'],
+    ['Auth',           'Conectar Carteira',        'nunca "Entrar" ou "Login"'],
+    ['Geração IA',     '🤖 Gerar com IA',          'emoji + verbo'],
+    ['Loading IA',     '⏳ A IA está criando…',    'reticências, lowercase após emoji'],
+    ['Aprovado',       '🎉 Parabéns! Você foi aprovado!', 'exclamação no fim'],
+    ['Reprovado',      'Não foi desta vez',        'sem ponto final, tom suave'],
+    ['On-chain',       '⛓️ Registrado na Blockchain!', 'título case em "Blockchain"'],
+    ['Empty state',    'Nenhum módulo ainda',      'Gere seu primeiro módulo com IA ←'],
+    ['Endereço',       '0x742d35…f4Bb',            'sempre mono, truncado 6+4'],
+  ];
+  return (
+    <div className="panel p-6">
+      <div className="eyebrow mb-4">Dicionário de copy (pt-BR canônico)</div>
+      <div className="grid gap-1 text-sm">
+        {entries.map(([k,v,r]) => (
+          <div key={k} className="grid grid-cols-[140px_1fr_1fr] gap-4 py-2" style={{borderBottom:'1px solid var(--border)'}}>
+            <div className="caption">{k}</div>
+            <div className="font-medium">{v}</div>
+            <div className="caption">{r}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ======================= App =======================
+function App() {
+  const [theme, setTheme] = useTheme();
+  return (
+    <>
+      <TopNav theme={theme} setTheme={setTheme}/>
+      <Hero/>
+
+      <section id="tokens">
+        <div className="section-head"><span className="num">01</span><h2 className="sg">Tokens</h2></div>
+        <ColorGrid/>
+        <div className="mt-10"/>
+        <div className="eyebrow mb-3">Tipografia</div>
+        <TypeSpec/>
+      </section>
+
+      <section id="components">
+        <div className="section-head"><span className="num">02</span><h2 className="sg">Componentes</h2></div>
+        <div className="grid md:grid-cols-2 gap-5">
+          <ButtonsRow/>
+          <CopyDict/>
+        </div>
+        <div className="mt-5"><NewComponents/></div>
+      </section>
+
+      <section id="states">
+        <div className="section-head"><span className="num">03</span><h2 className="sg">Estados especiais</h2></div>
+        <div className="grid md:grid-cols-2 gap-5">
+          <AIStreaming/>
+          <BlockchainStamp/>
+        </div>
+        <p className="caption mt-4">Dois momentos que precisam ser memoráveis: quando a IA gera (texto "digitando" com caret roxo) e quando grava on-chain (carimbo com animação de escala + rotação leve).</p>
+      </section>
+
+      <section id="dashboard">
+        <div className="section-head"><span className="num">04</span><h2 className="sg">Dashboard v2</h2></div>
+        <DashboardV2/>
+      </section>
+
+      <section id="motif">
+        <div className="section-head"><span className="num">05</span><h2 className="sg">Motivo gráfico</h2></div>
+        <div className="grid md:grid-cols-2 gap-5">
+          <div className="panel p-10 hash-grid"><div className="eyebrow">hash-grid</div><p className="mt-3 body-sm">Grade pontilhada 24×24 em roxo a 8% opacity. Usar em heros, cards "on-chain" e empty states. Único padrão decorativo do sistema.</p></div>
+          <div className="panel p-10"><div className="eyebrow">circuit trace</div><div className="circuit-trace mt-6"/><p className="mt-4 body-sm">Linha tracejada roxa 2px. Usar como divisor em certificados e receipts blockchain.</p></div>
+        </div>
+      </section>
+
+      <footer className="py-12 px-6 text-center caption" style={{borderTop:'1px solid var(--border)'}}>
+        AI-DLH Design System · v2 "Circuit &amp; Ink" · April 2026
+      </footer>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

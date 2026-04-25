@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 64" width="280" height="64">
+  <defs>
+    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7c3aed"></stop>
+      <stop offset="100%" stop-color="#22d3ee"></stop>
+    </linearGradient>
+  </defs>
+  <g transform="translate(4 4)">
+    <path d="M28 0 L52 14 L52 42 L28 56 L4 42 L4 14 Z" fill="url(#g2)"></path>
+    <circle cx="28" cy="28" r="4" fill="#ffffff"></circle>
+    <circle cx="18" cy="21" r="2" fill="#ffffff" opacity=".85"></circle>
+    <circle cx="38" cy="21" r="2" fill="#ffffff" opacity=".85"></circle>
+    <circle cx="18" cy="35" r="2" fill="#ffffff" opacity=".85"></circle>
+    <circle cx="38" cy="35" r="2" fill="#ffffff" opacity=".85"></circle>
+    <g stroke="#ffffff" stroke-width="1.2" opacity=".7">
+      <line x1="19.5" y1="22" x2="25.5" y2="26"></line>
+      <line x1="36.5" y1="22" x2="30.5" y2="26"></line>
+      <line x1="19.5" y1="34" x2="25.5" y2="30"></line>
+      <line x1="36.5" y1="34" x2="30.5" y2="30"></line>
+    </g>
+  </g>
+  <text x="72" y="40" font-family="Space Grotesk, Inter, sans-serif" font-size="26" font-weight="700" fill="#161514" letter-spacing="-0.02em">AI-DLH</text>
+</svg>

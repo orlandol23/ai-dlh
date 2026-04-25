@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Semantic colors (v2)</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;padding:0;background:#fff;font-family:var(--font-sans);}
+  .wrap{padding:18px 24px;display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+  .card{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+  .head{display:flex;align-items:center;gap:8px;padding:10px;}
+  .dot{width:14px;height:14px;border-radius:999px;}
+  .label{font-size:12px;font-weight:600;}
+  .bg{padding:8px 10px;font-size:11px;border-top:1px solid;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="head"><div class="dot" style="background:#16a34a"></div><div class="label">Success</div></div>
+    <div class="bg" style="background:#f0fdf4;border-color:#bbf7d0;color:#14532d">Aprovado ✅</div>
+  </div>
+  <div class="card">
+    <div class="head"><div class="dot" style="background:#d97706"></div><div class="label">Warning</div></div>
+    <div class="bg" style="background:#fffbeb;border-color:#fde68a;color:#78350f">Pendente ⚠️</div>
+  </div>
+  <div class="card">
+    <div class="head"><div class="dot" style="background:#dc2626"></div><div class="label">Error</div></div>
+    <div class="bg" style="background:#fef2f2;border-color:#fecaca;color:#7f1d1d">Reprovado ❌</div>
+  </div>
+  <div class="card">
+    <div class="head"><div class="dot" style="background:#06b6d4"></div><div class="label">Info · ciano</div></div>
+    <div class="bg" style="background:#ecfeff;border-color:#cffafe;color:#164e63">Já completou</div>
+  </div>
+  <div class="card">
+    <div class="head"><div class="dot" style="background:#7c3aed"></div><div class="label">On-chain · roxo</div></div>
+    <div class="bg" style="background:#f5f3ff;border-color:#ddd6fe;color:#4c1d95">⛓️ Na Blockchain</div>
+  </div>
+</div>
+</body></html>

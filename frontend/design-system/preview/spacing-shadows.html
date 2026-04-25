@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Shadows (v2)</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;padding:0;font-family:var(--font-sans);background:#fbfaf9;}
+  .wrap{padding:22px 24px;display:grid;grid-template-columns:repeat(5,1fr);gap:18px;}
+  .cell{display:flex;flex-direction:column;align-items:center;gap:10px;}
+  .card{width:120px;height:72px;background:#fff;border:1px solid #e2ddd6;border-radius:10px;}
+  .name{font-size:12px;font-weight:600;text-align:center;}
+  .hex{font-family:var(--font-mono);font-size:9px;color:var(--muted-foreground);text-align:center;max-width:140px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="cell"><div class="card" style="box-shadow:0 1px 3px 0 rgba(76,29,149,.08),0 1px 2px -1px rgba(76,29,149,.06)"></div><div class="name">shadow-sm</div><div class="hex">cards padrão · tint roxo</div></div>
+  <div class="cell"><div class="card" style="box-shadow:0 4px 6px -1px rgba(76,29,149,.10),0 2px 4px -2px rgba(76,29,149,.06)"></div><div class="name">shadow</div><div class="hex">elevação default</div></div>
+  <div class="cell"><div class="card" style="box-shadow:0 10px 15px -3px rgba(76,29,149,.12),0 4px 6px -4px rgba(76,29,149,.08)"></div><div class="name">shadow-md</div><div class="hex">hover / popover</div></div>
+  <div class="cell"><div class="card" style="box-shadow:0 20px 25px -5px rgba(76,29,149,.14),0 8px 10px -6px rgba(76,29,149,.08)"></div><div class="name">shadow-lg</div><div class="hex">dialogs</div></div>
+  <div class="cell"><div class="card" style="box-shadow:0 0 0 4px rgba(124,58,237,.12),0 0 24px 0 rgba(124,58,237,.20)"></div><div class="name">shadow-glow ✨</div><div class="hex">CTA hover · assinatura</div></div>
+</div>
+</body></html>

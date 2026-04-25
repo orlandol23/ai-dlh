@@ -82,13 +82,22 @@ export const OnChainTimeline = ({
             >
               {isOnChain ? '⛓' : passed ? '✓' : '·'}
             </span>
-            <button
-              type="button"
-              onClick={() => navigate(`/module/${r.moduleId}`)}
-              className="w-full flex items-start justify-between gap-3 rounded-md border border-border bg-card p-3 text-left hover:border-primary/40 hover:bg-muted/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-              aria-label={`Abrir ${r.module?.title ?? `módulo ${r.moduleId}`} (score ${r.score}%)`}
-            >
-              <div className="min-w-0 flex-1">
+            <div className="relative flex items-start justify-between gap-3 rounded-md border border-border bg-card p-3 hover:border-primary/40 hover:bg-muted/30 transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background">
+              {/*
+                Stretched-link pattern: an invisible button covers the whole
+                card so clicks anywhere navigate. The visible content has
+                `pointer-events-none` to let clicks fall through. The Etherscan
+                <a> uses `relative` to gain a higher stacking context, staying
+                clickable as a separate target — no interactive-in-interactive
+                nesting.
+              */}
+              <button
+                type="button"
+                onClick={() => navigate(`/module/${r.moduleId}`)}
+                aria-label={`Abrir ${r.module?.title ?? `módulo ${r.moduleId}`} (score ${r.score}%)`}
+                className="absolute inset-0 rounded-md focus:outline-none"
+              />
+              <div className="min-w-0 flex-1 pointer-events-none">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-sm truncate">
                     {r.module?.title ?? `Módulo #${r.moduleId}`}
@@ -119,14 +128,13 @@ export const OnChainTimeline = ({
                   href={getEtherscanUrl(r.transactionHash!)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="font-mono text-[11px] text-primary hover:underline shrink-0"
+                  className="relative font-mono text-[11px] text-primary hover:underline shrink-0"
                   title="Ver no Etherscan"
                 >
                   {shortHash(r.transactionHash!)} ↗
                 </a>
               )}
-            </button>
+            </div>
           </li>
         );
       })}

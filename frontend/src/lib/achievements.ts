@@ -98,7 +98,6 @@ export function deriveAchievements(records: ProgressLike[]): Achievement[] {
 export interface SparklinePoint {
   score: number;
   completedAt: Date;
-  title: string;
 }
 
 /** Returns the last N records for sparkline (oldest → newest). */
@@ -115,6 +114,5 @@ export function buildSparklinePoints(
     .map((r) => ({
       score: r.score,
       completedAt: new Date(r.completedAt),
-      title: '',
     }));
 }

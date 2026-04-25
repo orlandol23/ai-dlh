@@ -37,7 +37,8 @@ export const DashboardPage = () => {
       return;
     }
     const id = window.setInterval(() => {
-      setStreamStage((s) => Math.min(s + 1, STREAM_STAGES.length - 1));
+      // Cycle through stages while generating; no fixed total duration.
+      setStreamStage((s) => (s + 1) % STREAM_STAGES.length);
     }, 2200);
     return () => window.clearInterval(id);
   }, [isGenerating]);

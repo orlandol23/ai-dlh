@@ -1,4 +1,5 @@
 import { pgTable, serial, varchar, text, integer, timestamp, json, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
 
 /**
  * Users table - stores wallet addresses and user information
@@ -96,3 +97,39 @@ export type NewModule = typeof modules.$inferInsert;
 
 export type ProgressRecord = typeof progressRecords.$inferSelect;
 export type NewProgressRecord = typeof progressRecords.$inferInsert;
+
+/**
+ * Drizzle relational-query mappings.
+ *
+ * `references()` on a column declares a SQL foreign key but does NOT teach
+ * the relational query API (`db.query.X.findMany({ with: { ... } })`) how
+ * to traverse it — that requires explicit `relations()` definitions, one
+ * per side of the join. Without them, the query builder fails at runtime
+ * when constructing the relational query with "Cannot read properties of
+ * undefined (reading 'referencedTable')" inside drizzle-orm/relations.js,
+ * which is exactly the error progress.getUserProgress was hitting in
+ * production.
+ */
+export const usersRelations = relations(users, ({ many }) => ({
+  modules: many(modules),
+  progressRecords: many(progressRecords),
+}));
+
+export const modulesRelations = relations(modules, ({ one, many }) => ({
+  user: one(users, {
+    fields: [modules.userId],
+    references: [users.id],
+  }),
+  progressRecords: many(progressRecords),
+}));
+
+export const progressRecordsRelations = relations(progressRecords, ({ one }) => ({
+  user: one(users, {
+    fields: [progressRecords.userId],
+    references: [users.id],
+  }),
+  module: one(modules, {
+    fields: [progressRecords.moduleId],
+    references: [modules.id],
+  }),
+}));

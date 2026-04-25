@@ -1,13 +1,46 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { createExpressMiddleware } from '@trpc/server/adapters/express';
+import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import { appRouter } from './routers/index.js';
 import { createContext } from './context.js';
 import { corsMiddleware } from './middleware/cors.middleware.js';
 import { logger } from './utils/logger.js';
 import { config } from './utils/env.js';
-import { checkDatabaseConnection } from './db/index.js';
+import { checkDatabaseConnection, db } from './db/index.js';
 import { web3Service } from './services/web3.service.js';
 import { aiService } from './services/ai.service.js';
+
+/**
+ * Apply pending Drizzle migrations on cold boot.
+ *
+ * Drizzle records applied migrations in `__drizzle_migrations`, so this is
+ * idempotent — a server that restarts on an already-migrated database
+ * does nothing here. We block the listen call until it finishes so a
+ * partially-migrated DB never serves traffic; if the migration fails
+ * the process exits non-zero and Railway restarts the deployment.
+ *
+ * Disable with SKIP_MIGRATIONS=true (e.g., when migrations are run by a
+ * separate one-off job during release).
+ */
+async function runMigrations(): Promise<void> {
+  if (process.env.SKIP_MIGRATIONS === 'true') {
+    logger.info('Migrations skipped (SKIP_MIGRATIONS=true)');
+    return;
+  }
+
+  // Resolve relative to *this* compiled module so the path stays correct
+  // regardless of CWD (Railway's start command, local `node dist/...`, etc.).
+  // At runtime this file is server/dist/index.js → migrations live two
+  // levels up: ../db/migrations.
+  const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+  const migrationsFolder = path.resolve(moduleDir, '..', 'db', 'migrations');
+
+  logger.info(`Applying migrations from ${migrationsFolder}`);
+  await migrate(db, { migrationsFolder });
+  logger.info('Migrations applied');
+}
 
 // Create Express app
 const app = express();
@@ -69,9 +102,16 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   });
 });
 
-// Start server
+// Start server (after migrations succeed)
 const PORT = parseInt(config.PORT);
 const HOST = '0.0.0.0'; // Listen on all interfaces for Railway
+
+try {
+  await runMigrations();
+} catch (error) {
+  logger.error('Failed to apply migrations; refusing to start server', error as Error);
+  process.exit(1);
+}
 
 app.listen(PORT, HOST, () => {
   logger.info('═══════════════════════════════════════════════════════════');

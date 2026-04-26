@@ -46,11 +46,18 @@ export const Sparkline = ({ points, height = 96, className }: SparklineProps) =>
     return (
       <div
         className={cn(
-          'flex items-center justify-center h-24 text-sm text-muted-foreground border border-dashed border-border rounded-md',
+          'relative rounded-lg border border-dashed border-primary/30 bg-card p-12 text-center hash-grid overflow-hidden',
           className
         )}
       >
-        {t('sparkline.noData')}
+        <div className="text-5xl mb-4" aria-hidden="true">📊</div>
+        <p className="font-display text-lg font-semibold tracking-tight">
+          {t('sparkline.empty.title')}
+        </p>
+        <p className="text-sm text-muted-foreground mt-1">
+          {t('sparkline.empty.hint')}{' '}
+          <span className="font-mono inline-block rtl:rotate-180" aria-hidden="true">←</span>
+        </p>
       </div>
     );
   }

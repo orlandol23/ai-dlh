@@ -14,8 +14,11 @@
     "title": "Évolution du score",
     "descriptionEmpty": "Aucun quiz complété — la ligne pointillée marque le seuil de 70 %",
     "descriptionWithData": "Derniers {{count}} quiz — ligne pointillée marque le seuil de 70 %",
-    "noData": "Aucune donnée — complétez votre premier quiz",
-    "aria": "Historique des scores"
+    "aria": "Historique des scores",
+    "empty": {
+      "title": "Aucun quiz complété",
+      "hint": "Générez votre premier module avec l'IA"
+    }
   },
   "achievements": {
     "eyebrow": "Succès",
@@ -51,10 +54,13 @@
     "eyebrow": "Chronologie",
     "title": "Activité on-chain",
     "description": "Quiz complétés et leurs empreintes sur la blockchain Sepolia",
-    "emptyDefault": "Aucun module — générez le premier avec l'IA",
     "moduleAriaLabel": "Ouvrir {{title}} (score {{score}} %)",
     "moduleFallback": "Module #{{id}}",
-    "viewOnEtherscan": "Voir sur Etherscan"
+    "viewOnEtherscan": "Voir sur Etherscan",
+    "empty": {
+      "title": "Aucun certificat on-chain",
+      "hint": "Validez un quiz pour générer votre premier certificat"
+    }
   },
   "generator": {
     "eyebrow": "🤖 IA",

@@ -43,7 +43,6 @@ export const OnChainTimeline = ({
 }: OnChainTimelineProps) => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation('dashboard');
-  const resolvedEmptyHint = emptyHint ?? t('timeline.emptyDefault');
   const sorted = [...records].sort(
     (a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
   );
@@ -52,11 +51,19 @@ export const OnChainTimeline = ({
     return (
       <div
         className={cn(
-          'flex items-center justify-center h-32 text-sm text-muted-foreground border border-dashed border-border rounded-md',
+          'relative rounded-lg border border-dashed border-primary/30 bg-card p-12 text-center hash-grid overflow-hidden',
           className
         )}
       >
-        {resolvedEmptyHint}
+        <div className="text-5xl mb-4" aria-hidden="true">⛓️</div>
+        <p className="font-display text-lg font-semibold tracking-tight">
+          {emptyHint ?? t('timeline.empty.title')}
+        </p>
+        {!emptyHint && (
+          <p className="text-sm text-muted-foreground mt-1">
+            {t('timeline.empty.hint')}
+          </p>
+        )}
       </div>
     );
   }

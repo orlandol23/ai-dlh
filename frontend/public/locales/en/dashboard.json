@@ -14,8 +14,11 @@
     "title": "Score evolution",
     "descriptionEmpty": "No quiz completed yet — the dashed line marks the 70% threshold",
     "descriptionWithData": "Last {{count}} quizzes — dashed line marks the 70% threshold",
-    "noData": "No data yet — complete your first quiz",
-    "aria": "Score history"
+    "aria": "Score history",
+    "empty": {
+      "title": "No quiz completed yet",
+      "hint": "Generate your first module with AI"
+    }
   },
   "achievements": {
     "eyebrow": "Achievements",
@@ -51,10 +54,13 @@
     "eyebrow": "Timeline",
     "title": "On-chain activity",
     "description": "Completed quizzes and their stamps on the Sepolia blockchain",
-    "emptyDefault": "No module yet — generate your first with AI",
     "moduleAriaLabel": "Open {{title}} (score {{score}}%)",
     "moduleFallback": "Module #{{id}}",
-    "viewOnEtherscan": "View on Etherscan"
+    "viewOnEtherscan": "View on Etherscan",
+    "empty": {
+      "title": "No on-chain certificate yet",
+      "hint": "Pass a quiz to mint your first certificate"
+    }
   },
   "generator": {
     "eyebrow": "🤖 AI",

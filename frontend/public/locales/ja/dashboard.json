@@ -14,8 +14,11 @@
     "title": "スコアの推移",
     "descriptionEmpty": "まだクイズが完了していません — 破線は70%のしきい値を示します",
     "descriptionWithData": "直近{{count}}件のクイズ — 破線は70%のしきい値",
-    "noData": "データはまだありません — 最初のクイズに挑戦してください",
-    "aria": "スコア履歴"
+    "aria": "スコア履歴",
+    "empty": {
+      "title": "まだクイズが完了していません",
+      "hint": "AIで最初のモジュールを生成しましょう"
+    }
   },
   "achievements": {
     "eyebrow": "実績",
@@ -51,10 +54,13 @@
     "eyebrow": "タイムライン",
     "title": "オンチェーン活動",
     "description": "完了したクイズとSepoliaブロックチェーン上のスタンプ",
-    "emptyDefault": "モジュールはまだありません — AIで最初の一つを生成しましょう",
     "moduleAriaLabel": "{{title}}を開く (スコア {{score}}%)",
     "moduleFallback": "モジュール #{{id}}",
-    "viewOnEtherscan": "Etherscanで確認"
+    "viewOnEtherscan": "Etherscanで確認",
+    "empty": {
+      "title": "オンチェーン証明書はまだありません",
+      "hint": "クイズに合格して最初の証明書を獲得しましょう"
+    }
   },
   "generator": {
     "eyebrow": "🤖 AI",

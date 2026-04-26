@@ -1,1 +1,60 @@
-{}
+{
+  "header": {
+    "title": "Panel",
+    "logoAlt": "AI-DLH"
+  },
+  "stats": {
+    "total": { "eyebrow": "Total", "label": "Módulos generados" },
+    "passed": { "eyebrow": "Aprobados", "label": "Puntuación ≥ 70%" },
+    "avgScore": { "eyebrow": "Puntuación media", "label": "En todos los quizzes" },
+    "onChain": { "eyebrow": "⛓ On-chain", "label": "Certificados activos" }
+  },
+  "sparkline": {
+    "eyebrow": "Historial",
+    "title": "Evolución de puntuación",
+    "descriptionEmpty": "Ningún quiz completado aún — la línea discontinua marca el umbral del 70%",
+    "descriptionWithData": "Últimos {{count}} quizzes — línea discontinua marca el umbral del 70%"
+  },
+  "achievements": { "eyebrow": "Logros" },
+  "timeline": {
+    "eyebrow": "Cronología",
+    "title": "Actividad on-chain",
+    "description": "Quizzes completados y sus sellos en la blockchain Sepolia"
+  },
+  "generator": {
+    "eyebrow": "🤖 IA",
+    "title": "Generar módulo",
+    "description": "Contenido personalizado bajo demanda",
+    "topicLabel": "Tema de estudio",
+    "topicPlaceholder": "Ej.: TypeScript, React Hooks…",
+    "levelLabel": "Nivel",
+    "levels": {
+      "beginner": "Principiante",
+      "intermediate": "Intermedio",
+      "advanced": "Avanzado"
+    },
+    "submit": "🤖 Generar con IA",
+    "generating": "Generando…",
+    "workingEyebrow": "IA trabajando",
+    "stages": {
+      "0": "Analizando el tema",
+      "1": "Estructurando el módulo",
+      "2": "Generando contenido personalizado",
+      "3": "Construyendo el quiz",
+      "4": "Casi listo"
+    }
+  },
+  "pending": {
+    "eyebrow": "Pendientes ({{count}})",
+    "minutes": "min"
+  },
+  "toasts": {
+    "moduleGenerated": "🎉 ¡Módulo generado!",
+    "moduleGeneratedDesc": "Abriendo el contenido…",
+    "unexpectedResponse": "Respuesta inesperada al generar módulo",
+    "unexpectedResponseDesc": "El módulo se creó, pero no se pudo abrir automáticamente.",
+    "generationError": "Error al generar módulo",
+    "topicTooShort": "Tema demasiado corto",
+    "topicTooShortDesc": "El tema debe tener al menos 3 caracteres."
+  }
+}

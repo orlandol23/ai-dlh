@@ -1,1 +1,60 @@
-{}
+{
+  "header": {
+    "title": "لوحة التحكم",
+    "logoAlt": "AI-DLH"
+  },
+  "stats": {
+    "total": { "eyebrow": "الإجمالي", "label": "الوحدات المُولَّدة" },
+    "passed": { "eyebrow": "مجتازة", "label": "النتيجة ≥ 70٪" },
+    "avgScore": { "eyebrow": "متوسط النتيجة", "label": "في جميع الاختبارات" },
+    "onChain": { "eyebrow": "⛓ على السلسلة", "label": "الشهادات النشطة" }
+  },
+  "sparkline": {
+    "eyebrow": "السجل",
+    "title": "تطوّر النتيجة",
+    "descriptionEmpty": "لم يُكتمل أي اختبار بعد — يشير الخط المتقطع إلى عتبة 70٪",
+    "descriptionWithData": "آخر {{count}} اختبارات — الخط المتقطع يشير إلى عتبة 70٪"
+  },
+  "achievements": { "eyebrow": "الإنجازات" },
+  "timeline": {
+    "eyebrow": "الجدول الزمني",
+    "title": "النشاط على السلسلة",
+    "description": "الاختبارات المُكتملة وأختامها على بلوكتشين Sepolia"
+  },
+  "generator": {
+    "eyebrow": "🤖 الذكاء الاصطناعي",
+    "title": "توليد وحدة",
+    "description": "محتوى مخصّص حسب الطلب",
+    "topicLabel": "موضوع الدراسة",
+    "topicPlaceholder": "مثال: TypeScript، React Hooks…",
+    "levelLabel": "المستوى",
+    "levels": {
+      "beginner": "مبتدئ",
+      "intermediate": "متوسط",
+      "advanced": "متقدم"
+    },
+    "submit": "🤖 توليد بالذكاء الاصطناعي",
+    "generating": "جارٍ التوليد…",
+    "workingEyebrow": "الذكاء الاصطناعي يعمل",
+    "stages": {
+      "0": "تحليل الموضوع",
+      "1": "هيكلة الوحدة",
+      "2": "توليد محتوى مخصّص",
+      "3": "بناء الاختبار",
+      "4": "اقتربنا"
+    }
+  },
+  "pending": {
+    "eyebrow": "قيد الانتظار ({{count}})",
+    "minutes": "دقيقة"
+  },
+  "toasts": {
+    "moduleGenerated": "🎉 تم توليد الوحدة!",
+    "moduleGeneratedDesc": "جارٍ فتح المحتوى…",
+    "unexpectedResponse": "استجابة غير متوقعة عند توليد الوحدة",
+    "unexpectedResponseDesc": "تم إنشاء الوحدة، لكن تعذّر فتحها تلقائيًا.",
+    "generationError": "خطأ في توليد الوحدة",
+    "topicTooShort": "الموضوع قصير جدًا",
+    "topicTooShortDesc": "يجب أن يحتوي الموضوع على 3 أحرف على الأقل."
+  }
+}

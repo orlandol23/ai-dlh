@@ -1,1 +1,60 @@
-{}
+{
+  "header": {
+    "title": "ダッシュボード",
+    "logoAlt": "AI-DLH"
+  },
+  "stats": {
+    "total": { "eyebrow": "合計", "label": "生成したモジュール" },
+    "passed": { "eyebrow": "合格", "label": "スコア70%以上" },
+    "avgScore": { "eyebrow": "平均スコア", "label": "全クイズの平均" },
+    "onChain": { "eyebrow": "⛓ オンチェーン", "label": "有効な証明書" }
+  },
+  "sparkline": {
+    "eyebrow": "履歴",
+    "title": "スコアの推移",
+    "descriptionEmpty": "まだクイズが完了していません — 破線は70%のしきい値を示します",
+    "descriptionWithData": "直近{{count}}件のクイズ — 破線は70%のしきい値"
+  },
+  "achievements": { "eyebrow": "実績" },
+  "timeline": {
+    "eyebrow": "タイムライン",
+    "title": "オンチェーン活動",
+    "description": "完了したクイズとSepoliaブロックチェーン上のスタンプ"
+  },
+  "generator": {
+    "eyebrow": "🤖 AI",
+    "title": "モジュール生成",
+    "description": "オンデマンドの個別コンテンツ",
+    "topicLabel": "学習トピック",
+    "topicPlaceholder": "例: TypeScript, React Hooks…",
+    "levelLabel": "レベル",
+    "levels": {
+      "beginner": "初級",
+      "intermediate": "中級",
+      "advanced": "上級"
+    },
+    "submit": "🤖 AIで生成",
+    "generating": "生成中…",
+    "workingEyebrow": "AI処理中",
+    "stages": {
+      "0": "トピックを分析中",
+      "1": "モジュールを構築中",
+      "2": "個別コンテンツを生成中",
+      "3": "クイズを作成中",
+      "4": "もう少しです"
+    }
+  },
+  "pending": {
+    "eyebrow": "未完了 ({{count}})",
+    "minutes": "分"
+  },
+  "toasts": {
+    "moduleGenerated": "🎉 モジュールを生成しました!",
+    "moduleGeneratedDesc": "コンテンツを開いています…",
+    "unexpectedResponse": "モジュール生成で予期しない応答",
+    "unexpectedResponseDesc": "モジュールは作成されましたが、自動で開けませんでした。",
+    "generationError": "モジュール生成エラー",
+    "topicTooShort": "トピックが短すぎます",
+    "topicTooShortDesc": "トピックは3文字以上必要です。"
+  }
+}

@@ -13,13 +13,22 @@
     "eyebrow": "History",
     "title": "Score evolution",
     "descriptionEmpty": "No quiz completed yet — the dashed line marks the 70% threshold",
-    "descriptionWithData": "Last {{count}} quizzes — dashed line marks the 70% threshold"
+    "descriptionWithData": "Last {{count}} quizzes — dashed line marks the 70% threshold",
+    "noData": "No data yet — complete your first quiz",
+    "aria": "Score history"
   },
-  "achievements": { "eyebrow": "Achievements" },
+  "achievements": {
+    "eyebrow": "Achievements",
+    "unlockedSuffix": " (unlocked)"
+  },
   "timeline": {
     "eyebrow": "Timeline",
     "title": "On-chain activity",
-    "description": "Completed quizzes and their stamps on the Sepolia blockchain"
+    "description": "Completed quizzes and their stamps on the Sepolia blockchain",
+    "emptyDefault": "No module yet — generate your first with AI",
+    "moduleAriaLabel": "Open {{title}} (score {{score}}%)",
+    "moduleFallback": "Module #{{id}}",
+    "viewOnEtherscan": "View on Etherscan"
   },
   "generator": {
     "eyebrow": "🤖 AI",

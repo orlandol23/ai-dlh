@@ -13,13 +13,22 @@
     "eyebrow": "السجل",
     "title": "تطوّر النتيجة",
     "descriptionEmpty": "لم يُكتمل أي اختبار بعد — يشير الخط المتقطع إلى عتبة 70٪",
-    "descriptionWithData": "آخر {{count}} اختبارات — الخط المتقطع يشير إلى عتبة 70٪"
+    "descriptionWithData": "آخر {{count}} اختبارات — الخط المتقطع يشير إلى عتبة 70٪",
+    "noData": "لا توجد بيانات بعد — أكمل اختبارك الأول",
+    "aria": "سجل النتائج"
   },
-  "achievements": { "eyebrow": "الإنجازات" },
+  "achievements": {
+    "eyebrow": "الإنجازات",
+    "unlockedSuffix": " (مفتوح)"
+  },
   "timeline": {
     "eyebrow": "الجدول الزمني",
     "title": "النشاط على السلسلة",
-    "description": "الاختبارات المُكتملة وأختامها على بلوكتشين Sepolia"
+    "description": "الاختبارات المُكتملة وأختامها على بلوكتشين Sepolia",
+    "emptyDefault": "لا توجد وحدات بعد — ولّد أول وحدة بالذكاء الاصطناعي",
+    "moduleAriaLabel": "فتح {{title}} (النتيجة {{score}}٪)",
+    "moduleFallback": "الوحدة #{{id}}",
+    "viewOnEtherscan": "عرض على Etherscan"
   },
   "generator": {
     "eyebrow": "🤖 الذكاء الاصطناعي",

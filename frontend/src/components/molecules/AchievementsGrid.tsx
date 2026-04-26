@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import type { Achievement } from '@/lib/achievements';
 import { Tooltip } from '@/components/atoms/Tooltip';
@@ -8,6 +9,7 @@ interface AchievementsGridProps {
 }
 
 export const AchievementsGrid = ({ achievements, className }: AchievementsGridProps) => {
+  const { t } = useTranslation('dashboard');
   return (
     <div className={cn('grid grid-cols-3 gap-3', className)}>
       {achievements.map((a) => (
@@ -27,7 +29,7 @@ export const AchievementsGrid = ({ achievements, className }: AchievementsGridPr
         >
           <button
             type="button"
-            aria-label={`${a.label}${a.unlocked ? ' (desbloqueada)' : ''}: ${a.description}`}
+            aria-label={`${a.label}${a.unlocked ? t('achievements.unlockedSuffix') : ''}: ${a.description}`}
             className={cn(
               'flex flex-col items-center gap-1 p-3 rounded-md border transition-colors text-center w-full',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',

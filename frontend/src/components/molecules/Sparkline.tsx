@@ -1,4 +1,5 @@
 import { useId, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import type { SparklinePoint } from '@/lib/achievements';
 
@@ -12,6 +13,7 @@ const PAD_X = 6;
 const PAD_Y = 8;
 
 export const Sparkline = ({ points, height = 96, className }: SparklineProps) => {
+  const { t } = useTranslation('dashboard');
   const reactId = useId();
   const strokeId = `spark-stroke-${reactId}`;
   const fillId = `spark-fill-${reactId}`;
@@ -48,7 +50,7 @@ export const Sparkline = ({ points, height = 96, className }: SparklineProps) =>
           className
         )}
       >
-        Sem dados ainda — complete seu primeiro quiz
+        {t('sparkline.noData')}
       </div>
     );
   }
@@ -58,7 +60,7 @@ export const Sparkline = ({ points, height = 96, className }: SparklineProps) =>
       viewBox={`0 0 ${width} ${height}`}
       preserveAspectRatio="none"
       className={cn('w-full h-24 spark', className)}
-      aria-label="Histórico de scores"
+      aria-label={t('sparkline.aria')}
     >
       <defs>
         <linearGradient id={strokeId} x1="0" y1="0" x2="1" y2="0">

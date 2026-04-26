@@ -13,13 +13,22 @@
     "eyebrow": "履歴",
     "title": "スコアの推移",
     "descriptionEmpty": "まだクイズが完了していません — 破線は70%のしきい値を示します",
-    "descriptionWithData": "直近{{count}}件のクイズ — 破線は70%のしきい値"
+    "descriptionWithData": "直近{{count}}件のクイズ — 破線は70%のしきい値",
+    "noData": "データはまだありません — 最初のクイズに挑戦してください",
+    "aria": "スコア履歴"
   },
-  "achievements": { "eyebrow": "実績" },
+  "achievements": {
+    "eyebrow": "実績",
+    "unlockedSuffix": " (解除済み)"
+  },
   "timeline": {
     "eyebrow": "タイムライン",
     "title": "オンチェーン活動",
-    "description": "完了したクイズとSepoliaブロックチェーン上のスタンプ"
+    "description": "完了したクイズとSepoliaブロックチェーン上のスタンプ",
+    "emptyDefault": "モジュールはまだありません — AIで最初の一つを生成しましょう",
+    "moduleAriaLabel": "{{title}}を開く (スコア {{score}}%)",
+    "moduleFallback": "モジュール #{{id}}",
+    "viewOnEtherscan": "Etherscanで確認"
   },
   "generator": {
     "eyebrow": "🤖 AI",

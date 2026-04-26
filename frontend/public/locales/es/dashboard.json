@@ -13,13 +13,22 @@
     "eyebrow": "Historial",
     "title": "Evolución de puntuación",
     "descriptionEmpty": "Ningún quiz completado aún — la línea discontinua marca el umbral del 70%",
-    "descriptionWithData": "Últimos {{count}} quizzes — línea discontinua marca el umbral del 70%"
+    "descriptionWithData": "Últimos {{count}} quizzes — línea discontinua marca el umbral del 70%",
+    "noData": "Sin datos aún — completa tu primer quiz",
+    "aria": "Historial de puntuaciones"
   },
-  "achievements": { "eyebrow": "Logros" },
+  "achievements": {
+    "eyebrow": "Logros",
+    "unlockedSuffix": " (desbloqueado)"
+  },
   "timeline": {
     "eyebrow": "Cronología",
     "title": "Actividad on-chain",
-    "description": "Quizzes completados y sus sellos en la blockchain Sepolia"
+    "description": "Quizzes completados y sus sellos en la blockchain Sepolia",
+    "emptyDefault": "Aún no hay módulos — genera el primero con IA",
+    "moduleAriaLabel": "Abrir {{title}} (puntuación {{score}}%)",
+    "moduleFallback": "Módulo #{{id}}",
+    "viewOnEtherscan": "Ver en Etherscan"
   },
   "generator": {
     "eyebrow": "🤖 IA",

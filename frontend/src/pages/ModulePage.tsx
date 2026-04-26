@@ -231,7 +231,7 @@ export const ModulePage = () => {
                 <div className="mb-4">
                   <div className="w-full bg-muted rounded-full h-2">
                     <div
-                      className="bg-primary h-2 rounded-full transition-all"
+                      className="h-2 rounded-full transition-all duration-300 bg-gradient-to-r from-primary to-accent"
                       style={{ width: `${progressPercentage}%` }}
                     />
                   </div>

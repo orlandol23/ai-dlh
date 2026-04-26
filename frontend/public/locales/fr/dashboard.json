@@ -47,8 +47,24 @@
       "streak": {
         "label": "Série",
         "description": "3 réussites consécutives"
+      },
+      "streak-3": {
+        "label": "Série de 3 jours",
+        "description": "Étudiez 3 jours d'affilée"
+      },
+      "streak-7": {
+        "label": "Série de 7 jours",
+        "description": "Étudiez 7 jours d'affilée"
+      },
+      "streak-30": {
+        "label": "Série de 30 jours",
+        "description": "Étudiez 30 jours d'affilée"
       }
     }
+  },
+  "streak": {
+    "badge_one": "{{count}} jour de série",
+    "badge_other": "{{count}} jours de série"
   },
   "timeline": {
     "eyebrow": "Chronologie",

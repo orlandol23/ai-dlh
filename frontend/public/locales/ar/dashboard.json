@@ -47,8 +47,24 @@
       "streak": {
         "label": "سلسلة",
         "description": "3 نتائج ناجحة متتالية"
+      },
+      "streak-3": {
+        "label": "سلسلة 3 أيام",
+        "description": "ادرس 3 أيام متتالية"
+      },
+      "streak-7": {
+        "label": "سلسلة 7 أيام",
+        "description": "ادرس 7 أيام متتالية"
+      },
+      "streak-30": {
+        "label": "سلسلة 30 يوم",
+        "description": "ادرس 30 يوم متتالي"
       }
     }
+  },
+  "streak": {
+    "badge_one": "سلسلة يوم واحد",
+    "badge_other": "سلسلة {{count}} أيام"
   },
   "timeline": {
     "eyebrow": "الجدول الزمني",

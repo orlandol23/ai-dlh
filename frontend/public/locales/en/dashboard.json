@@ -47,8 +47,24 @@
       "streak": {
         "label": "Streak",
         "description": "3 consecutive passing scores"
+      },
+      "streak-3": {
+        "label": "3-day streak",
+        "description": "Study 3 days in a row"
+      },
+      "streak-7": {
+        "label": "7-day streak",
+        "description": "Study 7 days in a row"
+      },
+      "streak-30": {
+        "label": "30-day streak",
+        "description": "Study 30 days in a row"
       }
     }
+  },
+  "streak": {
+    "badge_one": "{{count}} day streak",
+    "badge_other": "{{count}} day streak"
   },
   "timeline": {
     "eyebrow": "Timeline",

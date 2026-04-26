@@ -47,8 +47,24 @@
       "streak": {
         "label": "Sequência",
         "description": "3 aprovações consecutivas"
+      },
+      "streak-3": {
+        "label": "Sequência de 3 dias",
+        "description": "Estude 3 dias seguidos"
+      },
+      "streak-7": {
+        "label": "Sequência de 7 dias",
+        "description": "Estude 7 dias seguidos"
+      },
+      "streak-30": {
+        "label": "Sequência de 30 dias",
+        "description": "Estude 30 dias seguidos"
       }
     }
+  },
+  "streak": {
+    "badge_one": "{{count}} dia de sequência",
+    "badge_other": "{{count}} dias de sequência"
   },
   "timeline": {
     "eyebrow": "Timeline",

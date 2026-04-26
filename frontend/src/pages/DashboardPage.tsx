@@ -24,7 +24,7 @@ import { toast } from '@/components/molecules/Toaster';
 import { useAuth } from '@/hooks/useAuth';
 import { trpc } from '@/lib/trpc';
 import { formatAddress } from '@/lib/utils';
-import { buildSparklinePoints, deriveAchievements } from '@/lib/achievements';
+import { buildSparklinePoints, calculateStreakDays, deriveAchievements } from '@/lib/achievements';
 
 const STAGE_KEYS = ['0', '1', '2', '3', '4'] as const;
 
@@ -61,6 +61,7 @@ export const DashboardPage = () => {
     () => deriveAchievements(progress ?? []),
     [progress]
   );
+  const streakDays = useMemo(() => calculateStreakDays(progress ?? []), [progress]);
   const pendingModules = useMemo(() => {
     // Wait for both queries to resolve. Otherwise progress=undefined makes
     // every module flicker as "pending" until getUserProgress returns.
@@ -123,6 +124,17 @@ export const DashboardPage = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {streakDays > 0 && (
+                <div
+                  className="flex items-center gap-1 px-2 py-1 rounded-full bg-warning-bg border border-warning-border"
+                  aria-label={t('dashboard:streak.badge', { count: streakDays })}
+                  title={t('dashboard:streak.badge', { count: streakDays })}
+                >
+                  <span className="text-warning-fg font-mono text-xs font-semibold">
+                    🔥 {streakDays}
+                  </span>
+                </div>
+              )}
               <LanguageSelector />
               <ThemeToggle />
               <Button variant="outline" onClick={logout}>

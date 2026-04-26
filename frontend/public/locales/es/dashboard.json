@@ -47,8 +47,24 @@
       "streak": {
         "label": "Racha",
         "description": "3 aprobados consecutivos"
+      },
+      "streak-3": {
+        "label": "Racha de 3 días",
+        "description": "Estudia 3 días seguidos"
+      },
+      "streak-7": {
+        "label": "Racha de 7 días",
+        "description": "Estudia 7 días seguidos"
+      },
+      "streak-30": {
+        "label": "Racha de 30 días",
+        "description": "Estudia 30 días seguidos"
       }
     }
+  },
+  "streak": {
+    "badge_one": "{{count}} día de racha",
+    "badge_other": "{{count}} días de racha"
   },
   "timeline": {
     "eyebrow": "Cronología",

@@ -12,7 +12,10 @@ export type AchievementId =
   | 'perfectionist'
   | 'high-flyer'
   | 'polymath'
-  | 'streak';
+  | 'streak'
+  | 'streak-3'
+  | 'streak-7'
+  | 'streak-30';
 
 export interface Achievement {
   id: AchievementId;
@@ -22,13 +25,41 @@ export interface Achievement {
 }
 
 /**
+ * Counts consecutive days of activity (any completed quiz, regardless of score)
+ * ending today, anchored on the user's local timezone day boundary.
+ *
+ * Without timezone awareness, a user in Tokyo could "lose" their streak just
+ * because their local day starts ~9h before UTC midnight.
+ */
+export function calculateStreakDays(records: ProgressLike[], timezone?: string): number {
+  if (records.length === 0) return 0;
+  const tz = timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const dayKey = (date: Date) =>
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: tz,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(date);
+
+  const days = new Set(records.map((r) => dayKey(new Date(r.completedAt))));
+  let streak = 0;
+  const cursor = new Date();
+  while (days.has(dayKey(cursor))) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+/**
  * Derives the achievement set client-side from progress records.
  * Backend has no /achievements endpoint yet — this is the source of truth.
  *
  * Labels/descriptions are NOT returned here — consumers resolve them via
  * `t('dashboard:achievements.items.<id>.label')` so achievements stay localized.
  */
-export function deriveAchievements(records: ProgressLike[]): Achievement[] {
+export function deriveAchievements(records: ProgressLike[], timezone?: string): Achievement[] {
   const onChain = records.filter((r) => r.blockchainStatus === 'confirmed').length;
   const perfect = records.some((r) => r.score === 100);
   const high = records.filter((r) => r.score >= 90).length;
@@ -44,6 +75,8 @@ export function deriveAchievements(records: ProgressLike[]): Achievement[] {
     if (r.score >= 70) streak += 1;
     else break;
   }
+
+  const streakDays = calculateStreakDays(records, timezone);
 
   return [
     {
@@ -80,6 +113,24 @@ export function deriveAchievements(records: ProgressLike[]): Achievement[] {
       emoji: '🎉',
       unlocked: streak >= 3,
       progress: { current: Math.min(streak, 3), target: 3 },
+    },
+    {
+      id: 'streak-3',
+      emoji: '🔥',
+      unlocked: streakDays >= 3,
+      progress: { current: Math.min(streakDays, 3), target: 3 },
+    },
+    {
+      id: 'streak-7',
+      emoji: '🔥',
+      unlocked: streakDays >= 7,
+      progress: { current: Math.min(streakDays, 7), target: 7 },
+    },
+    {
+      id: 'streak-30',
+      emoji: '🔥',
+      unlocked: streakDays >= 30,
+      progress: { current: Math.min(streakDays, 30), target: 30 },
     },
   ];
 }

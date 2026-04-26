@@ -47,8 +47,24 @@
       "streak": {
         "label": "連続記録",
         "description": "3回連続合格"
+      },
+      "streak-3": {
+        "label": "3日連続",
+        "description": "3日連続で学習"
+      },
+      "streak-7": {
+        "label": "7日連続",
+        "description": "7日連続で学習"
+      },
+      "streak-30": {
+        "label": "30日連続",
+        "description": "30日連続で学習"
       }
     }
+  },
+  "streak": {
+    "badge_one": "{{count}}日連続",
+    "badge_other": "{{count}}日連続"
   },
   "timeline": {
     "eyebrow": "タイムライン",

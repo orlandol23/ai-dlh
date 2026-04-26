@@ -73,7 +73,7 @@ export const CertPage = () => {
           <Card className="max-w-md mx-auto">
             <CardContent className="pt-6 text-center">
               <p className="text-lg font-semibold">{t('page.notFound')}</p>
-              <Button className="mt-4" asChild={false} onClick={() => (window.location.href = '/')}>
+              <Button className="mt-4" onClick={() => (window.location.href = '/')}>
                 {t('page.createYour')}
               </Button>
             </CardContent>

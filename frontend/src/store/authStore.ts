@@ -7,7 +7,8 @@ interface User {
   name?: string | null;
   email?: string | null;
   avatar?: string | null;
-  preferredTier?: 'default' | 'premium' | null;
+  // Server stores these as varchar; UI narrows to known values where needed.
+  preferredTier?: string | null;
   preferredLocale?: string | null;
   preferredTimezone?: string | null;
 }

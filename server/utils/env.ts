@@ -129,8 +129,12 @@ const envSchema = z.object({
   PRIVATE_KEY: z.string().regex(/^0x[a-fA-F0-9]{64}$/, 'PRIVATE_KEY must be a valid private key'),
   CONTRACT_ADDRESS: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'CONTRACT_ADDRESS must be a valid address'),
 
-  // AI
+  // AI — primary provider (always required)
   GEMINI_API_KEY: z.string().min(1, 'GEMINI_API_KEY is required'),
+
+  // AI — optional providers (enable tier=premium / region=cn when set)
+  ANTHROPIC_API_KEY: z.string().optional(),
+  DASHSCOPE_API_KEY: z.string().optional(),
 
   // Auth
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),

@@ -8,6 +8,13 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { ThemeToggle } from '@/components/atoms/ThemeToggle';
 import { LanguageSelector } from '@/components/molecules/LanguageSelector';
 import { Avatar } from '@/components/atoms/Avatar';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/atoms/Select';
 import { Sparkline } from '@/components/molecules/Sparkline';
 import { AchievementsGrid } from '@/components/molecules/AchievementsGrid';
 import { OnChainTimeline } from '@/components/molecules/OnChainTimeline';
@@ -236,19 +243,23 @@ export const DashboardPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">{t('dashboard:generator.levelLabel')}</label>
-                  <select
+                  <label htmlFor="level-select" className="block text-sm font-medium mb-2">
+                    {t('dashboard:generator.levelLabel')}
+                  </label>
+                  <Select
                     value={level}
-                    onChange={(e) =>
-                      setLevel(e.target.value as 'beginner' | 'intermediate' | 'advanced')
-                    }
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-ring-v2"
+                    onValueChange={(v) => setLevel(v as 'beginner' | 'intermediate' | 'advanced')}
                     disabled={isGenerating}
                   >
-                    <option value="beginner">{t('dashboard:generator.levels.beginner')}</option>
-                    <option value="intermediate">{t('dashboard:generator.levels.intermediate')}</option>
-                    <option value="advanced">{t('dashboard:generator.levels.advanced')}</option>
-                  </select>
+                    <SelectTrigger id="level-select" aria-label={t('dashboard:generator.levelLabel')}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="beginner">{t('dashboard:generator.levels.beginner')}</SelectItem>
+                      <SelectItem value="intermediate">{t('dashboard:generator.levels.intermediate')}</SelectItem>
+                      <SelectItem value="advanced">{t('dashboard:generator.levels.advanced')}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <Button

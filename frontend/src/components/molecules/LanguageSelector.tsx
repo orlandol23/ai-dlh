@@ -1,5 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import { SUPPORTED_LOCALES } from '@/i18n';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/atoms/Select';
 
 const LOCALE_NAMES: Record<string, string> = {
   'en': 'English',
@@ -14,15 +21,18 @@ export function LanguageSelector() {
   const { i18n, t } = useTranslation();
 
   return (
-    <select
-      value={i18n.language}
-      onChange={(e) => i18n.changeLanguage(e.target.value)}
-      className="font-mono text-xs bg-transparent border border-border rounded-md px-2 py-1 focus-ring-v2"
-      aria-label={t('common:language')}
-    >
-      {SUPPORTED_LOCALES.map((loc) => (
-        <option key={loc} value={loc}>{LOCALE_NAMES[loc]}</option>
-      ))}
-    </select>
+    <Select value={i18n.language} onValueChange={(v) => i18n.changeLanguage(v)}>
+      <SelectTrigger
+        className="w-auto h-8 px-2 text-xs font-mono bg-transparent border-border"
+        aria-label={t('common:language')}
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {SUPPORTED_LOCALES.map((loc) => (
+          <SelectItem key={loc} value={loc}>{LOCALE_NAMES[loc]}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }

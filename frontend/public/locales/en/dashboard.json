@@ -19,7 +19,33 @@
   },
   "achievements": {
     "eyebrow": "Achievements",
-    "unlockedSuffix": " (unlocked)"
+    "unlockedSuffix": " (unlocked)",
+    "items": {
+      "first-step": {
+        "label": "First Step",
+        "description": "Complete your first module"
+      },
+      "on-chain": {
+        "label": "On-chain Certificate",
+        "description": "1 certificate recorded on the blockchain"
+      },
+      "perfectionist": {
+        "label": "Perfectionist",
+        "description": "Score 100% on a quiz"
+      },
+      "high-flyer": {
+        "label": "High Flyer",
+        "description": "5 quizzes with score ≥90%"
+      },
+      "polymath": {
+        "label": "Polymath",
+        "description": "Study 3 different topics"
+      },
+      "streak": {
+        "label": "Streak",
+        "description": "3 consecutive passing scores"
+      }
+    }
   },
   "timeline": {
     "eyebrow": "Timeline",

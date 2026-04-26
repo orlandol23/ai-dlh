@@ -19,7 +19,33 @@
   },
   "achievements": {
     "eyebrow": "الإنجازات",
-    "unlockedSuffix": " (مفتوح)"
+    "unlockedSuffix": " (مفتوح)",
+    "items": {
+      "first-step": {
+        "label": "الخطوة الأولى",
+        "description": "أكمل أول وحدة"
+      },
+      "on-chain": {
+        "label": "شهادة على السلسلة",
+        "description": "شهادة واحدة مسجّلة على البلوكتشين"
+      },
+      "perfectionist": {
+        "label": "المثالي",
+        "description": "احصل على نتيجة 100٪ في اختبار"
+      },
+      "high-flyer": {
+        "label": "تحليق عالٍ",
+        "description": "5 اختبارات بنتيجة ≥ 90٪"
+      },
+      "polymath": {
+        "label": "متعدد المعارف",
+        "description": "ادرس 3 موضوعات مختلفة"
+      },
+      "streak": {
+        "label": "سلسلة",
+        "description": "3 نتائج ناجحة متتالية"
+      }
+    }
   },
   "timeline": {
     "eyebrow": "الجدول الزمني",

@@ -19,7 +19,33 @@
   },
   "achievements": {
     "eyebrow": "Succès",
-    "unlockedSuffix": " (débloqué)"
+    "unlockedSuffix": " (débloqué)",
+    "items": {
+      "first-step": {
+        "label": "Premier pas",
+        "description": "Complétez votre premier module"
+      },
+      "on-chain": {
+        "label": "Certificat on-chain",
+        "description": "1 certificat enregistré sur la blockchain"
+      },
+      "perfectionist": {
+        "label": "Perfectionniste",
+        "description": "Score de 100 % à un quiz"
+      },
+      "high-flyer": {
+        "label": "Haut vol",
+        "description": "5 quiz avec un score ≥ 90 %"
+      },
+      "polymath": {
+        "label": "Polymathe",
+        "description": "Étudiez 3 sujets différents"
+      },
+      "streak": {
+        "label": "Série",
+        "description": "3 réussites consécutives"
+      }
+    }
   },
   "timeline": {
     "eyebrow": "Chronologie",

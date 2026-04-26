@@ -19,7 +19,33 @@
   },
   "achievements": {
     "eyebrow": "実績",
-    "unlockedSuffix": " (解除済み)"
+    "unlockedSuffix": " (解除済み)",
+    "items": {
+      "first-step": {
+        "label": "最初の一歩",
+        "description": "最初のモジュールを完了"
+      },
+      "on-chain": {
+        "label": "オンチェーン証明書",
+        "description": "ブロックチェーンに登録された証明書 1 件"
+      },
+      "perfectionist": {
+        "label": "完璧主義者",
+        "description": "クイズで100%を獲得"
+      },
+      "high-flyer": {
+        "label": "ハイフライヤー",
+        "description": "スコア90%以上のクイズを5回"
+      },
+      "polymath": {
+        "label": "博識家",
+        "description": "3つの異なるトピックを学習"
+      },
+      "streak": {
+        "label": "連続記録",
+        "description": "3回連続合格"
+      }
+    }
   },
   "timeline": {
     "eyebrow": "タイムライン",

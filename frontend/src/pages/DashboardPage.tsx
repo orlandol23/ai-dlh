@@ -20,6 +20,7 @@ import { Sparkline } from '@/components/molecules/Sparkline';
 import { AchievementsGrid } from '@/components/molecules/AchievementsGrid';
 import { OnChainTimeline } from '@/components/molecules/OnChainTimeline';
 import { OnboardingTour } from '@/components/molecules/OnboardingTour';
+import { PreferencesPanel } from '@/components/molecules/PreferencesPanel';
 import { toast } from '@/components/molecules/Toaster';
 import { useAuth } from '@/hooks/useAuth';
 import { trpc } from '@/lib/trpc';
@@ -141,6 +142,7 @@ export const DashboardPage = () => {
               )}
               <LanguageSelector />
               <ThemeToggle />
+              <PreferencesPanel />
               <Button variant="outline" onClick={logout}>
                 {t('auth:disconnect')}
               </Button>

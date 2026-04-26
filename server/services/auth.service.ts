@@ -275,6 +275,24 @@ export class AuthService {
     if (!updated) throw new Error('User not found');
     return updated;
   }
+
+  async updateUserPreferences(
+    userId: number,
+    data: {
+      preferredTier?: 'default' | 'premium';
+      preferredLocale?: string | null;
+      preferredTimezone?: string | null;
+    }
+  ): Promise<User> {
+    const [updated] = await db
+      .update(users)
+      .set(data)
+      .where(eq(users.id, userId))
+      .returning();
+
+    if (!updated) throw new Error('User not found');
+    return updated;
+  }
 }
 
 export const authService = new AuthService();

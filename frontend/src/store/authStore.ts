@@ -7,6 +7,9 @@ interface User {
   name?: string | null;
   email?: string | null;
   avatar?: string | null;
+  preferredTier?: 'default' | 'premium' | null;
+  preferredLocale?: string | null;
+  preferredTimezone?: string | null;
 }
 
 interface AuthState {

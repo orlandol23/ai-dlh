@@ -9,6 +9,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { ModulePage } from './pages/ModulePage';
 import { Toaster } from './components/molecules/Toaster';
 import { useAuthStore } from './store/authStore';
+import { RtlProvider } from './i18n/RtlProvider';
 
 function App() {
   const [queryClient] = useState(() => new QueryClient({
@@ -25,31 +26,33 @@ function App() {
   return (
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider delayDuration={200}>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <DashboardPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/module/:id"
-                element={
-                  <ProtectedRoute>
-                    <ModulePage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </BrowserRouter>
-          <Toaster />
-        </TooltipProvider>
+        <RtlProvider>
+          <TooltipProvider delayDuration={200}>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/module/:id"
+                  element={
+                    <ProtectedRoute>
+                      <ModulePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </BrowserRouter>
+            <Toaster />
+          </TooltipProvider>
+        </RtlProvider>
       </QueryClientProvider>
     </trpc.Provider>
   );

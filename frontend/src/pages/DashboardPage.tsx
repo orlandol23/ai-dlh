@@ -147,7 +147,7 @@ export const DashboardPage = () => {
           <Card className="lg:col-span-3">
             <CardContent className="pt-6">
               <p className="eyebrow">{t('dashboard:stats.passed.eyebrow')}</p>
-              <p className="font-display text-5xl font-bold text-success tabular-nums leading-none mt-2">
+              <p className="font-display text-5xl font-bold text-success-fg tabular-nums leading-none mt-2">
                 {stats?.passedModules ?? 0}
               </p>
               <p className="text-sm text-muted-foreground mt-2">{t('dashboard:stats.passed.label')}</p>
@@ -157,7 +157,7 @@ export const DashboardPage = () => {
           <Card className="lg:col-span-3">
             <CardContent className="pt-6">
               <p className="eyebrow">{t('dashboard:stats.avgScore.eyebrow')}</p>
-              <p className="font-display text-5xl font-bold text-info tabular-nums leading-none mt-2">
+              <p className="font-display text-5xl font-bold text-info-fg tabular-nums leading-none mt-2">
                 {stats?.avgScore ?? 0}%
               </p>
               <p className="text-sm text-muted-foreground mt-2">{t('dashboard:stats.avgScore.label')}</p>
@@ -167,7 +167,7 @@ export const DashboardPage = () => {
           <Card className="lg:col-span-3">
             <CardContent className="pt-6">
               <p className="eyebrow">{t('dashboard:stats.onChain.eyebrow')}</p>
-              <p className="font-display text-5xl font-bold text-onchain tabular-nums leading-none mt-2">
+              <p className="font-display text-5xl font-bold text-onchain-fg tabular-nums leading-none mt-2">
                 {stats?.onChainRecords ?? 0}
               </p>
               <p className="text-sm text-muted-foreground mt-2">{t('dashboard:stats.onChain.label')}</p>

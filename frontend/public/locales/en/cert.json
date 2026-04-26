@@ -1,1 +1,9 @@
-{}
+{
+  "share": {
+    "text": "I just earned an on-chain certificate in {{topic}} with score {{score}}%!",
+    "linkedin": "Share on LinkedIn",
+    "twitter": "Share on X",
+    "copyLink": "Copy link",
+    "copied": "Link copied to clipboard"
+  }
+}

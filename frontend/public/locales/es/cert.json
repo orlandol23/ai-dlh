@@ -1,1 +1,9 @@
-{}
+{
+  "share": {
+    "text": "¡Acabo de obtener un certificado on-chain en {{topic}} con puntuación {{score}}%!",
+    "linkedin": "Compartir en LinkedIn",
+    "twitter": "Compartir en X",
+    "copyLink": "Copiar enlace",
+    "copied": "Enlace copiado al portapapeles"
+  }
+}

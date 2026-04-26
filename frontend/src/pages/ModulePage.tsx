@@ -23,7 +23,7 @@ interface QuizQuestion {
 export const ModulePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { t } = useTranslation(['module', 'quiz', 'common']);
+  const { t, i18n } = useTranslation(['module', 'quiz', 'common', 'cert']);
   const reduceMotion = useReducedMotion();
   const moduleId = parseInt(id || '0');
 
@@ -380,6 +380,32 @@ export const ModulePage = () => {
                       </a>
                     </div>
                   )}
+
+                  {quizResult.passed && quizResult.transactionHash && (() => {
+                    const shareText = t('cert:share.text', { topic: module.topic, score: quizResult.score });
+                    const shareUrl = `${window.location.origin}/cert/${quizResult.transactionHash}?lang=${i18n.language}`;
+                    const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+                    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+                    const linkClasses = 'inline-flex items-center justify-center h-9 px-3 text-sm rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground transition-colors focus-ring-v2';
+                    const copy = async () => {
+                      await navigator.clipboard.writeText(shareUrl);
+                      toast.success(t('cert:share.copied'));
+                    };
+                    return (
+                      <div className="flex flex-wrap gap-3 mt-6 justify-center">
+                        <a target="_blank" rel="noopener noreferrer" href={linkedInUrl} className={linkClasses}>
+                          {t('cert:share.linkedin')}
+                          <span className="font-mono inline-block rtl:rotate-180 ms-1">→</span>
+                        </a>
+                        <a target="_blank" rel="noopener noreferrer" href={twitterUrl} className={linkClasses}>
+                          {t('cert:share.twitter')}
+                        </a>
+                        <Button variant="outline" size="sm" onClick={copy}>
+                          {t('cert:share.copyLink')}
+                        </Button>
+                      </div>
+                    );
+                  })()}
 
                   {quizResult.blockchainError && (
                     <div className="mt-6 bg-warning-bg border border-warning-border rounded-lg p-6">

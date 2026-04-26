@@ -1,1 +1,9 @@
-{}
+{
+  "share": {
+    "text": "{{topic}}でオンチェーン証明書を獲得しました!スコア {{score}}%",
+    "linkedin": "LinkedInで共有",
+    "twitter": "Xで共有",
+    "copyLink": "リンクをコピー",
+    "copied": "リンクをクリップボードにコピーしました"
+  }
+}

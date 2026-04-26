@@ -8,7 +8,7 @@ export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 
 export const RTL_LOCALES: SupportedLocale[] = ['ar'];
 
-export const NAMESPACES = ['common', 'home', 'dashboard', 'module', 'quiz', 'cert', 'auth'] as const;
+export const NAMESPACES = ['common', 'home', 'dashboard', 'module', 'quiz', 'cert', 'auth', 'zod'] as const;
 
 i18n
   .use(HttpBackend)

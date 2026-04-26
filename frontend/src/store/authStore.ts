@@ -21,6 +21,14 @@ interface AuthState {
 }
 
 /**
+ * The subset of AuthState that actually gets written to localStorage —
+ * see `partialize` below. Typing the storage to this shape (instead of
+ * `unknown`) keeps `getItem`/`setItem` honest: any future change to
+ * partialize that adds or renames a field has to be reflected here too.
+ */
+type PersistedAuthState = Pick<AuthState, 'user' | 'token' | 'isAuthenticated'>;
+
+/**
  * Custom storage that round-trips through superjson instead of JSON.
  *
  * The User type carries Date fields (createdAt, lastLoginAt) returned by
@@ -30,9 +38,8 @@ interface AuthState {
  * superjson here keeps Dates as Dates across reloads, and stays the
  * same transformer tRPC already uses on the wire.
  *
- * We persist `PersistedAuthState` (a subset, see partialize below), but
- * the storage itself is generic over `unknown` because it just shuttles
- * whatever shape persist hands it.
+ * Typed against `PersistedAuthState` so getItem/setItem are checked
+ * against the actual persisted shape (see partialize below).
  */
 const AUTH_TOKEN_KEY = 'auth_token';
 
@@ -75,7 +82,21 @@ function safeRemove(key: string): void {
   }
 }
 
-const superjsonStorage: PersistStorage<unknown> = {
+/**
+ * Custom storage that round-trips through superjson instead of JSON.
+ *
+ * The User type carries Date fields (createdAt, lastLoginAt) returned by
+ * tRPC via superjson. Default JSON.stringify would serialize them to ISO
+ * strings on persist, and on reload they'd come back as strings —
+ * making the runtime value disagree with the inferred type. Using
+ * superjson here keeps Dates as Dates across reloads, and stays the
+ * same transformer tRPC already uses on the wire.
+ *
+ * Typed against `PersistedAuthState` (the partialize output) so the
+ * payload contract is checked at compile time instead of the storage
+ * silently shuttling whatever shape it gets.
+ */
+const superjsonStorage: PersistStorage<PersistedAuthState> = {
   getItem: (name) => {
     const value = safeGet(name);
     if (!value) return null;

@@ -44,6 +44,14 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   render() {
     if (this.state.error) {
+      // Only expose the raw error name/message in dev. In production an
+      // Error.message can carry backend payload, config hints, or
+      // user-specific data that the user shouldn't see (and that the
+      // person looking at the screen probably can't act on anyway).
+      // The full error is still console.error'd for whoever has DevTools
+      // open or is shipping logs to a monitoring service.
+      const showDetails = import.meta.env.DEV;
+
       return (
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
           <Card className="max-w-lg w-full">
@@ -56,14 +64,16 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <details className="rounded-md border border-border bg-muted/40 p-3 text-xs">
-                <summary className="cursor-pointer font-mono text-muted-foreground">
-                  Detalhes técnicos
-                </summary>
-                <pre className="mt-2 whitespace-pre-wrap break-all text-muted-foreground">
-                  {this.state.error.name}: {this.state.error.message}
-                </pre>
-              </details>
+              {showDetails && (
+                <details className="rounded-md border border-border bg-muted/40 p-3 text-xs">
+                  <summary className="cursor-pointer font-mono text-muted-foreground">
+                    Detalhes técnicos (somente dev)
+                  </summary>
+                  <pre className="mt-2 whitespace-pre-wrap break-all text-muted-foreground">
+                    {this.state.error.name}: {this.state.error.message}
+                  </pre>
+                </details>
+              )}
               <div className="flex gap-2">
                 <Button onClick={this.handleReset} variant="outline" className="flex-1">
                   Tentar novamente

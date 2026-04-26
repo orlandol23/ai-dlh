@@ -10,11 +10,13 @@ import { getErrorMessage } from '../utils/errors.js';
 
 /**
  * Progress Router - Handles quiz submissions and progress tracking
- * 
+ *
  * Endpoints:
  * - submitQuiz: Submit quiz answers and record on blockchain if passing
- * - getUserProgress: Get all progress records for user
- * - getStatistics: Get aggregated statistics (avg score, completion rate, etc.)
+ * - getUserProgress: Get up to 50 most recent progress records for user
+ *   (capped — see endpoint comment for rationale)
+ * - getStatistics: Get aggregated statistics computed in SQL
+ *   (avg score, completion rate, achievement aggregates, capped streak)
  * - getModuleProgress: Get progress for specific module
  */
 export const progressRouter = router({
@@ -191,7 +193,9 @@ export const progressRouter = router({
       // Streak is order-dependent (consecutive passes from the most
       // recent backwards). Fetching only the columns we need keeps the
       // payload tiny; cap at 50 because no realistic streak survives
-      // that long without hitting a sub-70 score.
+      // that long without hitting a sub-70 score. The returned field
+      // is named `currentStreakCapped` so consumers know not to treat
+      // it as exact past 50; achievement target is well within the cap.
       db
         .select({ score: progressRecords.score })
         .from(progressRecords)
@@ -200,9 +204,9 @@ export const progressRouter = router({
         .limit(50),
     ]);
 
-    let currentStreak = 0;
+    let currentStreakCapped = 0;
     for (const r of recentScores) {
-      if (r.score >= 70) currentStreak += 1;
+      if (r.score >= 70) currentStreakCapped += 1;
       else break;
     }
 
@@ -216,7 +220,9 @@ export const progressRouter = router({
       highScoreCount: aggregates.highScore,
       hasPerfectScore: aggregates.hasPerfect,
       distinctTopicsCount: topics.count,
-      currentStreak,
+      // Capped at 50 — see comment above. Frontend's streak achievement
+      // unlocks at 3, so the cap never affects unlock state in practice.
+      currentStreakCapped,
     };
   }),
 

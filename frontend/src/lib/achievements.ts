@@ -36,7 +36,7 @@ export interface AchievementsStats {
   highScoreCount: number;
   hasPerfectScore: boolean;
   distinctTopicsCount: number;
-  currentStreak: number;
+  currentStreakCapped: number;
 }
 
 /**
@@ -90,8 +90,8 @@ export function deriveAchievements(stats: AchievementsStats): Achievement[] {
       label: 'Sequência',
       emoji: '🎉',
       description: '3 aprovações consecutivas',
-      unlocked: stats.currentStreak >= 3,
-      progress: { current: Math.min(stats.currentStreak, 3), target: 3 },
+      unlocked: stats.currentStreakCapped >= 3,
+      progress: { current: Math.min(stats.currentStreakCapped, 3), target: 3 },
     },
   ];
 }

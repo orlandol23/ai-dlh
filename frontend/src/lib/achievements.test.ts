@@ -13,7 +13,7 @@ const makeStats = (overrides: Partial<AchievementsStats> = {}): AchievementsStat
   highScoreCount: 0,
   hasPerfectScore: false,
   distinctTopicsCount: 0,
-  currentStreak: 0,
+  currentStreakCapped: 0,
   ...overrides,
 });
 
@@ -77,10 +77,10 @@ describe('deriveAchievements', () => {
     expect(three.find((a) => a.id === 'polymath')?.unlocked).toBe(true);
   });
 
-  it('streak unlocks at currentStreak >= 3 and caps progress display at 3', () => {
-    const two = deriveAchievements(makeStats({ currentStreak: 2 }));
-    const three = deriveAchievements(makeStats({ currentStreak: 3 }));
-    const ten = deriveAchievements(makeStats({ currentStreak: 10 }));
+  it('streak unlocks at currentStreakCapped >= 3 and caps progress display at 3', () => {
+    const two = deriveAchievements(makeStats({ currentStreakCapped: 2 }));
+    const three = deriveAchievements(makeStats({ currentStreakCapped: 3 }));
+    const ten = deriveAchievements(makeStats({ currentStreakCapped: 10 }));
 
     expect(two.find((a) => a.id === 'streak')?.unlocked).toBe(false);
     expect(three.find((a) => a.id === 'streak')?.unlocked).toBe(true);

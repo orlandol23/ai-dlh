@@ -62,7 +62,7 @@ export const DashboardPage = () => {
           highScoreCount: 0,
           hasPerfectScore: false,
           distinctTopicsCount: 0,
-          currentStreak: 0,
+          currentStreakCapped: 0,
         }
       ),
     [stats]

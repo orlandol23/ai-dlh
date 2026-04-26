@@ -36,9 +36,48 @@ interface AuthState {
  */
 const AUTH_TOKEN_KEY = 'auth_token';
 
+/**
+ * Defensive localStorage wrappers.
+ *
+ * Direct `localStorage.*` calls can throw in browsers that disable storage
+ * (private mode, "Block all cookies"), in restricted iframe contexts, or
+ * when the quota is full — and they don't exist at all under SSR / Vitest
+ * jsdom-less setups. Wrapping every access lets the store fall back to
+ * in-memory state instead of crashing on import or surface-level render.
+ * (Same pattern themeStore.ts uses; centralized here to keep both stores
+ * consistent.)
+ */
+function safeGet(key: string): string | null {
+  try {
+    if (typeof window === 'undefined') return null;
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSet(key: string, value: string): void {
+  try {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(key, value);
+  } catch {
+    // ignore — we still update the in-memory store, the user just
+    // won't be remembered after a reload.
+  }
+}
+
+function safeRemove(key: string): void {
+  try {
+    if (typeof window === 'undefined') return;
+    window.localStorage.removeItem(key);
+  } catch {
+    // ignore
+  }
+}
+
 const superjsonStorage: PersistStorage<unknown> = {
   getItem: (name) => {
-    const value = localStorage.getItem(name);
+    const value = safeGet(name);
     if (!value) return null;
     try {
       return superjson.parse(value);
@@ -50,15 +89,15 @@ const superjsonStorage: PersistStorage<unknown> = {
       // logged-out while tRPC still sends an Authorization header
       // backed by stale credentials. Fully resetting both keys gives
       // a single coherent "logged out, please reconnect" state.
-      localStorage.removeItem(name);
-      localStorage.removeItem(AUTH_TOKEN_KEY);
+      safeRemove(name);
+      safeRemove(AUTH_TOKEN_KEY);
       return null;
     }
   },
   setItem: (name, value) => {
-    localStorage.setItem(name, superjson.stringify(value));
+    safeSet(name, superjson.stringify(value));
   },
-  removeItem: (name) => localStorage.removeItem(name),
+  removeItem: (name) => safeRemove(name),
 };
 
 /**
@@ -75,16 +114,21 @@ export const useAuthStore = create<AuthState>()(
         set({ user, isAuthenticated: !!user }),
 
       setToken: (token) => {
+        // Update the store first so the UI is consistent regardless of
+        // whether the localStorage write succeeds (it can fail in private
+        // mode, with cookies blocked, or when quota is full). The
+        // session just won't survive a reload — same trade-off
+        // themeStore makes.
         if (token) {
-          localStorage.setItem(AUTH_TOKEN_KEY, token);
+          safeSet(AUTH_TOKEN_KEY, token);
         } else {
-          localStorage.removeItem(AUTH_TOKEN_KEY);
+          safeRemove(AUTH_TOKEN_KEY);
         }
         set({ token });
       },
 
       logout: () => {
-        localStorage.removeItem(AUTH_TOKEN_KEY);
+        safeRemove(AUTH_TOKEN_KEY);
         set({ user: null, token: null, isAuthenticated: false });
       },
     }),

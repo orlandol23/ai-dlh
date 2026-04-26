@@ -360,6 +360,34 @@
 }
 
 /* =========================================================
+   Indeterminate progress bar — gradiente animado horizontal
+   Use sobreposto a um botão para indicar trabalho em andamento.
+   ========================================================= */
+@keyframes indeterminate {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.bar-indeterminate {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.bar-indeterminate::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsl(var(--accent) / 0.4),
+    transparent
+  );
+  animation: indeterminate 1.4s linear infinite;
+}
+
+/* =========================================================
    Reduced motion — respeita prefers-reduced-motion do SO/browser
    Desliga shimmer, caret blink, transitions e scroll-behavior.
    ========================================================= */

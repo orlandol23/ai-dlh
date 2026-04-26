@@ -240,26 +240,33 @@ export const ModulePage = () => {
                     {t('quiz:progressLabel', { current: currentQuestion + 1, total: quizData.length })}
                   </p>
                 </div>
-                <CardTitle>{currentQ.question}</CardTitle>
+                <CardTitle id="question-title">{currentQ.question}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3 mb-6">
-                  {currentQ.options.map((option, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSelectAnswer(index)}
-                      className={`w-full text-left px-4 py-3 border rounded-lg transition ${
-                        selectedAnswers[currentQuestion] === index
-                          ? 'bg-primary/10 border-primary ring-2 ring-primary/20'
-                          : 'hover:bg-muted border-border'
-                      }`}
-                    >
-                      <span className="font-medium mr-2">
-                        {String.fromCharCode(65 + index)}.
-                      </span>
-                      {option}
-                    </button>
-                  ))}
+                <div className="space-y-3 mb-6" role="radiogroup" aria-labelledby="question-title">
+                  {currentQ.options.map((option, index) => {
+                    const letter = String.fromCharCode(65 + index);
+                    return (
+                      <button
+                        key={index}
+                        type="button"
+                        role="radio"
+                        aria-checked={selectedAnswers[currentQuestion] === index}
+                        aria-label={t('quiz:option.aria', { letter, content: option })}
+                        onClick={() => handleSelectAnswer(index)}
+                        className={`w-full text-left px-4 py-3 border rounded-lg transition focus-ring-v2 ${
+                          selectedAnswers[currentQuestion] === index
+                            ? 'bg-primary/10 border-primary ring-2 ring-primary/20'
+                            : 'hover:bg-muted border-border'
+                        }`}
+                      >
+                        <span className="font-medium mr-2" aria-hidden="true">
+                          {letter}.
+                        </span>
+                        {option}
+                      </button>
+                    );
+                  })}
                 </div>
 
                 <div className="flex justify-between">

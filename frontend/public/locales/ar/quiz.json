@@ -1,5 +1,8 @@
 {
   "progressLabel": "السؤال {{current}} من {{total}}",
+  "option": {
+    "aria": "الخيار {{letter}}: {{content}}"
+  },
   "buttons": {
     "previous": "السابق",
     "next": "التالي",

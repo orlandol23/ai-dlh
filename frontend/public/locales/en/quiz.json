@@ -1,5 +1,8 @@
 {
   "progressLabel": "Question {{current}} of {{total}}",
+  "option": {
+    "aria": "Option {{letter}}: {{content}}"
+  },
   "buttons": {
     "previous": "Previous",
     "next": "Next",

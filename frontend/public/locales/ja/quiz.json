@@ -1,5 +1,8 @@
 {
   "progressLabel": "問題 {{current}} / {{total}}",
+  "option": {
+    "aria": "選択肢{{letter}}: {{content}}"
+  },
   "buttons": {
     "previous": "前へ",
     "next": "次へ",

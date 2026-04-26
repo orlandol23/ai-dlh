@@ -34,6 +34,8 @@ interface AuthState {
  * the storage itself is generic over `unknown` because it just shuttles
  * whatever shape persist hands it.
  */
+const AUTH_TOKEN_KEY = 'auth_token';
+
 const superjsonStorage: PersistStorage<unknown> = {
   getItem: (name) => {
     const value = localStorage.getItem(name);
@@ -41,9 +43,15 @@ const superjsonStorage: PersistStorage<unknown> = {
     try {
       return superjson.parse(value);
     } catch {
-      // Corrupt or pre-superjson payload — drop it so persist starts clean
-      // instead of throwing on every render and breaking auth.
+      // Corrupt or pre-superjson payload — drop it so persist starts
+      // clean instead of throwing on every render and breaking auth.
+      // Also wipe the standalone bearer token: if we keep the token but
+      // lose the user/isAuthenticated state, the UI re-mounts as
+      // logged-out while tRPC still sends an Authorization header
+      // backed by stale credentials. Fully resetting both keys gives
+      // a single coherent "logged out, please reconnect" state.
       localStorage.removeItem(name);
+      localStorage.removeItem(AUTH_TOKEN_KEY);
       return null;
     }
   },
@@ -68,15 +76,15 @@ export const useAuthStore = create<AuthState>()(
 
       setToken: (token) => {
         if (token) {
-          localStorage.setItem('auth_token', token);
+          localStorage.setItem(AUTH_TOKEN_KEY, token);
         } else {
-          localStorage.removeItem('auth_token');
+          localStorage.removeItem(AUTH_TOKEN_KEY);
         }
         set({ token });
       },
 
       logout: () => {
-        localStorage.removeItem('auth_token');
+        localStorage.removeItem(AUTH_TOKEN_KEY);
         set({ user: null, token: null, isAuthenticated: false });
       },
     }),

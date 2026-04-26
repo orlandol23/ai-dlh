@@ -39,6 +39,7 @@ export const ModulePage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Queries
+  const utils = trpc.useUtils();
   const { data: module, isLoading } = trpc.ai.getModuleById.useQuery({ moduleId });
   const { data: progress } = trpc.progress.getModuleProgress.useQuery({ moduleId });
 
@@ -48,6 +49,12 @@ export const ModulePage = () => {
       setIsSubmitting(false);
       setQuizResult(data);
       setShowResults(true);
+      // Submitting a quiz changes stats / progress / module-progress —
+      // invalidate every query that derives from progress_records so the
+      // Dashboard, achievements, and "you already completed this" banner
+      // reflect the new state immediately. Without this, the global
+      // staleTime in App.tsx would otherwise show stale data for up to 30s.
+      void utils.progress.invalidate();
     },
     onError: (error) => {
       setIsSubmitting(false);

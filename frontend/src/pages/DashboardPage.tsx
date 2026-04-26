@@ -43,7 +43,8 @@ export const DashboardPage = () => {
     return () => window.clearInterval(id);
   }, [isGenerating]);
 
-  const { data: modules, refetch: refetchModules } = trpc.ai.getUserModules.useQuery();
+  const utils = trpc.useUtils();
+  const { data: modules } = trpc.ai.getUserModules.useQuery();
   const { data: stats } = trpc.progress.getStatistics.useQuery();
   const { data: progress } = trpc.progress.getUserProgress.useQuery();
 
@@ -78,7 +79,11 @@ export const DashboardPage = () => {
     onSuccess: (data) => {
       setIsGenerating(false);
       setTopic('');
-      refetchModules();
+      // Generating a module changes the catalog and (via the new module
+      // appearing on this dashboard) the pending-modules sidebar. Invalidate
+      // the AI router's queries so the cache catches up before the global
+      // staleTime would.
+      void utils.ai.invalidate();
       if (typeof data?.id === 'number') {
         toast.success('🎉 Módulo gerado!', { description: 'Abrindo o conteúdo…' });
         navigate(`/module/${data.id}`);

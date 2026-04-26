@@ -17,13 +17,18 @@ function App() {
       queries: {
         refetchOnWindowFocus: false,
         retry: 1,
-        // Treat data as fresh for 30s. Without this, the Dashboard's three
-        // parallel queries (modules / stats / progress) refire on every
-        // mount/router-transition even when the user is just navigating
-        // back from /module/:id. A short staleTime avoids the spinner
-        // flash and the redundant load on Postgres without staleness
-        // becoming user-visible (records only change after submitQuiz,
-        // which already invalidates via tRPC's mutation lifecycle).
+        // Treat query data as fresh for 30s. Without this the Dashboard's
+        // three parallel queries (modules / stats / progress) refire on
+        // every mount or router-transition — even when the user is just
+        // returning from /module/:id without doing anything that mutated
+        // state. Spinner flash + redundant Postgres load with no benefit.
+        //
+        // Staleness is NOT invisible by default: the mutations that change
+        // the underlying records (submitQuiz, generateModule) explicitly
+        // call `utils.progress.invalidate()` / `utils.ai.invalidate()` in
+        // their onSuccess so dependent caches refetch immediately. Any
+        // new mutation that touches progress_records / modules MUST do
+        // the same — otherwise it'll appear stale for up to 30s.
         staleTime: 30_000,
       },
     },

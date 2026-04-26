@@ -346,3 +346,15 @@
   margin-left: 2px;
   animation: caret-blink 1s steps(1) infinite;
 }
+
+/* =========================================================
+   Focus ring v2 — anel triplo roxo translúcido com gap
+   Use em qualquer elemento focável que herde design system v2.
+   ========================================================= */
+@layer components {
+  .focus-ring-v2 {
+    @apply focus-visible:outline-none
+           focus-visible:ring-[3px] focus-visible:ring-primary/40
+           focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+}

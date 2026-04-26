@@ -62,10 +62,11 @@ export class AIService {
       const result = await this.model.generateContent(prompt);
       const text = result.response.text();
 
-      logger.debug('AI Response received');
-      logger.debug('Response length:', text.length);
-      const responseSample = text.slice(0, 500);
-      logger.debug(`AI response sample (first ${responseSample.length} chars): ${responseSample}`);
+      // Don't log the response body — Gemini sometimes echoes the user's
+      // prompt verbatim, and the generated content itself can carry the
+      // topic. For sensitive topics that's both a privacy leak and
+      // log-volume waste. Length is enough to detect truncation issues.
+      logger.debug(`AI response received (${text.length} chars)`);
 
       // With responseMimeType: 'application/json', Gemini returns valid JSON directly
       const parsed = JSON.parse(text);

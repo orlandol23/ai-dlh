@@ -5,6 +5,7 @@ import { db } from '../db/index.js';
 import { modules } from '../db/schema.js';
 import { eq, desc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
+import { getErrorMessage } from '../utils/errors.js';
 
 /**
  * AI Router - Handles AI-powered module generation and management
@@ -46,10 +47,10 @@ export const aiRouter = router({
           .returning();
 
         return saved;
-      } catch (error: any) {
+      } catch (error) {
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: error.message || 'Failed to generate module',
+          message: getErrorMessage(error, 'Failed to generate module'),
         });
       }
     }),

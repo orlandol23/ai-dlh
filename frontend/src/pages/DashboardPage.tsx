@@ -43,7 +43,8 @@ export const DashboardPage = () => {
     return () => window.clearInterval(id);
   }, [isGenerating]);
 
-  const { data: modules, refetch: refetchModules } = trpc.ai.getUserModules.useQuery();
+  const utils = trpc.useUtils();
+  const { data: modules } = trpc.ai.getUserModules.useQuery();
   const { data: stats } = trpc.progress.getStatistics.useQuery();
   const { data: progress } = trpc.progress.getUserProgress.useQuery();
 
@@ -52,8 +53,19 @@ export const DashboardPage = () => {
     [progress]
   );
   const achievements = useMemo(
-    () => deriveAchievements(progress ?? []),
-    [progress]
+    () =>
+      deriveAchievements(
+        stats ?? {
+          totalModules: 0,
+          passedModules: 0,
+          onChainRecords: 0,
+          highScoreCount: 0,
+          hasPerfectScore: false,
+          distinctTopicsCount: 0,
+          currentStreakCapped: 0,
+        }
+      ),
+    [stats]
   );
   const pendingModules = useMemo(() => {
     // Wait for both queries to resolve. Otherwise progress=undefined makes
@@ -67,7 +79,12 @@ export const DashboardPage = () => {
     onSuccess: (data) => {
       setIsGenerating(false);
       setTopic('');
-      refetchModules();
+      // Generating a module changes the catalog and (via the new module
+      // appearing on this dashboard) the pending-modules sidebar. Only
+      // getUserModules is affected — invalidate just that key instead of
+      // the entire `ai` router so unrelated queries (getModuleById for
+      // open modules, etc.) don't unnecessarily refetch.
+      void utils.ai.getUserModules.invalidate();
       if (typeof data?.id === 'number') {
         toast.success('🎉 Módulo gerado!', { description: 'Abrindo o conteúdo…' });
         navigate(`/module/${data.id}`);

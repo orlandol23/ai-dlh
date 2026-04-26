@@ -10,6 +10,15 @@
 export function getErrorMessage(error: unknown, fallback = 'Erro desconhecido'): string {
   if (error instanceof Error) return error.message;
   if (typeof error === 'string') return error;
+  // Many libraries throw plain objects instead of Error instances —
+  // notably EIP-1193 / JSON-RPC providers like MetaMask, which throw
+  // { code: number, message: string }. Without this branch we'd hide
+  // the real reason (e.g., "User rejected the request") behind the
+  // generic fallback.
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message: unknown }).message;
+    if (typeof message === 'string') return message;
+  }
   return fallback;
 }
 

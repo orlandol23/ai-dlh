@@ -11,6 +11,15 @@
 export function getErrorMessage(error: unknown, fallback = 'Unknown error'): string {
   if (error instanceof Error) return error.message;
   if (typeof error === 'string') return error;
+  // Many libraries throw plain objects instead of Error instances —
+  // Postgres / drizzle errors come through as { code, message, detail },
+  // ethers' contract errors as { code, reason, message }, etc. The
+  // docstring promises this works for "any thrown value", so explicitly
+  // pull `.message` off whatever shape we got before falling back.
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message: unknown }).message;
+    if (typeof message === 'string') return message;
+  }
   return fallback;
 }
 

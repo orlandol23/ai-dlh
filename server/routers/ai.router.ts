@@ -5,6 +5,20 @@ import { db } from '../db/index.js';
 import { modules } from '../db/schema.js';
 import { eq, desc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
+import type { Region, Tier } from '../services/providers/types.js';
+
+const SUPPORTED_LOCALES = ['en', 'pt-BR', 'es', 'fr', 'ja', 'ar'] as const;
+
+/**
+ * Region detection — v1 reads optional `x-region` header, defaults to 'global'.
+ * Geo-IP based detection is left to v1.1.
+ */
+function detectRegion(req: { headers: { [k: string]: string | string[] | undefined } }): Region {
+  const raw = req.headers['x-region'];
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  if (value === 'cn' || value === 'eu-strict') return value;
+  return 'global';
+}
 
 /**
  * AI Router - Handles AI-powered module generation and management
@@ -24,14 +38,22 @@ export const aiRouter = router({
       z.object({
         topic: z.string().min(3).max(200, 'Topic must be between 3-200 characters'),
         level: z.enum(['beginner', 'intermediate', 'advanced']),
+        locale: z.enum(SUPPORTED_LOCALES).default('pt-BR'),
       })
     )
     .mutation(async ({ input, ctx }) => {
       try {
-        // Generate content with AI
-        const content = await aiService.generateModule(input.topic, input.level);
+        const tier: Tier =
+          ctx.user.preferredTier === 'premium' ? 'premium' : 'default';
+        const region: Region = detectRegion(ctx.req);
 
-        // Save to database
+        const { content, provider } = await aiService.generateModule(
+          input.topic,
+          input.level,
+          input.locale,
+          { tier, region, locale: input.locale },
+        );
+
         const [saved] = await db
           .insert(modules)
           .values({
@@ -40,6 +62,8 @@ export const aiRouter = router({
             content: content.content,
             topic: input.topic,
             level: input.level,
+            locale: input.locale,
+            provider,
             quizData: content.quiz,
             estimatedTime: content.estimatedTime,
           })

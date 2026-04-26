@@ -30,7 +30,7 @@ const STAGE_KEYS = ['0', '1', '2', '3', '4'] as const;
 
 export const DashboardPage = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation(['dashboard', 'common', 'auth']);
+  const { t, i18n } = useTranslation(['dashboard', 'common', 'auth']);
   const { user, logout } = useAuth();
   const [topic, setTopic] = useState('');
   const [level, setLevel] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner');
@@ -101,7 +101,11 @@ export const DashboardPage = () => {
       return;
     }
     setIsGenerating(true);
-    generateMutation.mutate({ topic, level });
+    // Send the user's active i18n locale so the AI generates content in
+    // the language they are reading the UI in. Backend defaults to pt-BR
+    // for backwards compatibility if for some reason the locale is missing.
+    const locale = (i18n.language as 'en' | 'pt-BR' | 'es' | 'fr' | 'ja' | 'ar') ?? 'pt-BR';
+    generateMutation.mutate({ topic, level, locale });
   };
 
   const walletAddress = user?.walletAddress || '';

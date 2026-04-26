@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { HomePage } from './pages/HomePage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ModulePage } from './pages/ModulePage';
+import { CertPage } from './pages/CertPage';
 import { Toaster } from './components/molecules/Toaster';
 import { SkipLink } from './components/atoms/SkipLink';
 import { useAuthStore } from './store/authStore';
@@ -49,6 +50,7 @@ function App() {
                     </ProtectedRoute>
                   }
                 />
+                <Route path="/cert/:hash" element={<CertPage />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </BrowserRouter>

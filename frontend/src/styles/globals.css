@@ -358,3 +358,26 @@
            focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
 }
+
+/* =========================================================
+   Reduced motion — respeita prefers-reduced-motion do SO/browser
+   Desliga shimmer, caret blink, transitions e scroll-behavior.
+   ========================================================= */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .skeleton {
+    animation: none;
+    background: hsl(var(--muted));
+  }
+  .caret::after {
+    animation: none;
+    opacity: 1;
+  }
+}

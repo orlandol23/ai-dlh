@@ -114,22 +114,22 @@ export const useAuthStore = create<AuthState>()(
         set({ user, isAuthenticated: !!user }),
 
       setToken: (token) => {
-        // Update the store first so the UI is consistent regardless of
-        // whether the localStorage write succeeds (it can fail in private
-        // mode, with cookies blocked, or when quota is full). The
-        // session just won't survive a reload — same trade-off
-        // themeStore makes.
+        // Update the in-memory store first so the UI is consistent
+        // regardless of whether the localStorage write succeeds (it can
+        // fail in private mode, with cookies blocked, or when the quota
+        // is full). The session just won't survive a reload — same
+        // trade-off themeStore makes.
+        set({ token });
         if (token) {
           safeSet(AUTH_TOKEN_KEY, token);
         } else {
           safeRemove(AUTH_TOKEN_KEY);
         }
-        set({ token });
       },
 
       logout: () => {
-        safeRemove(AUTH_TOKEN_KEY);
         set({ user: null, token: null, isAuthenticated: false });
+        safeRemove(AUTH_TOKEN_KEY);
       },
     }),
     {

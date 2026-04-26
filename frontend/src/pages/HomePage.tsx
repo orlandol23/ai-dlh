@@ -56,7 +56,7 @@ export const HomePage = () => {
       </header>
 
       {/* Hero Section */}
-      <main className="container mx-auto px-4 py-16 relative">
+      <main id="main-content" tabIndex={-1} className="container mx-auto px-4 py-16 relative">
         <div className="absolute inset-0 hash-grid opacity-70 pointer-events-none" aria-hidden="true" />
         <div className="max-w-4xl mx-auto text-center space-y-8 relative">
           <div className="space-y-4">

@@ -131,7 +131,7 @@ export const DashboardPage = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 space-y-6">
+      <main id="main-content" tabIndex={-1} className="container mx-auto px-4 py-8 space-y-6">
         {/* Row 1 — 4 stat tiles, col-span-3 each on lg */}
         <div className="grid grid-cols-2 lg:grid-cols-12 gap-4">
           <Card className="lg:col-span-3">

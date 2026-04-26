@@ -8,6 +8,7 @@ import { HomePage } from './pages/HomePage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ModulePage } from './pages/ModulePage';
 import { Toaster } from './components/molecules/Toaster';
+import { SkipLink } from './components/atoms/SkipLink';
 import { useAuthStore } from './store/authStore';
 import { RtlProvider } from './i18n/RtlProvider';
 
@@ -29,6 +30,7 @@ function App() {
         <RtlProvider>
           <TooltipProvider delayDuration={200}>
             <BrowserRouter>
+              <SkipLink />
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route

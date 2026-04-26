@@ -164,7 +164,7 @@ export const ModulePage = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main id="main-content" tabIndex={-1} className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           {/* Module Content */}
           {!showQuiz && !showResults && (

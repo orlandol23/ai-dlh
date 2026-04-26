@@ -1,1 +1,42 @@
-{}
+{
+  "hero": {
+    "titleLine1": "<0>AI</0>で学ぶ",
+    "titleLine2": "<0>チェーン</0>で証明する",
+    "subtitle": "オンデマンドで教育コンテンツを生成する生成AIを使った個別学習プラットフォーム。学習進捗をイーサリアムブロックチェーンに記録します。",
+    "ctaPrimary": "今すぐ始める",
+    "ctaSecondary": "詳しく見る"
+  },
+  "features": {
+    "ai": {
+      "title": "生成AI",
+      "description": "Google Gemini AIによる個別最適化された教育コンテンツ"
+    },
+    "blockchain": {
+      "title": "ブロックチェーン",
+      "description": "イーサリアムブロックチェーンに永続的な証明書を記録"
+    },
+    "progress": {
+      "title": "進捗",
+      "description": "学習の進捗と統計を確認できます"
+    }
+  },
+  "howItWorks": {
+    "title": "使い方",
+    "step1": {
+      "title": "ウォレットを接続",
+      "description": "MetaMaskでWeb3認証"
+    },
+    "step2": {
+      "title": "トピックを選ぶ",
+      "description": "学びたい内容と難易度を入力"
+    },
+    "step3": {
+      "title": "学習と練習",
+      "description": "生成された内容を読みクイズに挑戦"
+    },
+    "step4": {
+      "title": "証明書を獲得",
+      "description": "スコア70%以上でブロックチェーンに記録"
+    }
+  }
+}

@@ -1,1 +1,42 @@
-{}
+{
+  "hero": {
+    "titleLine1": "Learn with <0>AI</0>",
+    "titleLine2": "Certify <0>on chain</0>",
+    "subtitle": "A personalized learning hub that uses Generative AI to create educational content on-demand and records your progress on the Ethereum blockchain.",
+    "ctaPrimary": "Get started",
+    "ctaSecondary": "Learn more"
+  },
+  "features": {
+    "ai": {
+      "title": "Generative AI",
+      "description": "Personalized educational content powered by Google Gemini AI"
+    },
+    "blockchain": {
+      "title": "Blockchain",
+      "description": "Permanent certificates recorded on the Ethereum blockchain"
+    },
+    "progress": {
+      "title": "Progress",
+      "description": "Track your learning progress and statistics"
+    }
+  },
+  "howItWorks": {
+    "title": "How it works",
+    "step1": {
+      "title": "Connect your wallet",
+      "description": "Use MetaMask to authenticate via Web3"
+    },
+    "step2": {
+      "title": "Pick a topic",
+      "description": "Type what you want to learn and the difficulty level"
+    },
+    "step3": {
+      "title": "Study and practice",
+      "description": "Read the generated content and complete the quiz"
+    },
+    "step4": {
+      "title": "Earn a certificate",
+      "description": "Score ≥ 70% records on the blockchain"
+    }
+  }
+}

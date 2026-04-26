@@ -12,5 +12,8 @@
   "skipToContent": "Aller au contenu",
   "loading": "Chargement…",
   "error": { "generic": "Une erreur est survenue" },
-  "footer": { "copyright": "© {{year}} AI-DLH. Projet portfolio." }
+  "footer": {
+    "copyright": "© {{year}} AI-DLH. Projet portfolio démontrant Frontend, Full Stack, IA générative et Web3.",
+    "poweredBy": "Powered by React, TypeScript, Gemini AI, Ethereum & Solidity"
+  }
 }

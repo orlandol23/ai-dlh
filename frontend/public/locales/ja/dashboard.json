@@ -89,6 +89,9 @@
     "eyebrow": "未完了 ({{count}})",
     "minutes": "分"
   },
+  "generating": {
+    "eyebrow": "モジュールを構築中"
+  },
   "toasts": {
     "moduleGenerated": "🎉 モジュールを生成しました!",
     "moduleGeneratedDesc": "コンテンツを開いています…",

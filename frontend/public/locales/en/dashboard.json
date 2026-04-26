@@ -89,6 +89,9 @@
     "eyebrow": "Pending ({{count}})",
     "minutes": "min"
   },
+  "generating": {
+    "eyebrow": "Building your module"
+  },
   "toasts": {
     "moduleGenerated": "🎉 Module generated!",
     "moduleGeneratedDesc": "Opening content…",

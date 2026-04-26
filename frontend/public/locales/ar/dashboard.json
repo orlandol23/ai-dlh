@@ -89,6 +89,9 @@
     "eyebrow": "قيد الانتظار ({{count}})",
     "minutes": "دقيقة"
   },
+  "generating": {
+    "eyebrow": "جارٍ بناء وحدتك"
+  },
   "toasts": {
     "moduleGenerated": "🎉 تم توليد الوحدة!",
     "moduleGeneratedDesc": "جارٍ فتح المحتوى…",

@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { ThemeToggle } from '@/components/atoms/ThemeToggle';
 import { LanguageSelector } from '@/components/molecules/LanguageSelector';
 import { Avatar } from '@/components/atoms/Avatar';
+import { Skeleton } from '@/components/atoms/Skeleton';
 import {
   Select,
   SelectContent,
@@ -330,6 +331,30 @@ export const DashboardPage = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Skeleton estrutural — preview shell do módulo enquanto IA gera */}
+        {isGenerating && (
+          <Card className="hash-grid">
+            <CardContent className="pt-6 space-y-4">
+              <p className="eyebrow flex items-center gap-2">
+                <span className="inline-block w-2 h-2 rounded-full bg-primary animate-pulse" aria-hidden="true" />
+                {t('dashboard:generating.eyebrow')}
+              </p>
+              <Skeleton className="h-10 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+              <div className="space-y-2 pt-4">
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-5/6" />
+              </div>
+              <div className="space-y-2 pt-4">
+                <Skeleton className="h-12 w-full rounded-md" />
+                <Skeleton className="h-12 w-full rounded-md" />
+                <Skeleton className="h-12 w-full rounded-md" />
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </main>
     </div>
   );

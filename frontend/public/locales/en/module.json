@@ -21,5 +21,9 @@
     "viewOnBlockchain": "View on Blockchain"
   },
   "startQuiz": "Start Quiz",
-  "retakeQuiz": "Retake Quiz"
+  "retakeQuiz": "Retake Quiz",
+  "focus": {
+    "enter": "Focus mode",
+    "exit": "Exit focus mode"
+  }
 }

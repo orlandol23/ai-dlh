@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
@@ -33,6 +33,15 @@ export const ModulePage = () => {
   const [showResults, setShowResults] = useState(false);
   const [quizResult, setQuizResult] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [focusMode, setFocusMode] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('ai_dlh_focus_mode') === 'true';
+  });
+
+  // Persist focus-mode preference
+  useEffect(() => {
+    localStorage.setItem('ai_dlh_focus_mode', String(focusMode));
+  }, [focusMode]);
 
   // Queries
   const { data: module, isLoading } = trpc.ai.getModuleById.useQuery({ moduleId });
@@ -133,38 +142,52 @@ export const ModulePage = () => {
   const currentQ = quizData[currentQuestion];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card border-b border-border">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Button variant="outline" onClick={() => navigate('/dashboard')}>
-              <span className="font-mono inline-block rtl:rotate-180 me-1">←</span>
-              {t('module:header.back')}
-            </Button>
-            <div className="flex items-center gap-2">
-              <Badge
-                variant={
-                  module.level === 'beginner'
-                    ? 'success'
-                    : module.level === 'intermediate'
-                    ? 'warning'
-                    : 'error'
-                }
-              >
-                {t(`module:level.${module.level}`)}
-              </Badge>
-              <span className="text-sm text-muted-foreground">
-                {module.estimatedTime} {t('module:header.minutes')}
-              </span>
-              <LanguageSelector />
-              <ThemeToggle />
+    <div className={`min-h-screen bg-background ${focusMode ? 'hash-grid' : ''}`}>
+      {/* Header — escondido em modo focado */}
+      {!focusMode && (
+        <header className="bg-card border-b border-border">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <Button variant="outline" onClick={() => navigate('/dashboard')}>
+                <span className="font-mono inline-block rtl:rotate-180 me-1">←</span>
+                {t('module:header.back')}
+              </Button>
+              <div className="flex items-center gap-2">
+                <Badge
+                  variant={
+                    module.level === 'beginner'
+                      ? 'success'
+                      : module.level === 'intermediate'
+                      ? 'warning'
+                      : 'error'
+                  }
+                >
+                  {t(`module:level.${module.level}`)}
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  {module.estimatedTime} {t('module:header.minutes')}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFocusMode(true)}
+                  aria-label={t('module:focus.enter')}
+                >
+                  {t('module:focus.enter')}
+                </Button>
+                <LanguageSelector />
+                <ThemeToggle />
+              </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
-      <main id="main-content" tabIndex={-1} className="container mx-auto px-4 py-8">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className={focusMode ? 'mx-auto px-4 py-12 max-w-2xl' : 'container mx-auto px-4 py-8'}
+      >
         <div className="max-w-4xl mx-auto">
           {/* Module Content */}
           {!showQuiz && !showResults && (
@@ -182,7 +205,7 @@ export const ModulePage = () => {
                 </CardContent>
               </Card>
 
-              {progress && (
+              {progress && !focusMode && (
                 <Card className="mb-4 bg-info-bg border-info-border">
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between">
@@ -430,6 +453,18 @@ export const ModulePage = () => {
           )}
         </div>
       </main>
+
+      {/* Floating exit button — modo focado */}
+      {focusMode && (
+        <button
+          type="button"
+          onClick={() => setFocusMode(false)}
+          className="fixed bottom-6 end-6 z-40 px-4 py-2 rounded-full bg-primary text-primary-foreground shadow-lg hover:opacity-90 transition focus-ring-v2 font-medium text-sm"
+          aria-label={t('module:focus.exit')}
+        >
+          {t('module:focus.exit')}
+        </button>
+      )}
     </div>
   );
 };

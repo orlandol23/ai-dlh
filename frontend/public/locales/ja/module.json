@@ -21,5 +21,9 @@
     "viewOnBlockchain": "ブロックチェーンで確認"
   },
   "startQuiz": "クイズを開始",
-  "retakeQuiz": "クイズを再挑戦"
+  "retakeQuiz": "クイズを再挑戦",
+  "focus": {
+    "enter": "集中モード",
+    "exit": "集中モードを終了"
+  }
 }

@@ -1,0 +1,16 @@
+{
+  "buttons": {
+    "next": "Próximo",
+    "previous": "Anterior",
+    "back": "Voltar",
+    "skip": "Pular",
+    "close": "Fechar",
+    "share": "Compartilhar",
+    "copyLink": "Copiar link"
+  },
+  "language": "Idioma",
+  "skipToContent": "Pular para o conteúdo",
+  "loading": "Carregando…",
+  "error": { "generic": "Algo deu errado" },
+  "footer": { "copyright": "© {{year}} AI-DLH. Projeto de portfólio." }
+}

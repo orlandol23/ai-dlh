@@ -1,0 +1,16 @@
+{
+  "buttons": {
+    "next": "التالي",
+    "previous": "السابق",
+    "back": "رجوع",
+    "skip": "تخطي",
+    "close": "إغلاق",
+    "share": "مشاركة",
+    "copyLink": "نسخ الرابط"
+  },
+  "language": "اللغة",
+  "skipToContent": "تخطي إلى المحتوى",
+  "loading": "جارٍ التحميل…",
+  "error": { "generic": "حدث خطأ ما" },
+  "footer": { "copyright": "© {{year}} AI-DLH. مشروع محفظة." }
+}

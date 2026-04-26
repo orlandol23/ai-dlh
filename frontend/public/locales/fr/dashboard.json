@@ -92,6 +92,23 @@
   "generating": {
     "eyebrow": "Construction de votre module"
   },
+  "onboarding": {
+    "skip": "Passer",
+    "next": "Suivant",
+    "start": "Commencer",
+    "generator": {
+      "title": "Commencez ici",
+      "body": "Dites-nous ce que vous voulez apprendre et choisissez un niveau."
+    },
+    "sparkline": {
+      "title": "Suivez votre progression",
+      "body": "Vos scores apparaîtront ici après le premier quiz."
+    },
+    "onchain": {
+      "title": "Certificats permanents",
+      "body": "Les quiz validés sont enregistrés sur la blockchain."
+    }
+  },
   "toasts": {
     "moduleGenerated": "🎉 Module généré !",
     "moduleGeneratedDesc": "Ouverture du contenu…",

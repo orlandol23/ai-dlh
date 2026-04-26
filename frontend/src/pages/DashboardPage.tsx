@@ -19,6 +19,7 @@ import {
 import { Sparkline } from '@/components/molecules/Sparkline';
 import { AchievementsGrid } from '@/components/molecules/AchievementsGrid';
 import { OnChainTimeline } from '@/components/molecules/OnChainTimeline';
+import { OnboardingTour } from '@/components/molecules/OnboardingTour';
 import { toast } from '@/components/molecules/Toaster';
 import { useAuth } from '@/hooks/useAuth';
 import { trpc } from '@/lib/trpc';
@@ -178,7 +179,7 @@ export const DashboardPage = () => {
 
         {/* Row 2 — sparkline (col-span-8) + achievements (col-span-4) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <Card className="lg:col-span-8">
+          <Card className="lg:col-span-8" data-onboarding="sparkline">
             <CardHeader>
               <p className="eyebrow">{t('dashboard:sparkline.eyebrow')}</p>
               <CardTitle className="font-display tracking-tight">{t('dashboard:sparkline.title')}</CardTitle>
@@ -208,7 +209,7 @@ export const DashboardPage = () => {
 
         {/* Row 3 — timeline on-chain (col-span-8) + form gerar (col-span-4) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <Card className="lg:col-span-8">
+          <Card className="lg:col-span-8" data-onboarding="onchain">
             <CardHeader>
               <p className="eyebrow">{t('dashboard:timeline.eyebrow')}</p>
               <CardTitle className="font-display tracking-tight">{t('dashboard:timeline.title')}</CardTitle>
@@ -221,7 +222,7 @@ export const DashboardPage = () => {
             </CardContent>
           </Card>
 
-          <Card className="lg:col-span-4">
+          <Card className="lg:col-span-4" data-onboarding="generator">
             <CardHeader>
               <p className="eyebrow">{t('dashboard:generator.eyebrow')}</p>
               <CardTitle className="font-display tracking-tight">{t('dashboard:generator.title')}</CardTitle>
@@ -333,6 +334,7 @@ export const DashboardPage = () => {
           </Card>
         )}
       </main>
+      <OnboardingTour />
     </div>
   );
 };

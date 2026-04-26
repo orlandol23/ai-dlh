@@ -92,6 +92,23 @@
   "generating": {
     "eyebrow": "モジュールを構築中"
   },
+  "onboarding": {
+    "skip": "スキップ",
+    "next": "次へ",
+    "start": "始める",
+    "generator": {
+      "title": "ここから始めましょう",
+      "body": "学びたいトピックと難易度を入力してください。"
+    },
+    "sparkline": {
+      "title": "進捗を確認",
+      "body": "最初のクイズの後、ここにスコアが表示されます。"
+    },
+    "onchain": {
+      "title": "永続的な証明書",
+      "body": "合格したクイズはブロックチェーンに記録されます。"
+    }
+  },
   "toasts": {
     "moduleGenerated": "🎉 モジュールを生成しました!",
     "moduleGeneratedDesc": "コンテンツを開いています…",

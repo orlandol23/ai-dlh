@@ -1,1 +1,29 @@
-{}
+{
+  "progressLabel": "問題 {{current}} / {{total}}",
+  "buttons": {
+    "previous": "前へ",
+    "next": "次へ",
+    "finish": "クイズを終了",
+    "processing": "処理中…",
+    "retake": "クイズを再挑戦"
+  },
+  "incomplete": {
+    "title": "クイズが未完了です",
+    "description": "終了する前にすべての質問に回答してください。"
+  },
+  "submitError": "クイズの送信エラー",
+  "results": {
+    "correctOfTotal": "{{total}}問中 {{correct}}問正解",
+    "passedTitle": "🎉 おめでとうございます!合格です!",
+    "passedDescription": "最低スコア70%に到達しました",
+    "failedTitle": "今回は届きませんでした",
+    "failedDescription": "合格には70%が必要です。もう一度挑戦してください!",
+    "onChainBadge": "ON-CHAIN",
+    "onChainTitle": "⛓️ ブロックチェーンに記録しました!",
+    "onChainDescription": "あなたの証明書はイーサリアムブロックチェーンに永続的に記録されました",
+    "viewOnEtherscan": "Etherscanで確認",
+    "blockchainPendingTitle": "⚠️ ブロックチェーン登録は保留中",
+    "blockchainPendingDescription": "進捗は保存されましたが、ブロックチェーン登録で問題が発生しました: {{error}}",
+    "backToDashboard": "ダッシュボードへ戻る"
+  }
+}

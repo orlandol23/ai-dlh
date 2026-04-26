@@ -1,1 +1,25 @@
-{}
+{
+  "header": {
+    "back": "Voltar",
+    "minutes": "min"
+  },
+  "level": {
+    "beginner": "Iniciante",
+    "intermediate": "Intermediário",
+    "advanced": "Avançado"
+  },
+  "topicLabel": "Tópico: {{topic}}",
+  "notFound": {
+    "title": "Módulo não encontrado",
+    "back": "Voltar ao Dashboard"
+  },
+  "alreadyCompleted": {
+    "title": "Você já completou este módulo",
+    "scoreLine": "Score: {{score}}% — {{result}}",
+    "passed": "Aprovado ✅",
+    "failed": "Reprovado ❌",
+    "viewOnBlockchain": "Ver na Blockchain"
+  },
+  "startQuiz": "Iniciar Quiz",
+  "retakeQuiz": "Refazer Quiz"
+}

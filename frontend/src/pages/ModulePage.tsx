@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/atoms/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/atoms/Card';
 import { Badge } from '@/components/atoms/Badge';
@@ -22,6 +23,7 @@ interface QuizQuestion {
 export const ModulePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation(['module', 'quiz', 'common']);
   const moduleId = parseInt(id || '0');
 
   const [showQuiz, setShowQuiz] = useState(false);
@@ -44,7 +46,7 @@ export const ModulePage = () => {
     },
     onError: (error) => {
       setIsSubmitting(false);
-      toast.error('Erro ao enviar quiz', { description: error.message });
+      toast.error(t('quiz:submitError'), { description: error.message });
     },
   });
 
@@ -74,9 +76,9 @@ export const ModulePage = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Módulo não encontrado</h1>
+          <h1 className="text-2xl font-bold mb-4">{t('module:notFound.title')}</h1>
           <Button onClick={() => navigate('/dashboard')}>
-            Voltar ao Dashboard
+            {t('module:notFound.back')}
           </Button>
         </div>
       </div>
@@ -113,8 +115,8 @@ export const ModulePage = () => {
 
   const handleSubmitQuiz = async () => {
     if (selectedAnswers.includes(-1)) {
-      toast.warning('Quiz incompleto', {
-        description: 'Responda todas as perguntas antes de finalizar.',
+      toast.warning(t('quiz:incomplete.title'), {
+        description: t('quiz:incomplete.description'),
       });
       return;
     }
@@ -136,7 +138,8 @@ export const ModulePage = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Button variant="outline" onClick={() => navigate('/dashboard')}>
-              ← Voltar
+              <span className="font-mono inline-block rtl:rotate-180 me-1">←</span>
+              {t('module:header.back')}
             </Button>
             <div className="flex items-center gap-2">
               <Badge
@@ -148,10 +151,10 @@ export const ModulePage = () => {
                     : 'error'
                 }
               >
-                {module.level}
+                {t(`module:level.${module.level}`)}
               </Badge>
               <span className="text-sm text-muted-foreground">
-                {module.estimatedTime} min
+                {module.estimatedTime} {t('module:header.minutes')}
               </span>
               <LanguageSelector />
               <ThemeToggle />
@@ -167,7 +170,7 @@ export const ModulePage = () => {
             <>
               <div className="mb-8">
                 <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight mb-4">{module.title}</h1>
-                <p className="text-muted-foreground">Tópico: {module.topic}</p>
+                <p className="text-muted-foreground">{t('module:topicLabel', { topic: module.topic })}</p>
               </div>
 
               <Card className="mb-8">
@@ -184,11 +187,16 @@ export const ModulePage = () => {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-semibold text-info-fg">
-                          Você já completou este módulo
+                          {t('module:alreadyCompleted.title')}
                         </p>
                         <p className="text-sm text-info-fg/80">
-                          Score: {progress.score}% -{' '}
-                          {progress.score >= 70 ? 'Aprovado ✅' : 'Reprovado ❌'}
+                          {t('module:alreadyCompleted.scoreLine', {
+                            score: progress.score,
+                            result:
+                              progress.score >= 70
+                                ? t('module:alreadyCompleted.passed')
+                                : t('module:alreadyCompleted.failed'),
+                          })}
                         </p>
                       </div>
                       {progress.transactionHash && (
@@ -198,7 +206,8 @@ export const ModulePage = () => {
                           rel="noopener noreferrer"
                           className="text-primary hover:underline text-sm font-mono"
                         >
-                          Ver na Blockchain →
+                          {t('module:alreadyCompleted.viewOnBlockchain')}{' '}
+                          <span className="font-mono inline-block rtl:rotate-180">→</span>
                         </a>
                       )}
                     </div>
@@ -208,7 +217,8 @@ export const ModulePage = () => {
 
               <div className="flex justify-center">
                 <Button size="lg" onClick={handleStartQuiz}>
-                  {progress ? 'Refazer Quiz' : 'Iniciar Quiz'} →
+                  {progress ? t('module:retakeQuiz') : t('module:startQuiz')}{' '}
+                  <span className="font-mono inline-block rtl:rotate-180">→</span>
                 </Button>
               </div>
             </>
@@ -226,7 +236,7 @@ export const ModulePage = () => {
                     />
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">
-                    Questão {currentQuestion + 1} de {quizData.length}
+                    {t('quiz:progressLabel', { current: currentQuestion + 1, total: quizData.length })}
                   </p>
                 </div>
                 <CardTitle>{currentQ.question}</CardTitle>
@@ -257,7 +267,8 @@ export const ModulePage = () => {
                     onClick={handlePrevious}
                     disabled={currentQuestion === 0}
                   >
-                    ← Anterior
+                    <span className="font-mono inline-block rtl:rotate-180 me-1">←</span>
+                    {t('quiz:buttons.previous')}
                   </Button>
 
                   {currentQuestion < quizData.length - 1 ? (
@@ -265,7 +276,8 @@ export const ModulePage = () => {
                       onClick={handleNext}
                       disabled={selectedAnswers[currentQuestion] === -1}
                     >
-                      Próxima →
+                      {t('quiz:buttons.next')}{' '}
+                      <span className="font-mono inline-block rtl:rotate-180">→</span>
                     </Button>
                   ) : (
                     <Button
@@ -279,10 +291,10 @@ export const ModulePage = () => {
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
-                          <span>Processando...</span>
+                          <span>{t('quiz:buttons.processing')}</span>
                         </div>
                       ) : (
-                        'Finalizar Quiz'
+                        t('quiz:buttons.finish')
                       )}
                     </Button>
                   )}
@@ -305,26 +317,29 @@ export const ModulePage = () => {
                       {quizResult.score}%
                     </div>
                     <p className="text-xl text-muted-foreground">
-                      {quizResult.correct} de {quizResult.total} corretas
+                      {t('quiz:results.correctOfTotal', {
+                        correct: quizResult.correct,
+                        total: quizResult.total,
+                      })}
                     </p>
                   </div>
 
                   {quizResult.passed ? (
                     <div className="bg-success-bg border border-success-border rounded-lg p-6">
                       <p className="text-xl font-semibold text-success-fg mb-2">
-                        🎉 Parabéns! Você foi aprovado!
+                        {t('quiz:results.passedTitle')}
                       </p>
                       <p className="text-success-fg/80">
-                        Você atingiu a pontuação mínima de 70%
+                        {t('quiz:results.passedDescription')}
                       </p>
                     </div>
                   ) : (
                     <div className="bg-error-bg border border-error-border rounded-lg p-6">
                       <p className="text-xl font-semibold text-error-fg mb-2">
-                        Não foi desta vez
+                        {t('quiz:results.failedTitle')}
                       </p>
                       <p className="text-error-fg/80">
-                        Você precisa de 70% para ser aprovado. Tente novamente!
+                        {t('quiz:results.failedDescription')}
                       </p>
                     </div>
                   )}
@@ -338,14 +353,13 @@ export const ModulePage = () => {
                         className="absolute -top-2 right-4 px-3 py-1 rounded-md border-2 border-primary/60 bg-card font-mono text-[11px] font-bold tracking-widest text-primary uppercase shadow-md"
                         aria-hidden="true"
                       >
-                        ⛓ ON-CHAIN
+                        ⛓ {t('quiz:results.onChainBadge')}
                       </motion.div>
                       <p className="font-semibold text-onchain-fg mb-2 mt-4">
-                        ⛓️ Registrado na Blockchain!
+                        {t('quiz:results.onChainTitle')}
                       </p>
                       <p className="text-sm text-onchain-fg/80 mb-3">
-                        Seu certificado foi registrado permanentemente na blockchain
-                        Ethereum
+                        {t('quiz:results.onChainDescription')}
                       </p>
                       <a
                         href={getEtherscanUrl(quizResult.transactionHash)}
@@ -353,7 +367,8 @@ export const ModulePage = () => {
                         rel="noopener noreferrer"
                         className="inline-block bg-primary text-primary-foreground font-mono text-sm px-4 py-2 rounded-md hover:opacity-90 transition"
                       >
-                        Ver no Etherscan →
+                        {t('quiz:results.viewOnEtherscan')}{' '}
+                        <span className="font-mono inline-block rtl:rotate-180">→</span>
                       </a>
                     </div>
                   )}
@@ -361,11 +376,10 @@ export const ModulePage = () => {
                   {quizResult.blockchainError && (
                     <div className="mt-6 bg-warning-bg border border-warning-border rounded-lg p-6">
                       <p className="font-semibold text-warning-fg mb-2">
-                        ⚠️ Registro blockchain pendente
+                        {t('quiz:results.blockchainPendingTitle')}
                       </p>
                       <p className="text-sm text-warning-fg/80">
-                        Seu progresso foi salvo, mas houve um problema ao registrar na
-                        blockchain: {quizResult.blockchainError}
+                        {t('quiz:results.blockchainPendingDescription', { error: quizResult.blockchainError })}
                       </p>
                     </div>
                   )}
@@ -374,9 +388,9 @@ export const ModulePage = () => {
 
               <div className="flex gap-4 justify-center">
                 <Button variant="outline" onClick={() => navigate('/dashboard')}>
-                  Voltar ao Dashboard
+                  {t('quiz:results.backToDashboard')}
                 </Button>
-                <Button onClick={handleStartQuiz}>Refazer Quiz</Button>
+                <Button onClick={handleStartQuiz}>{t('quiz:buttons.retake')}</Button>
               </div>
             </div>
           )}

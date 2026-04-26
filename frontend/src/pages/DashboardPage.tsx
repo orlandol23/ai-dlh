@@ -5,6 +5,7 @@ import { Button } from '@/components/atoms/Button';
 import { Input } from '@/components/atoms/Input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/atoms/Card';
 import { ThemeToggle } from '@/components/atoms/ThemeToggle';
+import { LanguageSelector } from '@/components/molecules/LanguageSelector';
 import { Avatar } from '@/components/atoms/Avatar';
 import { Sparkline } from '@/components/molecules/Sparkline';
 import { AchievementsGrid } from '@/components/molecules/AchievementsGrid';
@@ -116,6 +117,7 @@ export const DashboardPage = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <LanguageSelector />
               <ThemeToggle />
               <Button variant="outline" onClick={logout}>
                 Desconectar

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/atoms/Button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/atoms/Card';
 import { ThemeToggle } from '@/components/atoms/ThemeToggle';
+import { LanguageSelector } from '@/components/molecules/LanguageSelector';
 import { useAuth } from '@/hooks/useAuth';
 
 /**
@@ -39,6 +40,7 @@ export const HomePage = () => {
               <h1 className="text-xl font-bold">AI-DLH</h1>
             </div>
             <div className="flex items-center gap-2">
+              <LanguageSelector />
               <ThemeToggle />
               <Button
                 onClick={connectWallet}

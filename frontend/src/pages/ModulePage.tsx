@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/atoms/Car
 import { Badge } from '@/components/atoms/Badge';
 import { Skeleton } from '@/components/atoms/Skeleton';
 import { ThemeToggle } from '@/components/atoms/ThemeToggle';
+import { LanguageSelector } from '@/components/molecules/LanguageSelector';
 import { toast } from '@/components/molecules/Toaster';
 import { trpc } from '@/lib/trpc';
 import { getEtherscanUrl } from '@/lib/utils';
@@ -152,6 +153,7 @@ export const ModulePage = () => {
               <span className="text-sm text-muted-foreground">
                 {module.estimatedTime} min
               </span>
+              <LanguageSelector />
               <ThemeToggle />
             </div>
           </div>

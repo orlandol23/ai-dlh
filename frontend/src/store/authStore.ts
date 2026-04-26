@@ -51,8 +51,9 @@ const AUTH_TOKEN_KEY = 'auth_token';
  * when the quota is full — and they don't exist at all under SSR / Vitest
  * jsdom-less setups. Wrapping every access lets the store fall back to
  * in-memory state instead of crashing on import or surface-level render.
- * (Same pattern themeStore.ts uses; centralized here to keep both stores
- * consistent.)
+ * (themeStore.ts uses a similar defensive pattern, but these helpers are
+ * local to authStore — extracting to a shared util would be the next
+ * step if a third store needed the same behavior.)
  */
 function safeGet(key: string): string | null {
   try {

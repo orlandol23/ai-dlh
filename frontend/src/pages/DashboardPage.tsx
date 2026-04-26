@@ -80,10 +80,11 @@ export const DashboardPage = () => {
       setIsGenerating(false);
       setTopic('');
       // Generating a module changes the catalog and (via the new module
-      // appearing on this dashboard) the pending-modules sidebar. Invalidate
-      // the AI router's queries so the cache catches up before the global
-      // staleTime would.
-      void utils.ai.invalidate();
+      // appearing on this dashboard) the pending-modules sidebar. Only
+      // getUserModules is affected — invalidate just that key instead of
+      // the entire `ai` router so unrelated queries (getModuleById for
+      // open modules, etc.) don't unnecessarily refetch.
+      void utils.ai.getUserModules.invalidate();
       if (typeof data?.id === 'number') {
         toast.success('🎉 Módulo gerado!', { description: 'Abrindo o conteúdo…' });
         navigate(`/module/${data.id}`);

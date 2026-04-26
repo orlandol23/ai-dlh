@@ -163,37 +163,42 @@ export const progressRouter = router({
   getStatistics: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.user.id;
 
-    // Single round-trip for the additive aggregates.
-    const [aggregates] = await db
-      .select({
-        total: sql<number>`COUNT(*)::int`,
-        passed: sql<number>`COUNT(*) FILTER (WHERE ${progressRecords.score} >= 70)::int`,
-        onChain: sql<number>`COUNT(*) FILTER (WHERE ${progressRecords.blockchainStatus} = 'confirmed')::int`,
-        highScore: sql<number>`COUNT(*) FILTER (WHERE ${progressRecords.score} >= 90)::int`,
-        hasPerfect: sql<boolean>`COALESCE(bool_or(${progressRecords.score} = 100), false)`,
-        avgScore: sql<number>`COALESCE(ROUND(AVG(${progressRecords.score}))::int, 0)`,
-      })
-      .from(progressRecords)
-      .where(eq(progressRecords.userId, userId));
+    // None of the three queries depend on each other — issue them in
+    // parallel via Promise.all to cut the endpoint's latency to roughly
+    // the slowest single query instead of their sum.
+    const [[aggregates], [topics], recentScores] = await Promise.all([
+      // Single-table scan for the additive aggregates.
+      db
+        .select({
+          total: sql<number>`COUNT(*)::int`,
+          passed: sql<number>`COUNT(*) FILTER (WHERE ${progressRecords.score} >= 70)::int`,
+          onChain: sql<number>`COUNT(*) FILTER (WHERE ${progressRecords.blockchainStatus} = 'confirmed')::int`,
+          highScore: sql<number>`COUNT(*) FILTER (WHERE ${progressRecords.score} >= 90)::int`,
+          hasPerfect: sql<boolean>`COALESCE(bool_or(${progressRecords.score} = 100), false)`,
+          avgScore: sql<number>`COALESCE(ROUND(AVG(${progressRecords.score}))::int, 0)`,
+        })
+        .from(progressRecords)
+        .where(eq(progressRecords.userId, userId)),
 
-    // Distinct topics needs the join — kept as its own query so the
-    // first aggregate above stays a single-table scan.
-    const [topics] = await db
-      .select({ count: sql<number>`COUNT(DISTINCT ${modules.topic})::int` })
-      .from(progressRecords)
-      .innerJoin(modules, eq(progressRecords.moduleId, modules.id))
-      .where(eq(progressRecords.userId, userId));
+      // Distinct topics needs the join to modules — kept as its own
+      // query so the aggregates above stay a single-table scan.
+      db
+        .select({ count: sql<number>`COUNT(DISTINCT ${modules.topic})::int` })
+        .from(progressRecords)
+        .innerJoin(modules, eq(progressRecords.moduleId, modules.id))
+        .where(eq(progressRecords.userId, userId)),
 
-    // Streak is order-dependent (consecutive passes from the most
-    // recent backwards). Fetching only the columns we need keeps the
-    // payload tiny; cap at 50 because no realistic streak survives
-    // that long without hitting a sub-70 score.
-    const recentScores = await db
-      .select({ score: progressRecords.score })
-      .from(progressRecords)
-      .where(eq(progressRecords.userId, userId))
-      .orderBy(desc(progressRecords.completedAt))
-      .limit(50);
+      // Streak is order-dependent (consecutive passes from the most
+      // recent backwards). Fetching only the columns we need keeps the
+      // payload tiny; cap at 50 because no realistic streak survives
+      // that long without hitting a sub-70 score.
+      db
+        .select({ score: progressRecords.score })
+        .from(progressRecords)
+        .where(eq(progressRecords.userId, userId))
+        .orderBy(desc(progressRecords.completedAt))
+        .limit(50),
+    ]);
 
     let currentStreak = 0;
     for (const r of recentScores) {

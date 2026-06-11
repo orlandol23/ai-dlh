@@ -1,0 +1,12 @@
+{
+  // Lint-only TS project. The build tsconfig excludes "**/*.test.ts" so test
+  // files never reach dist/, but typescript-eslint requires every linted file
+  // to belong to the project referenced by parserOptions.project. This config
+  // widens the include to cover tests without changing the build output.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": ["./**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

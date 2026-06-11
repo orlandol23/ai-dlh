@@ -24,4 +24,8 @@ export const Toaster = () => {
   );
 };
 
+// Re-exporting sonner's `toast` next to the component is intentional: every
+// consumer imports both from this single module. The only cost is that Fast
+// Refresh falls back to a full reload for this file, which is acceptable.
+// eslint-disable-next-line react-refresh/only-export-components
 export { toast };

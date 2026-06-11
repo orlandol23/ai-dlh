@@ -125,7 +125,8 @@ export class Web3Service {
     try {
       const progress = await this.contract.getUserProgress(walletAddress);
 
-      return progress.map((p: any) => ({
+      // ethers returns tuple Results; index by the ABI field names.
+      return progress.map((p: { moduleId: bigint; score: bigint; timestamp: bigint; moduleTopic: string }) => ({
         moduleId: Number(p.moduleId),
         score: Number(p.score),
         timestamp: Number(p.timestamp),

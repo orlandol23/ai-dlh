@@ -78,7 +78,7 @@ const csvSuffixesSchema = z
       .map((s) => s.trim())
       .filter(Boolean);
     for (const entry of entries) {
-      if (!/^[A-Za-z0-9._\-]+(?::\d+)?$/.test(entry)) {
+      if (!/^[A-Za-z0-9._-]+(?::\d+)?$/.test(entry)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: `invalid host suffix: "${entry}" (expected e.g. "-myorg.vercel.app")`,

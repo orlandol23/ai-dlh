@@ -7,7 +7,6 @@ import { web3Service } from '../services/web3.service.js';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { logger } from '../utils/logger.js';
-import { getErrorMessage } from '../utils/errors.js';
 
 /**
  * Progress Router - Handles quiz submissions and progress tracking
@@ -111,8 +110,12 @@ export const progressRouter = router({
 
           logger.info(`Blockchain transaction confirmed: ${txHash}`);
         } catch (error) {
+          // Full detail (may contain RPC URL, wallet balance, ethers
+          // internals) stays in the server logs; the client gets a
+          // generic, displayable message (ModulePage interpolates it).
           logger.error('Blockchain recording failed', { error });
-          blockchainError = getErrorMessage(error, 'Blockchain recording failed');
+          blockchainError =
+            'Blockchain recording failed. Your score was saved and the on-chain record can be retried later.';
 
           // Update status to failed
           await db

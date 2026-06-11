@@ -51,13 +51,12 @@ export class AIService {
   }
 
   async testConnection(): Promise<boolean> {
-    // Tests the default provider (Gemini); see provider.testConnection() for individual checks
-    const { result } = await providerRouter.generate(
-      { topic: 'test', level: 'beginner', locale: 'en' },
-      { tier: 'default', region: 'global', locale: 'en' },
-    ).then((r) => ({ result: r.result }))
-      .catch(() => ({ result: null }));
-    return !!result;
+    // Cheap configuration check only — deliberately performs NO LLM call.
+    // /health is unauthenticated, so triggering a real generation here would
+    // let anyone burn provider quota/credits (incl. the paid Claude fallback)
+    // for free (security audit P0). Per-provider live checks remain available
+    // via provider.testConnection() for operator tooling.
+    return providerRouter.isConfigured();
   }
 }
 

@@ -29,6 +29,15 @@ export class ProviderRouter {
       : null;
   }
 
+  /**
+   * Cheap health probe: true when the primary provider (Gemini) has an API
+   * key configured. Performs NO network/LLM calls — the unauthenticated
+   * /health endpoint relies on this staying free of side effects.
+   */
+  isConfigured(): boolean {
+    return Boolean(config.GEMINI_API_KEY);
+  }
+
   pickPrimary(ctx: RouterContext): AIProvider {
     if (ctx.region === 'cn' && this.qwen) return this.qwen;
     if (ctx.tier === 'premium' && this.claude) return this.claude;

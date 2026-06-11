@@ -3,16 +3,25 @@ import { router, protectedProcedure, rateLimitByUser } from '../trpc.js';
 import { config } from '../utils/env.js';
 import { db } from '../db/index.js';
 import { modules, progressRecords, type QuizQuestion } from '../db/schema.js';
-import { web3Service } from '../services/web3.service.js';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { logger } from '../utils/logger.js';
 
 /**
+ * `blockchain_error` stores server-side detail (RPC URLs, ethers internals)
+ * and must never reach the client verbatim — every query that returns
+ * progress records excludes it via this column mask. The frontend renders
+ * a generic i18n message keyed off `blockchainStatus` instead.
+ */
+const CLIENT_SAFE_PROGRESS_COLUMNS = { blockchainError: false } as const;
+
+/**
  * Progress Router - Handles quiz submissions and progress tracking
  *
  * Endpoints:
- * - submitQuiz: Submit quiz answers and record on blockchain if passing
+ * - submitQuiz: Submit quiz answers; passing scores are enqueued for the
+ *   async blockchain queue worker (services/blockchain-queue.service.ts)
+ * - retryBlockchain: Re-enqueue a record that ended up `failed_permanent`
  * - getUserProgress: Get up to 50 most recent progress records for user
  *   (capped — see endpoint comment for rationale)
  * - getStatistics: Get aggregated statistics computed in SQL
@@ -84,7 +93,12 @@ export const progressRouter = router({
       const score = Math.round((correct / quizData.length) * 100);
       logger.info(`Quiz submitted: ${correct}/${quizData.length} correct (${score}%)`);
 
-      // Save progress record
+      // Save progress record. Passing scores are enqueued for the async
+      // blockchain queue worker — this mutation no longer waits for the
+      // on-chain confirmation (which can take minutes), it responds
+      // immediately and the frontend polls `getModuleProgress` while the
+      // record is pending/processing.
+      const passed = score >= 70;
       const [record] = await db
         .insert(progressRecords)
         .values({
@@ -92,58 +106,79 @@ export const progressRouter = router({
           moduleId: input.moduleId,
           score,
           answersData: input.answers,
-          blockchainStatus: score >= 70 ? 'pending' : 'none',
+          blockchainStatus: passed ? 'pending' : 'none',
         })
         .returning();
 
-      // If passed (score >= 70%), record on blockchain
-      let txHash: string | null = null;
-      let blockchainError: string | null = null;
-
-      if (score >= 70) {
-        try {
-          logger.info('Recording completion on blockchain...');
-          const tx = await web3Service.recordCompletion(
-            input.moduleId,
-            score,
-            module.topic
-          );
-          txHash = tx.hash;
-
-          // Update record with transaction hash
-          await db
-            .update(progressRecords)
-            .set({
-              transactionHash: txHash,
-              blockchainStatus: 'confirmed',
-            })
-            .where(eq(progressRecords.id, record.id));
-
-          logger.info(`Blockchain transaction confirmed: ${txHash}`);
-        } catch (error) {
-          // Full detail (may contain RPC URL, wallet balance, ethers
-          // internals) stays in the server logs; the client gets a
-          // generic, displayable message (ModulePage interpolates it).
-          logger.error('Blockchain recording failed', { error });
-          blockchainError =
-            'Blockchain recording failed. Your score was saved and the on-chain record can be retried later.';
-
-          // Update status to failed
-          await db
-            .update(progressRecords)
-            .set({ blockchainStatus: 'failed' })
-            .where(eq(progressRecords.id, record.id));
-        }
+      if (passed) {
+        logger.info(
+          `Progress record ${record.id} enqueued for on-chain recording (module ${input.moduleId})`
+        );
       }
 
       return {
+        recordId: record.id,
         score,
         correct,
         total: quizData.length,
-        passed: score >= 70,
-        transactionHash: txHash,
-        blockchainError,
+        passed,
+        // 'pending' (worker will pick it up) or 'none' (below threshold).
+        blockchainStatus: record.blockchainStatus,
       };
+    }),
+
+  /**
+   * Re-enqueue an on-chain record that the queue worker gave up on
+   * (`failed_permanent`) — exposed as the "tentar novamente" button in
+   * the frontend.
+   *
+   * Ownership + state checks live in the UPDATE's WHERE itself, so the
+   * whole thing is one atomic statement: a record that doesn't exist,
+   * belongs to someone else, or isn't `failed_permanent` all come back
+   * as "no row updated" → NOT_FOUND (no id enumeration).
+   *
+   * Rate limited per user: every retry can spend ETH from the custodial
+   * wallet, so it gets its own tight budget.
+   */
+  retryBlockchain: protectedProcedure
+    .use(
+      rateLimitByUser({
+        name: 'progress.retryBlockchain',
+        max: config.RATE_LIMIT_BLOCKCHAIN_RETRY_PER_HOUR,
+        windowMs: 60 * 60 * 1000,
+      })
+    )
+    .input(z.object({ recordId: z.number().int().positive() }))
+    .mutation(async ({ input, ctx }) => {
+      const updated = await db
+        .update(progressRecords)
+        .set({
+          blockchainStatus: 'pending',
+          blockchainAttempts: 0,
+          blockchainNextAttemptAt: null,
+          blockchainLockedAt: null,
+          blockchainError: null,
+        })
+        .where(
+          and(
+            eq(progressRecords.id, input.recordId),
+            eq(progressRecords.userId, ctx.user.id),
+            eq(progressRecords.blockchainStatus, 'failed_permanent')
+          )
+        )
+        .returning({ id: progressRecords.id });
+
+      if (!updated[0]) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'No retryable record found',
+        });
+      }
+
+      logger.info(
+        `Progress record ${input.recordId} re-enqueued by user ${ctx.user.id}`
+      );
+      return { recordId: updated[0].id, blockchainStatus: 'pending' as const };
     }),
 
   /**
@@ -165,6 +200,7 @@ export const progressRouter = router({
       where: eq(progressRecords.userId, ctx.user.id),
       orderBy: [desc(progressRecords.completedAt)],
       limit: 50,
+      columns: CLIENT_SAFE_PROGRESS_COLUMNS,
       with: {
         module: true,
       },
@@ -263,6 +299,7 @@ export const progressRouter = router({
           eq(progressRecords.moduleId, input.moduleId)
         ),
         orderBy: [desc(progressRecords.completedAt)],
+        columns: CLIENT_SAFE_PROGRESS_COLUMNS,
       });
 
       return record;

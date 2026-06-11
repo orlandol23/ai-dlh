@@ -61,6 +61,29 @@ export const modules = pgTable('modules', {
 });
 
 /**
+ * Possible values for `progress_records.blockchain_status`.
+ *
+ * Lifecycle (managed by services/blockchain-queue.service.ts):
+ *   none             → score < 70, nothing to record on-chain
+ *   pending          → enqueued, waiting for the worker to pick it up
+ *   processing       → claimed by the worker, tx being sent right now
+ *   confirmed        → tx mined; `transaction_hash` is set
+ *   failed           → last attempt failed; will be retried after
+ *                      `blockchain_next_attempt_at` (exponential backoff)
+ *   failed_permanent → gave up (max attempts or non-retryable error);
+ *                      only `progress.retryBlockchain` re-enqueues it
+ */
+export const BLOCKCHAIN_STATUSES = [
+  'none',
+  'pending',
+  'processing',
+  'confirmed',
+  'failed',
+  'failed_permanent',
+] as const;
+export type BlockchainStatus = (typeof BLOCKCHAIN_STATUSES)[number];
+
+/**
  * Progress records table - stores quiz results and blockchain transactions
  */
 export const progressRecords = pgTable('progress_records', {
@@ -70,13 +93,26 @@ export const progressRecords = pgTable('progress_records', {
   score: integer('score').notNull(), // 0-100
   answersData: json('answers_data').$type<number[]>(), // array of answer indices
   transactionHash: varchar('transaction_hash', { length: 66 }),
-  blockchainStatus: varchar('blockchain_status', { length: 20 }).notNull(), // pending | confirmed | failed | none
+  blockchainStatus: varchar('blockchain_status', { length: 20 }).notNull(), // see BLOCKCHAIN_STATUSES
+  // On-chain queue bookkeeping (see services/blockchain-queue.service.ts):
+  // number of send attempts already made (incremented at claim time).
+  blockchainAttempts: integer('blockchain_attempts').notNull().default(0),
+  // Earliest time the next retry may run (NULL = eligible immediately).
+  blockchainNextAttemptAt: timestamp('blockchain_next_attempt_at'),
+  // Set when the worker claims the row; rows stuck in 'processing' longer
+  // than the stale-lock window are reclaimed (crash recovery).
+  blockchainLockedAt: timestamp('blockchain_locked_at'),
+  // Last error message (server-side detail, never sent verbatim to clients).
+  blockchainError: text('blockchain_error'),
   completedAt: timestamp('completed_at').defaultNow().notNull(),
 }, (table) => {
   return {
     userIdIdx: index('progress_user_id_idx').on(table.userId),
     moduleIdIdx: index('progress_module_id_idx').on(table.moduleId),
     txHashIdx: index('progress_tx_hash_idx').on(table.transactionHash),
+    // The worker polls by (status, next_attempt_at); index keeps the
+    // poll cheap as the table grows.
+    blockchainStatusIdx: index('progress_blockchain_status_idx').on(table.blockchainStatus),
   };
 });
 

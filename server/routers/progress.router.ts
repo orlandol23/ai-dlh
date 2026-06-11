@@ -41,9 +41,15 @@ export const progressRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      // Get module
+      // Get module — ownership enforced in the query itself (same rule as
+      // getModuleById/deleteModule). NOT_FOUND is returned for both
+      // "doesn't exist" and "belongs to someone else" so module ids of
+      // other users are not enumerable.
       const module = await db.query.modules.findFirst({
-        where: eq(modules.id, input.moduleId),
+        where: and(
+          eq(modules.id, input.moduleId),
+          eq(modules.userId, ctx.user.id)
+        ),
       });
 
       if (!module) {
@@ -52,6 +58,11 @@ export const progressRouter = router({
           message: 'Module not found',
         });
       }
+
+      // TODO(security, PR próprio): hoje o quiz chega ao frontend com
+      // `correctAnswer` no payload (getModuleById). Mover a correção para
+      // o servidor exige mudança no fluxo do frontend — fora do escopo
+      // deste PR de hardening.
 
       // Validate answers length
       const quizData = module.quizData as QuizQuestion[];

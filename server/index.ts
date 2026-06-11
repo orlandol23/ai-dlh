@@ -7,6 +7,7 @@ import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import { appRouter } from './routers/index.js';
 import { createContext } from './context.js';
 import { corsMiddleware } from './middleware/cors.middleware.js';
+import { globalRateLimiter } from './middleware/rate-limit.middleware.js';
 import { logger } from './utils/logger.js';
 import { config } from './utils/env.js';
 import { checkDatabaseConnection, db } from './db/index.js';
@@ -51,7 +52,13 @@ async function runMigrations(): Promise<void> {
 // Create Express app
 const app = express();
 
+// Behind Railway's proxy the client IP arrives via X-Forwarded-For.
+// Trust exactly one proxy hop so express-rate-limit keys on the real
+// client IP instead of the proxy's (or a spoofable header chain).
+app.set('trust proxy', 1);
+
 // Middleware
+app.use(globalRateLimiter);
 app.use(express.json());
 app.use(corsMiddleware);
 

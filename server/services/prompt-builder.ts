@@ -1,4 +1,5 @@
 import type { GenerateModuleInput } from './providers/types.js';
+import type { LearningStyle } from './vark.js';
 
 const LANGUAGE_NAMES: Record<string, string> = {
   'en': 'English',
@@ -16,6 +17,35 @@ const LEVEL_DESCRIPTIONS: Record<string, string> = {
 };
 
 /**
+ * VARK learning-style adaptation (Fase 1 da fusão aprendaMais —
+ * docs/FUSION_APRENDAMAIS.md).
+ *
+ * Injected into the shared prompt when the user has a stored
+ * learning_style, so EVERY provider (Gemini / Claude / Qwen) adapts the
+ * pedagogy. These instructions shape *how* the content teaches; they must
+ * never change the JSON output contract (ModuleContentSchema).
+ */
+const STYLE_INSTRUCTIONS: Record<LearningStyle, string> = {
+  visual:
+    'The learner is a VISUAL learner. Favor visual analogies and mental imagery, ' +
+    'describe diagrams/flowcharts in words (e.g. "imagine a pipeline where..."), ' +
+    'use tables and spatially structured Markdown (nested lists, clear hierarchy ' +
+    'of ## / ### sections) so the layout itself conveys structure.',
+  auditory:
+    'The learner is an AUDITORY learner. Use a narrative, conversational tone as ' +
+    'if explaining out loud; include rhythmic/sound-based mnemonics, memorable ' +
+    'spoken-style phrases, and rhetorical questions followed by their answers.',
+  reading_writing:
+    'The learner is a READING/WRITING learner. Favor well-structured prose with ' +
+    'precise written definitions, bullet-point summaries, glossary-style lists of ' +
+    'key terms, and suggestions to rewrite/summarize concepts in their own words.',
+  kinesthetic:
+    'The learner is a KINESTHETIC learner. Favor learning-by-doing: practical ' +
+    'real-world examples, step-by-step hands-on exercises the learner can try ' +
+    'immediately, and "try it yourself" prompts after each concept.',
+};
+
+/**
  * Builds the LLM prompt for module generation, parametrized by output locale.
  *
  * Prompt instructions are kept in English (LLMs respond more reliably to
@@ -26,8 +56,16 @@ export function buildPrompt(input: GenerateModuleInput): string {
   const lang = LANGUAGE_NAMES[input.locale] ?? 'English';
   const level = LEVEL_DESCRIPTIONS[input.level];
 
+  // Optional VARK adaptation. Affects only the pedagogical approach of the
+  // generated content — the JSON structure below stays identical, so the
+  // ModuleContentSchema contract is preserved for every provider.
+  const styleSection = input.learningStyle
+    ? `\nLearner profile adaptation (VARK):\n- ${STYLE_INSTRUCTIONS[input.learningStyle]}\n- Adapt the teaching approach of "content" and the framing of quiz questions to this profile, while keeping the exact same JSON structure.\n`
+    : '';
+
   return `
 You are an expert in education and educational content creation. Create a complete educational module about "${input.topic}" at ${level} level.
+${styleSection}
 
 CRITICAL RULES:
 1. The output MUST be in ${lang}.

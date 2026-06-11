@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { router, protectedProcedure } from '../trpc.js';
+import { router, protectedProcedure, rateLimitByUser } from '../trpc.js';
+import { config } from '../utils/env.js';
 import { aiService } from '../services/ai.service.js';
 import { db } from '../db/index.js';
 import { modules } from '../db/schema.js';
@@ -34,8 +35,18 @@ function detectRegion(req: { headers: { [k: string]: string | string[] | undefin
 export const aiRouter = router({
   /**
    * Generate a new learning module with AI
+   *
+   * Rate limited per user: each call spends Gemini API quota, so a single
+   * user can't burn the whole project's daily allowance.
    */
   generateModule: protectedProcedure
+    .use(
+      rateLimitByUser({
+        name: 'ai.generateModule',
+        max: config.RATE_LIMIT_AI_GENERATE_PER_HOUR,
+        windowMs: 60 * 60 * 1000,
+      })
+    )
     .input(
       z.object({
         topic: z.string().min(3).max(200, 'Topic must be between 3-200 characters'),

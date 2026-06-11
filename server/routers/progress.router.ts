@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { router, protectedProcedure } from '../trpc.js';
+import { router, protectedProcedure, rateLimitByUser } from '../trpc.js';
+import { config } from '../utils/env.js';
 import { db } from '../db/index.js';
 import { modules, progressRecords, type QuizQuestion } from '../db/schema.js';
 import { web3Service } from '../services/web3.service.js';
@@ -22,8 +23,18 @@ import { getErrorMessage } from '../utils/errors.js';
 export const progressRouter = router({
   /**
    * Submit quiz answers and record progress
+   *
+   * Rate limited per user: passing submissions trigger an on-chain
+   * transaction paid with ETH from the server's custodial wallet.
    */
   submitQuiz: protectedProcedure
+    .use(
+      rateLimitByUser({
+        name: 'progress.submitQuiz',
+        max: config.RATE_LIMIT_QUIZ_SUBMIT_PER_HOUR,
+        windowMs: 60 * 60 * 1000,
+      })
+    )
     .input(
       z.object({
         moduleId: z.number(),

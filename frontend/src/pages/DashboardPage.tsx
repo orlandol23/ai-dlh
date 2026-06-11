@@ -31,7 +31,7 @@ const STAGE_KEYS = ['0', '1', '2', '3', '4'] as const;
 
 export const DashboardPage = () => {
   const navigate = useNavigate();
-  const { t, i18n } = useTranslation(['dashboard', 'common', 'auth']);
+  const { t, i18n } = useTranslation(['dashboard', 'common', 'auth', 'vark']);
   const { user, logout } = useAuth();
   const [topic, setTopic] = useState('');
   const [level, setLevel] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner');
@@ -170,6 +170,28 @@ export const DashboardPage = () => {
       </header>
 
       <main id="main-content" tabIndex={-1} className="container mx-auto px-4 py-8 space-y-6">
+        {/* VARK onboarding CTA — only until the user takes the questionnaire.
+            Fase 1 da fusão aprendaMais (docs/FUSION_APRENDAMAIS.md); the
+            quiz can be retaken later from the preferences panel. */}
+        {user && user.learningStyle == null && (
+          <Card className="border-primary/40">
+            <CardContent className="pt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <p className="eyebrow">{t('vark:cta.eyebrow')}</p>
+                <h2 className="font-display text-lg font-bold tracking-tight mt-1">
+                  {t('vark:cta.title')}
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {t('vark:cta.description')}
+                </p>
+              </div>
+              <Button onClick={() => navigate('/vark')} className="shrink-0">
+                {t('vark:cta.button')}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Row 1 — 4 stat tiles, col-span-3 each on lg */}
         <div className="grid grid-cols-2 lg:grid-cols-12 gap-4">
           <Card className="lg:col-span-3">

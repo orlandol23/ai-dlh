@@ -25,8 +25,13 @@
     "onChainTitle": "⛓️ Enregistré sur la blockchain !",
     "onChainDescription": "Votre certificat a été enregistré de manière permanente sur la blockchain Ethereum",
     "viewOnEtherscan": "Voir sur Etherscan",
-    "blockchainPendingTitle": "⚠️ Enregistrement blockchain en attente",
-    "blockchainPendingDescription": "Votre progression a été sauvegardée, mais un problème est survenu lors de l'enregistrement sur la blockchain : {{error}}",
+    "blockchainRegisteringTitle": "⛓️ Enregistrement sur la blockchain…",
+    "blockchainRegisteringDescription": "Votre certificat est en cours d'enregistrement sur Sepolia. Cela peut prendre quelques minutes — vous pouvez quitter cette page, l'enregistrement continue en arrière-plan.",
+    "blockchainFailedTitle": "⚠️ Échec de l'enregistrement sur la blockchain",
+    "blockchainFailedDescription": "Votre score a été sauvegardé, mais l'enregistrement on-chain a échoué après plusieurs tentatives. Vous pouvez réessayer.",
+    "retryBlockchain": "Réessayer",
+    "retryQueued": "Enregistrement remis en file d'attente — suivez le statut ici.",
+    "retryError": "Impossible de remettre l'enregistrement en file d'attente",
     "backToDashboard": "Retour au tableau de bord"
   }
 }

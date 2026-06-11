@@ -73,6 +73,8 @@
     "moduleAriaLabel": "فتح {{title}} (النتيجة {{score}}٪)",
     "moduleFallback": "الوحدة #{{id}}",
     "viewOnEtherscan": "عرض على Etherscan",
+    "chainPending": "جارٍ التسجيل…",
+    "chainFailed": "فشل",
     "empty": {
       "title": "لا توجد شهادات على السلسلة بعد",
       "hint": "اجتز اختبارًا لإصدار أول شهادة لك"

@@ -77,6 +77,13 @@ export const OnChainTimeline = ({
     >
       {sorted.map((r) => {
         const isOnChain = r.blockchainStatus === 'confirmed' && !!r.transactionHash;
+        // Async on-chain queue: pending/processing/failed = the server
+        // worker is still (re)trying; failed_permanent = it gave up
+        // (the module page offers a retry button).
+        const isChainPending = ['pending', 'processing', 'failed'].includes(
+          r.blockchainStatus
+        );
+        const isChainFailed = r.blockchainStatus === 'failed_permanent';
         const passed = r.score >= 70;
         return (
           <li key={r.id} className="relative pl-10">
@@ -91,7 +98,7 @@ export const OnChainTimeline = ({
               )}
               aria-hidden="true"
             >
-              {isOnChain ? '⛓' : passed ? '✓' : '·'}
+              {isOnChain ? '⛓' : isChainPending ? '⏳' : passed ? '✓' : '·'}
             </span>
             <div className="relative flex items-start justify-between gap-3 rounded-md border border-border bg-card p-3 hover:border-primary/40 hover:bg-muted/30 transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background">
               {/*
@@ -147,6 +154,16 @@ export const OnChainTimeline = ({
                 >
                   {shortHash(r.transactionHash!)} ↗
                 </a>
+              )}
+              {isChainPending && (
+                <span className="relative font-mono text-[11px] text-muted-foreground animate-pulse shrink-0">
+                  {t('timeline.chainPending')}
+                </span>
+              )}
+              {isChainFailed && (
+                <span className="relative font-mono text-[11px] text-error-fg shrink-0">
+                  {t('timeline.chainFailed')}
+                </span>
               )}
             </div>
           </li>

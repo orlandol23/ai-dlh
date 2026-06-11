@@ -25,8 +25,13 @@
     "onChainTitle": "⛓️ Recorded on the Blockchain!",
     "onChainDescription": "Your certificate has been permanently recorded on the Ethereum blockchain",
     "viewOnEtherscan": "View on Etherscan",
-    "blockchainPendingTitle": "⚠️ Blockchain registration pending",
-    "blockchainPendingDescription": "Your progress was saved, but there was an issue registering on the blockchain: {{error}}",
+    "blockchainRegisteringTitle": "⛓️ Registering on the blockchain…",
+    "blockchainRegisteringDescription": "Your certificate is being recorded on Sepolia. This can take a few minutes — you can leave this page, the registration continues in the background.",
+    "blockchainFailedTitle": "⚠️ Blockchain registration failed",
+    "blockchainFailedDescription": "Your score was saved, but the on-chain registration failed after several attempts. You can try again.",
+    "retryBlockchain": "Try again",
+    "retryQueued": "Registration re-queued — follow the status here.",
+    "retryError": "Could not re-queue the registration",
     "backToDashboard": "Back to Dashboard"
   }
 }

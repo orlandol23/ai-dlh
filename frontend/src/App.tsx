@@ -8,6 +8,7 @@ import { HomePage } from './pages/HomePage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ModulePage } from './pages/ModulePage';
 import { CertPage } from './pages/CertPage';
+import { VarkPage } from './pages/VarkPage';
 import { ErrorBoundary } from './components/molecules/ErrorBoundary';
 import { Toaster } from './components/molecules/Toaster';
 import { SkipLink } from './components/atoms/SkipLink';
@@ -66,6 +67,14 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <ModulePage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/vark"
+                    element={
+                      <ProtectedRoute>
+                        <VarkPage />
                       </ProtectedRoute>
                     }
                   />

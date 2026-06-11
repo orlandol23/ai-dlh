@@ -13,6 +13,12 @@ export const users = pgTable('users', {
   preferredTier: varchar('preferred_tier', { length: 20 }).notNull().default('default'), // 'default' | 'premium'
   preferredLocale: varchar('preferred_locale', { length: 10 }),
   preferredTimezone: varchar('preferred_timezone', { length: 64 }),
+  // VARK learning style detected by the onboarding questionnaire.
+  // 'visual' | 'auditory' | 'reading_writing' | 'kinesthetic' — nullable
+  // until the user takes the quiz. Conditions AI module generation
+  // (see services/prompt-builder.ts). Fase 1 da fusão aprendaMais
+  // (docs/FUSION_APRENDAMAIS.md).
+  learningStyle: varchar('learning_style', { length: 20 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   lastLoginAt: timestamp('last_login_at'),
 }, (table) => {

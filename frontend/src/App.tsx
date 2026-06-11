@@ -7,9 +7,12 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { HomePage } from './pages/HomePage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ModulePage } from './pages/ModulePage';
+import { CertPage } from './pages/CertPage';
 import { ErrorBoundary } from './components/molecules/ErrorBoundary';
 import { Toaster } from './components/molecules/Toaster';
+import { SkipLink } from './components/atoms/SkipLink';
 import { useAuthStore } from './store/authStore';
+import { RtlProvider } from './i18n/RtlProvider';
 
 function App() {
   const [queryClient] = useState(() => new QueryClient({
@@ -44,31 +47,35 @@ function App() {
     <ErrorBoundary>
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
-          <TooltipProvider delayDuration={200}>
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route
-                  path="/dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <DashboardPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/module/:id"
-                  element={
-                    <ProtectedRoute>
-                      <ModulePage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </BrowserRouter>
-            <Toaster />
-          </TooltipProvider>
+          <RtlProvider>
+            <TooltipProvider delayDuration={200}>
+              <BrowserRouter>
+                <SkipLink />
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <DashboardPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/module/:id"
+                    element={
+                      <ProtectedRoute>
+                        <ModulePage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="/cert/:hash" element={<CertPage />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </BrowserRouter>
+              <Toaster />
+            </TooltipProvider>
+          </RtlProvider>
         </QueryClientProvider>
       </trpc.Provider>
     </ErrorBoundary>

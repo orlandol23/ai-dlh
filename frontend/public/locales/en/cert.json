@@ -1,0 +1,20 @@
+{
+  "page": {
+    "topicLabel": "Topic",
+    "scoreLabel": "Score",
+    "walletLabel": "Owner",
+    "completedAt": "Completed on {{date}}",
+    "badge": "ON-CHAIN",
+    "verifyEtherscan": "Verify on Etherscan",
+    "createYour": "Create yours",
+    "notFound": "Certificate not found",
+    "loading": "Loading certificate…"
+  },
+  "share": {
+    "text": "I just earned an on-chain certificate in {{topic}} with score {{score}}%!",
+    "linkedin": "Share on LinkedIn",
+    "twitter": "Share on X",
+    "copyLink": "Copy link",
+    "copied": "Link copied to clipboard"
+  }
+}

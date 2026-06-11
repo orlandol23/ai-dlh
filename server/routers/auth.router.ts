@@ -57,6 +57,28 @@ export const authRouter = router({
     }),
 
   /**
+   * Update user preferences — controls AI tier, locale and timezone defaults.
+   *
+   * preferredTier 'premium' activates Claude Sonnet routing for next module
+   * generations (requires ANTHROPIC_API_KEY on the server).
+   */
+  updatePreferences: protectedProcedure
+    .input(
+      z.object({
+        preferredTier: z.enum(['default', 'premium']).optional(),
+        preferredLocale: z
+          .enum(['en', 'pt-BR', 'es', 'fr', 'ja', 'ar'])
+          .nullable()
+          .optional(),
+        preferredTimezone: z.string().max(64).nullable().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const updated = await authService.updateUserPreferences(ctx.user.id, input);
+      return updated;
+    }),
+
+  /**
    * Logout (client-side only, just invalidates token)
    */
   logout: protectedProcedure.mutation(() => {

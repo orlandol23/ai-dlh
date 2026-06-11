@@ -10,6 +10,9 @@ export const users = pgTable('users', {
   name: varchar('name', { length: 255 }),
   email: varchar('email', { length: 255 }),
   avatar: varchar('avatar', { length: 500 }),
+  preferredTier: varchar('preferred_tier', { length: 20 }).notNull().default('default'), // 'default' | 'premium'
+  preferredLocale: varchar('preferred_locale', { length: 10 }),
+  preferredTimezone: varchar('preferred_timezone', { length: 64 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   lastLoginAt: timestamp('last_login_at'),
 }, (table) => {
@@ -38,6 +41,8 @@ export const modules = pgTable('modules', {
   content: text('content').notNull(), // Markdown content
   topic: varchar('topic', { length: 255 }).notNull(),
   level: varchar('level', { length: 20 }).notNull(), // beginner | intermediate | advanced
+  locale: varchar('locale', { length: 10 }).notNull().default('pt-BR'),
+  provider: varchar('provider', { length: 20 }).notNull().default('gemini'), // 'gemini' | 'claude' | 'qwen'
   quizData: json('quiz_data').$type<QuizQuestion[]>().notNull(),
   estimatedTime: integer('estimated_time'), // in minutes
   createdAt: timestamp('created_at').defaultNow().notNull(),

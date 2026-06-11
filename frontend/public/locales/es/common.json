@@ -1,0 +1,19 @@
+{
+  "buttons": {
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "back": "Volver",
+    "skip": "Omitir",
+    "close": "Cerrar",
+    "share": "Compartir",
+    "copyLink": "Copiar enlace"
+  },
+  "language": "Idioma",
+  "skipToContent": "Saltar al contenido",
+  "loading": "Cargando…",
+  "error": { "generic": "Algo salió mal" },
+  "footer": {
+    "copyright": "© {{year}} AI-DLH. Proyecto de portafolio que demuestra Frontend, Full Stack, IA Generativa y Web3.",
+    "poweredBy": "Powered by React, TypeScript, Gemini AI, Ethereum & Solidity"
+  }
+}

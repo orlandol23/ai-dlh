@@ -1,0 +1,137 @@
+{
+  "header": {
+    "title": "ダッシュボード",
+    "logoAlt": "AI-DLH"
+  },
+  "stats": {
+    "total": { "eyebrow": "合計", "label": "生成したモジュール" },
+    "passed": { "eyebrow": "合格", "label": "スコア70%以上" },
+    "avgScore": { "eyebrow": "平均スコア", "label": "全クイズの平均" },
+    "onChain": { "eyebrow": "⛓ オンチェーン", "label": "有効な証明書" }
+  },
+  "sparkline": {
+    "eyebrow": "履歴",
+    "title": "スコアの推移",
+    "descriptionEmpty": "まだクイズが完了していません — 破線は70%のしきい値を示します",
+    "descriptionWithData": "直近{{count}}件のクイズ — 破線は70%のしきい値",
+    "aria": "スコア履歴",
+    "empty": {
+      "title": "まだクイズが完了していません",
+      "hint": "AIで最初のモジュールを生成しましょう"
+    }
+  },
+  "achievements": {
+    "eyebrow": "実績",
+    "unlockedSuffix": " (解除済み)",
+    "items": {
+      "first-step": {
+        "label": "最初の一歩",
+        "description": "最初のモジュールを完了"
+      },
+      "on-chain": {
+        "label": "オンチェーン証明書",
+        "description": "ブロックチェーンに登録された証明書 1 件"
+      },
+      "perfectionist": {
+        "label": "完璧主義者",
+        "description": "クイズで100%を獲得"
+      },
+      "high-flyer": {
+        "label": "ハイフライヤー",
+        "description": "スコア90%以上のクイズを5回"
+      },
+      "polymath": {
+        "label": "博識家",
+        "description": "3つの異なるトピックを学習"
+      },
+      "streak": {
+        "label": "連続記録",
+        "description": "3回連続合格"
+      },
+      "streak-3": {
+        "label": "3日連続",
+        "description": "3日連続で学習"
+      },
+      "streak-7": {
+        "label": "7日連続",
+        "description": "7日連続で学習"
+      },
+      "streak-30": {
+        "label": "30日連続",
+        "description": "30日連続で学習"
+      }
+    }
+  },
+  "streak": {
+    "badge_one": "{{count}}日連続",
+    "badge_other": "{{count}}日連続"
+  },
+  "timeline": {
+    "eyebrow": "タイムライン",
+    "title": "オンチェーン活動",
+    "description": "完了したクイズとSepoliaブロックチェーン上のスタンプ",
+    "moduleAriaLabel": "{{title}}を開く (スコア {{score}}%)",
+    "moduleFallback": "モジュール #{{id}}",
+    "viewOnEtherscan": "Etherscanで確認",
+    "empty": {
+      "title": "オンチェーン証明書はまだありません",
+      "hint": "クイズに合格して最初の証明書を獲得しましょう"
+    }
+  },
+  "generator": {
+    "eyebrow": "🤖 AI",
+    "title": "モジュール生成",
+    "description": "オンデマンドの個別コンテンツ",
+    "topicLabel": "学習トピック",
+    "topicPlaceholder": "例: TypeScript, React Hooks…",
+    "levelLabel": "レベル",
+    "levels": {
+      "beginner": "初級",
+      "intermediate": "中級",
+      "advanced": "上級"
+    },
+    "submit": "🤖 AIで生成",
+    "generating": "生成中…",
+    "workingEyebrow": "AI処理中",
+    "stages": {
+      "0": "トピックを分析中",
+      "1": "モジュールを構築中",
+      "2": "個別コンテンツを生成中",
+      "3": "クイズを作成中",
+      "4": "もう少しです"
+    }
+  },
+  "pending": {
+    "eyebrow": "未完了 ({{count}})",
+    "minutes": "分"
+  },
+  "generating": {
+    "eyebrow": "モジュールを構築中"
+  },
+  "onboarding": {
+    "skip": "スキップ",
+    "next": "次へ",
+    "start": "始める",
+    "generator": {
+      "title": "ここから始めましょう",
+      "body": "学びたいトピックと難易度を入力してください。"
+    },
+    "sparkline": {
+      "title": "進捗を確認",
+      "body": "最初のクイズの後、ここにスコアが表示されます。"
+    },
+    "onchain": {
+      "title": "永続的な証明書",
+      "body": "合格したクイズはブロックチェーンに記録されます。"
+    }
+  },
+  "toasts": {
+    "moduleGenerated": "🎉 モジュールを生成しました!",
+    "moduleGeneratedDesc": "コンテンツを開いています…",
+    "unexpectedResponse": "モジュール生成で予期しない応答",
+    "unexpectedResponseDesc": "モジュールは作成されましたが、自動で開けませんでした。",
+    "generationError": "モジュール生成エラー",
+    "topicTooShort": "トピックが短すぎます",
+    "topicTooShortDesc": "トピックは3文字以上必要です。"
+  }
+}

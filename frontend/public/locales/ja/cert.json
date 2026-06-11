@@ -1,0 +1,20 @@
+{
+  "page": {
+    "topicLabel": "トピック",
+    "scoreLabel": "スコア",
+    "walletLabel": "所有者",
+    "completedAt": "完了日: {{date}}",
+    "badge": "ON-CHAIN",
+    "verifyEtherscan": "Etherscanで確認",
+    "createYour": "自分の証明書を作る",
+    "notFound": "証明書が見つかりません",
+    "loading": "証明書を読み込み中…"
+  },
+  "share": {
+    "text": "{{topic}}でオンチェーン証明書を獲得しました!スコア {{score}}%",
+    "linkedin": "LinkedInで共有",
+    "twitter": "Xで共有",
+    "copyLink": "リンクをコピー",
+    "copied": "リンクをクリップボードにコピーしました"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "page": {
+    "topicLabel": "Tema",
+    "scoreLabel": "Puntuación",
+    "walletLabel": "Titular",
+    "completedAt": "Completado el {{date}}",
+    "badge": "ON-CHAIN",
+    "verifyEtherscan": "Verificar en Etherscan",
+    "createYour": "Crea el tuyo",
+    "notFound": "Certificado no encontrado",
+    "loading": "Cargando certificado…"
+  },
+  "share": {
+    "text": "¡Acabo de obtener un certificado on-chain en {{topic}} con puntuación {{score}}%!",
+    "linkedin": "Compartir en LinkedIn",
+    "twitter": "Compartir en X",
+    "copyLink": "Copiar enlace",
+    "copied": "Enlace copiado al portapapeles"
+  }
+}

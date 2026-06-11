@@ -1,0 +1,29 @@
+{
+  "header": {
+    "back": "戻る",
+    "minutes": "分"
+  },
+  "level": {
+    "beginner": "初級",
+    "intermediate": "中級",
+    "advanced": "上級"
+  },
+  "topicLabel": "トピック: {{topic}}",
+  "notFound": {
+    "title": "モジュールが見つかりません",
+    "back": "ダッシュボードへ戻る"
+  },
+  "alreadyCompleted": {
+    "title": "このモジュールはすでに完了しています",
+    "scoreLine": "スコア: {{score}}% — {{result}}",
+    "passed": "合格 ✅",
+    "failed": "不合格 ❌",
+    "viewOnBlockchain": "ブロックチェーンで確認"
+  },
+  "startQuiz": "クイズを開始",
+  "retakeQuiz": "クイズを再挑戦",
+  "focus": {
+    "enter": "集中モード",
+    "exit": "集中モードを終了"
+  }
+}

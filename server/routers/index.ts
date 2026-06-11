@@ -3,6 +3,7 @@ import { authRouter } from './auth.router.js';
 import { aiRouter } from './ai.router.js';
 import { progressRouter } from './progress.router.js';
 import { web3Router } from './web3.router.js';
+import { certRouter } from './cert.router.js';
 
 /**
  * Main application router
@@ -13,6 +14,7 @@ export const appRouter = router({
   ai: aiRouter,
   progress: progressRouter,
   web3: web3Router,
+  cert: certRouter,
 });
 
 // Export type definition for client

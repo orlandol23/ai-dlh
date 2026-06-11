@@ -1,0 +1,29 @@
+{
+  "header": {
+    "back": "Volver",
+    "minutes": "min"
+  },
+  "level": {
+    "beginner": "Principiante",
+    "intermediate": "Intermedio",
+    "advanced": "Avanzado"
+  },
+  "topicLabel": "Tema: {{topic}}",
+  "notFound": {
+    "title": "Módulo no encontrado",
+    "back": "Volver al panel"
+  },
+  "alreadyCompleted": {
+    "title": "Ya completaste este módulo",
+    "scoreLine": "Puntuación: {{score}}% — {{result}}",
+    "passed": "Aprobado ✅",
+    "failed": "Reprobado ❌",
+    "viewOnBlockchain": "Ver en la blockchain"
+  },
+  "startQuiz": "Iniciar quiz",
+  "retakeQuiz": "Repetir quiz",
+  "focus": {
+    "enter": "Modo enfocado",
+    "exit": "Salir del modo enfocado"
+  }
+}

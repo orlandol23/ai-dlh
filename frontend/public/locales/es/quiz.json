@@ -1,0 +1,32 @@
+{
+  "progressLabel": "Pregunta {{current}} de {{total}}",
+  "option": {
+    "aria": "Opción {{letter}}: {{content}}"
+  },
+  "buttons": {
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "finish": "Finalizar quiz",
+    "processing": "Procesando…",
+    "retake": "Repetir quiz"
+  },
+  "incomplete": {
+    "title": "Quiz incompleto",
+    "description": "Responde todas las preguntas antes de finalizar."
+  },
+  "submitError": "Error al enviar el quiz",
+  "results": {
+    "correctOfTotal": "{{correct}} de {{total}} correctas",
+    "passedTitle": "🎉 ¡Felicitaciones! ¡Aprobaste!",
+    "passedDescription": "Alcanzaste la puntuación mínima del 70%",
+    "failedTitle": "No esta vez",
+    "failedDescription": "Necesitas un 70% para aprobar. ¡Intenta de nuevo!",
+    "onChainBadge": "ON-CHAIN",
+    "onChainTitle": "⛓️ ¡Registrado en la blockchain!",
+    "onChainDescription": "Tu certificado fue registrado permanentemente en la blockchain Ethereum",
+    "viewOnEtherscan": "Ver en Etherscan",
+    "blockchainPendingTitle": "⚠️ Registro en blockchain pendiente",
+    "blockchainPendingDescription": "Tu progreso fue guardado, pero hubo un problema al registrar en la blockchain: {{error}}",
+    "backToDashboard": "Volver al panel"
+  }
+}

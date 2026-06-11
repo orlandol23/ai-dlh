@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ethers, type Eip1193Provider } from 'ethers';
+import { useTranslation } from 'react-i18next';
 import { toast } from '@/components/molecules/Toaster';
 import { getEipErrorCode, getErrorMessage } from '@/lib/errors';
 import { trpc } from '@/lib/trpc';
@@ -21,12 +22,13 @@ declare global {
 export const useAuth = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const { user, setUser, setToken, logout } = useAuthStore();
+  const { t } = useTranslation('auth');
   const loginMutation = trpc.auth.login.useMutation();
 
   const connectWallet = async () => {
     if (!window.ethereum) {
-      toast.error('MetaMask não detectado', {
-        description: 'Instale a extensão MetaMask em metamask.io para continuar.',
+      toast.error(t('errors.metamaskNotDetected.title'), {
+        description: t('errors.metamaskNotDetected.description'),
       });
       return;
     }
@@ -80,14 +82,14 @@ export const useAuth = () => {
       // EIP-1193 error codes: 4001 = user rejected, -32002 = request pending.
       const code = getEipErrorCode(error);
       if (code === 4001) {
-        toast('Conexão cancelada', { description: 'Você rejeitou a assinatura no MetaMask.' });
+        toast(t('errors.rejected.title'), { description: t('errors.rejected.description') });
       } else if (code === -32002) {
-        toast.warning('Solicitação pendente', {
-          description: 'Já existe uma conexão pendente no MetaMask — abra a extensão.',
+        toast.warning(t('errors.pendingRequest.title'), {
+          description: t('errors.pendingRequest.description'),
         });
       } else {
-        toast.error('Erro ao conectar carteira', {
-          description: getErrorMessage(error),
+        toast.error(t('errors.connectError.title'), {
+          description: getErrorMessage(error, t('errors.connectError.descriptionFallback')),
         });
       }
     } finally {

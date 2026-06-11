@@ -1,30 +1,37 @@
 import type { FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/atoms/Button';
 import { Input } from '@/components/atoms/Input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/atoms/Card';
 import { ThemeToggle } from '@/components/atoms/ThemeToggle';
+import { LanguageSelector } from '@/components/molecules/LanguageSelector';
 import { Avatar } from '@/components/atoms/Avatar';
+import { Skeleton } from '@/components/atoms/Skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/atoms/Select';
 import { Sparkline } from '@/components/molecules/Sparkline';
 import { AchievementsGrid } from '@/components/molecules/AchievementsGrid';
 import { OnChainTimeline } from '@/components/molecules/OnChainTimeline';
+import { OnboardingTour } from '@/components/molecules/OnboardingTour';
+import { PreferencesPanel } from '@/components/molecules/PreferencesPanel';
 import { toast } from '@/components/molecules/Toaster';
 import { useAuth } from '@/hooks/useAuth';
 import { trpc } from '@/lib/trpc';
 import { formatAddress } from '@/lib/utils';
-import { buildSparklinePoints, deriveAchievements } from '@/lib/achievements';
+import { buildSparklinePoints, calculateStreakDays, deriveAchievements } from '@/lib/achievements';
 
-const STREAM_STAGES = [
-  'Analisando o tópico',
-  'Estruturando o módulo',
-  'Gerando conteúdo personalizado',
-  'Montando o quiz',
-  'Quase lá',
-];
+const STAGE_KEYS = ['0', '1', '2', '3', '4'] as const;
 
 export const DashboardPage = () => {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation(['dashboard', 'common', 'auth']);
   const { user, logout } = useAuth();
   const [topic, setTopic] = useState('');
   const [level, setLevel] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner');
@@ -38,7 +45,7 @@ export const DashboardPage = () => {
     }
     const id = window.setInterval(() => {
       // Cycle through stages while generating; no fixed total duration.
-      setStreamStage((s) => (s + 1) % STREAM_STAGES.length);
+      setStreamStage((s) => (s + 1) % STAGE_KEYS.length);
     }, 2200);
     return () => window.clearInterval(id);
   }, [isGenerating]);
@@ -52,6 +59,7 @@ export const DashboardPage = () => {
     () => buildSparklinePoints(progress ?? [], 12),
     [progress]
   );
+  const streakDays = useMemo(() => calculateStreakDays(progress ?? []), [progress]);
   const achievements = useMemo(
     () =>
       deriveAchievements(
@@ -63,9 +71,10 @@ export const DashboardPage = () => {
           hasPerfectScore: false,
           distinctTopicsCount: 0,
           currentStreakCapped: 0,
-        }
+        },
+        streakDays
       ),
-    [stats]
+    [stats, streakDays]
   );
   const pendingModules = useMemo(() => {
     // Wait for both queries to resolve. Otherwise progress=undefined makes
@@ -86,31 +95,36 @@ export const DashboardPage = () => {
       // open modules, etc.) don't unnecessarily refetch.
       void utils.ai.getUserModules.invalidate();
       if (typeof data?.id === 'number') {
-        toast.success('🎉 Módulo gerado!', { description: 'Abrindo o conteúdo…' });
+        toast.success(t('dashboard:toasts.moduleGenerated'), {
+          description: t('dashboard:toasts.moduleGeneratedDesc'),
+        });
         navigate(`/module/${data.id}`);
         return;
       }
-      toast.error('Resposta inesperada ao gerar módulo', {
-        description:
-          'O módulo foi criado, mas não foi possível abri-lo automaticamente.',
+      toast.error(t('dashboard:toasts.unexpectedResponse'), {
+        description: t('dashboard:toasts.unexpectedResponseDesc'),
       });
     },
     onError: (error) => {
       setIsGenerating(false);
-      toast.error('Erro ao gerar módulo', { description: error.message });
+      toast.error(t('dashboard:toasts.generationError'), { description: error.message });
     },
   });
 
   const handleGenerateModule = async (e: FormEvent) => {
     e.preventDefault();
     if (topic.length < 3) {
-      toast.warning('Tópico muito curto', {
-        description: 'O tópico deve ter pelo menos 3 caracteres.',
+      toast.warning(t('dashboard:toasts.topicTooShort'), {
+        description: t('dashboard:toasts.topicTooShortDesc'),
       });
       return;
     }
     setIsGenerating(true);
-    generateMutation.mutate({ topic, level });
+    // Send the user's active i18n locale so the AI generates content in
+    // the language they are reading the UI in. Backend defaults to pt-BR
+    // for backwards compatibility if for some reason the locale is missing.
+    const locale = (i18n.language as 'en' | 'pt-BR' | 'es' | 'fr' | 'ja' | 'ar') ?? 'pt-BR';
+    generateMutation.mutate({ topic, level, locale });
   };
 
   const walletAddress = user?.walletAddress || '';
@@ -121,9 +135,9 @@ export const DashboardPage = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <img src="/logo.svg" alt="AI-DLH" className="w-10 h-10" />
+              <img src="/logo.svg" alt={t('dashboard:header.logoAlt')} className="w-10 h-10" />
               <div>
-                <h1 className="font-display text-xl font-bold tracking-tight">Dashboard</h1>
+                <h1 className="font-display text-xl font-bold tracking-tight">{t('dashboard:header.title')}</h1>
                 <div className="flex items-center gap-2">
                   <Avatar seed={walletAddress} size={16} />
                   <p className="font-mono text-sm text-muted-foreground">
@@ -133,69 +147,82 @@ export const DashboardPage = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {streakDays > 0 && (
+                <div
+                  className="flex items-center gap-1 px-2 py-1 rounded-full bg-warning-bg border border-warning-border"
+                  aria-label={t('dashboard:streak.badge', { count: streakDays })}
+                  title={t('dashboard:streak.badge', { count: streakDays })}
+                >
+                  <span className="text-warning-fg font-mono text-xs font-semibold">
+                    🔥 {streakDays}
+                  </span>
+                </div>
+              )}
+              <LanguageSelector />
               <ThemeToggle />
+              <PreferencesPanel />
               <Button variant="outline" onClick={logout}>
-                Desconectar
+                {t('auth:disconnect')}
               </Button>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 space-y-6">
+      <main id="main-content" tabIndex={-1} className="container mx-auto px-4 py-8 space-y-6">
         {/* Row 1 — 4 stat tiles, col-span-3 each on lg */}
         <div className="grid grid-cols-2 lg:grid-cols-12 gap-4">
           <Card className="lg:col-span-3">
             <CardContent className="pt-6">
-              <p className="eyebrow">Total</p>
+              <p className="eyebrow">{t('dashboard:stats.total.eyebrow')}</p>
               <p className="font-display text-5xl font-bold text-primary tabular-nums leading-none mt-2">
                 {stats?.totalModules ?? 0}
               </p>
-              <p className="text-sm text-muted-foreground mt-2">Módulos gerados</p>
+              <p className="text-sm text-muted-foreground mt-2">{t('dashboard:stats.total.label')}</p>
             </CardContent>
           </Card>
 
           <Card className="lg:col-span-3">
             <CardContent className="pt-6">
-              <p className="eyebrow">Aprovados</p>
-              <p className="font-display text-5xl font-bold text-success tabular-nums leading-none mt-2">
+              <p className="eyebrow">{t('dashboard:stats.passed.eyebrow')}</p>
+              <p className="font-display text-5xl font-bold text-success-fg tabular-nums leading-none mt-2">
                 {stats?.passedModules ?? 0}
               </p>
-              <p className="text-sm text-muted-foreground mt-2">Score ≥ 70%</p>
+              <p className="text-sm text-muted-foreground mt-2">{t('dashboard:stats.passed.label')}</p>
             </CardContent>
           </Card>
 
           <Card className="lg:col-span-3">
             <CardContent className="pt-6">
-              <p className="eyebrow">Score médio</p>
-              <p className="font-display text-5xl font-bold text-info tabular-nums leading-none mt-2">
+              <p className="eyebrow">{t('dashboard:stats.avgScore.eyebrow')}</p>
+              <p className="font-display text-5xl font-bold text-info-fg tabular-nums leading-none mt-2">
                 {stats?.avgScore ?? 0}%
               </p>
-              <p className="text-sm text-muted-foreground mt-2">Em todos os quizzes</p>
+              <p className="text-sm text-muted-foreground mt-2">{t('dashboard:stats.avgScore.label')}</p>
             </CardContent>
           </Card>
 
           <Card className="lg:col-span-3">
             <CardContent className="pt-6">
-              <p className="eyebrow">⛓ On-chain</p>
-              <p className="font-display text-5xl font-bold text-onchain tabular-nums leading-none mt-2">
+              <p className="eyebrow">{t('dashboard:stats.onChain.eyebrow')}</p>
+              <p className="font-display text-5xl font-bold text-onchain-fg tabular-nums leading-none mt-2">
                 {stats?.onChainRecords ?? 0}
               </p>
-              <p className="text-sm text-muted-foreground mt-2">Certificados ativos</p>
+              <p className="text-sm text-muted-foreground mt-2">{t('dashboard:stats.onChain.label')}</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Row 2 — sparkline (col-span-8) + achievements (col-span-4) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <Card className="lg:col-span-8">
+          <Card className="lg:col-span-8" data-onboarding="sparkline">
             <CardHeader>
-              <p className="eyebrow">Histórico</p>
-              <CardTitle className="font-display tracking-tight">Evolução de score</CardTitle>
+              <p className="eyebrow">{t('dashboard:sparkline.eyebrow')}</p>
+              <CardTitle className="font-display tracking-tight">{t('dashboard:sparkline.title')}</CardTitle>
               <CardDescription>
                 {sparklinePoints.length === 0
-                  ? 'Nenhum quiz concluído ainda — a linha tracejada marca o limiar de 70%'
-                  : `Últimos ${sparklinePoints.length} quizzes — linha tracejada marca o limiar de 70%`}
+                  ? t('dashboard:sparkline.descriptionEmpty')
+                  : t('dashboard:sparkline.descriptionWithData', { count: sparklinePoints.length })}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -205,7 +232,7 @@ export const DashboardPage = () => {
 
           <Card className="lg:col-span-4">
             <CardHeader>
-              <p className="eyebrow">Conquistas</p>
+              <p className="eyebrow">{t('dashboard:achievements.eyebrow')}</p>
               <CardTitle className="font-display tracking-tight text-lg">
                 {achievements.filter((a) => a.unlocked).length} / {achievements.length}
               </CardTitle>
@@ -218,12 +245,12 @@ export const DashboardPage = () => {
 
         {/* Row 3 — timeline on-chain (col-span-8) + form gerar (col-span-4) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <Card className="lg:col-span-8">
+          <Card className="lg:col-span-8" data-onboarding="onchain">
             <CardHeader>
-              <p className="eyebrow">Timeline</p>
-              <CardTitle className="font-display tracking-tight">Atividade on-chain</CardTitle>
+              <p className="eyebrow">{t('dashboard:timeline.eyebrow')}</p>
+              <CardTitle className="font-display tracking-tight">{t('dashboard:timeline.title')}</CardTitle>
               <CardDescription>
-                Quizzes completados e seus carimbos na blockchain Sepolia
+                {t('dashboard:timeline.description')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -231,19 +258,19 @@ export const DashboardPage = () => {
             </CardContent>
           </Card>
 
-          <Card className="lg:col-span-4">
+          <Card className="lg:col-span-4" data-onboarding="generator">
             <CardHeader>
-              <p className="eyebrow">🤖 IA</p>
-              <CardTitle className="font-display tracking-tight">Gerar módulo</CardTitle>
-              <CardDescription>Conteúdo personalizado sob demanda</CardDescription>
+              <p className="eyebrow">{t('dashboard:generator.eyebrow')}</p>
+              <CardTitle className="font-display tracking-tight">{t('dashboard:generator.title')}</CardTitle>
+              <CardDescription>{t('dashboard:generator.description')}</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleGenerateModule} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Tópico de Estudo</label>
+                  <label className="block text-sm font-medium mb-2">{t('dashboard:generator.topicLabel')}</label>
                   <Input
                     type="text"
-                    placeholder="Ex: TypeScript, React Hooks…"
+                    placeholder={t('dashboard:generator.topicPlaceholder')}
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
                     required
@@ -254,60 +281,41 @@ export const DashboardPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Nível</label>
-                  <select
+                  <label htmlFor="level-select" className="block text-sm font-medium mb-2">
+                    {t('dashboard:generator.levelLabel')}
+                  </label>
+                  <Select
                     value={level}
-                    onChange={(e) =>
-                      setLevel(e.target.value as 'beginner' | 'intermediate' | 'advanced')
-                    }
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    onValueChange={(v) => setLevel(v as 'beginner' | 'intermediate' | 'advanced')}
                     disabled={isGenerating}
                   >
-                    <option value="beginner">Iniciante</option>
-                    <option value="intermediate">Intermediário</option>
-                    <option value="advanced">Avançado</option>
-                  </select>
+                    <SelectTrigger id="level-select" aria-label={t('dashboard:generator.levelLabel')}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="beginner">{t('dashboard:generator.levels.beginner')}</SelectItem>
+                      <SelectItem value="intermediate">{t('dashboard:generator.levels.intermediate')}</SelectItem>
+                      <SelectItem value="advanced">{t('dashboard:generator.levels.advanced')}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <Button
                   type="submit"
-                  className={`w-full relative ${isGenerating ? 'opacity-70 cursor-wait' : ''}`}
+                  className={`w-full relative overflow-hidden ${isGenerating ? 'cursor-wait' : ''}`}
                   disabled={isGenerating || topic.length < 3}
                 >
-                  {isGenerating ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <svg
-                        className="animate-spin h-5 w-5"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
-                      </svg>
-                      <span>Gerando…</span>
-                    </div>
-                  ) : (
-                    '🤖 Gerar com IA'
-                  )}
+                  <span className="relative z-10">
+                    {isGenerating ? t('dashboard:generator.generating') : t('dashboard:generator.submit')}
+                  </span>
+                  {isGenerating && <span className="bar-indeterminate" aria-hidden="true" />}
                 </Button>
 
                 {isGenerating && (
                   <div className="rounded-md border border-primary/20 bg-primary/5 p-4">
-                    <p className="eyebrow mb-2">IA trabalhando</p>
+                    <p className="eyebrow mb-2">{t('dashboard:generator.workingEyebrow')}</p>
                     <p className="font-mono text-sm text-foreground caret">
-                      {STREAM_STAGES[streamStage]}
+                      {t(`dashboard:generator.stages.${STAGE_KEYS[streamStage]}`)}
                     </p>
                   </div>
                 )}
@@ -315,7 +323,7 @@ export const DashboardPage = () => {
 
               {pendingModules.length > 0 && (
                 <div className="mt-6 pt-6 border-t border-border">
-                  <p className="eyebrow mb-3">Pendentes ({pendingModules.length})</p>
+                  <p className="eyebrow mb-3">{t('dashboard:pending.eyebrow', { count: pendingModules.length })}</p>
                   <ul className="space-y-2">
                     {pendingModules.slice(0, 5).map((m) => (
                       <li key={m.id}>
@@ -326,7 +334,7 @@ export const DashboardPage = () => {
                         >
                           <p className="text-sm font-semibold truncate">{m.title}</p>
                           <p className="text-xs text-muted-foreground truncate">
-                            {m.topic} · {m.estimatedTime} min
+                            {m.topic} · {m.estimatedTime} {t('dashboard:pending.minutes')}
                           </p>
                         </button>
                       </li>
@@ -337,7 +345,32 @@ export const DashboardPage = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Skeleton estrutural — preview shell do módulo enquanto IA gera */}
+        {isGenerating && (
+          <Card className="hash-grid">
+            <CardContent className="pt-6 space-y-4">
+              <p className="eyebrow flex items-center gap-2">
+                <span className="inline-block w-2 h-2 rounded-full bg-primary animate-pulse" aria-hidden="true" />
+                {t('dashboard:generating.eyebrow')}
+              </p>
+              <Skeleton className="h-10 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+              <div className="space-y-2 pt-4">
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-5/6" />
+              </div>
+              <div className="space-y-2 pt-4">
+                <Skeleton className="h-12 w-full rounded-md" />
+                <Skeleton className="h-12 w-full rounded-md" />
+                <Skeleton className="h-12 w-full rounded-md" />
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </main>
+      <OnboardingTour />
     </div>
   );
 };

@@ -1,0 +1,20 @@
+{
+  "page": {
+    "topicLabel": "الموضوع",
+    "scoreLabel": "النتيجة",
+    "walletLabel": "المالك",
+    "completedAt": "أُكمل في {{date}}",
+    "badge": "ON-CHAIN",
+    "verifyEtherscan": "تحقق على Etherscan",
+    "createYour": "أنشئ شهادتك",
+    "notFound": "لم يتم العثور على الشهادة",
+    "loading": "جارٍ تحميل الشهادة…"
+  },
+  "share": {
+    "text": "حصلت للتو على شهادة على السلسلة في {{topic}} بنتيجة {{score}}٪!",
+    "linkedin": "مشاركة على LinkedIn",
+    "twitter": "مشاركة على X",
+    "copyLink": "نسخ الرابط",
+    "copied": "تم نسخ الرابط إلى الحافظة"
+  }
+}

@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { cn, getEtherscanUrl } from '@/lib/utils';
 import type { ProgressLike } from '@/lib/achievements';
 
@@ -17,16 +18,17 @@ interface OnChainTimelineProps {
   emptyHint?: string;
 }
 
-function relativeTime(date: Date): string {
+function formatRelativeTime(date: Date, locale: string): string {
   const diffMs = Math.max(0, Date.now() - date.getTime());
   const diffMin = Math.floor(diffMs / 60_000);
-  if (diffMin < 1) return 'agora';
-  if (diffMin < 60) return `${diffMin}m atrás`;
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+  if (diffMin < 1) return rtf.format(0, 'minute');
+  if (diffMin < 60) return rtf.format(-diffMin, 'minute');
   const diffH = Math.floor(diffMin / 60);
-  if (diffH < 24) return `${diffH}h atrás`;
+  if (diffH < 24) return rtf.format(-diffH, 'hour');
   const diffD = Math.floor(diffH / 24);
-  if (diffD < 7) return `${diffD}d atrás`;
-  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+  if (diffD < 7) return rtf.format(-diffD, 'day');
+  return new Intl.DateTimeFormat(locale, { day: '2-digit', month: 'short' }).format(date);
 }
 
 function shortHash(hash: string): string {
@@ -37,9 +39,10 @@ function shortHash(hash: string): string {
 export const OnChainTimeline = ({
   records,
   className,
-  emptyHint = 'Nenhum módulo ainda — gere seu primeiro com IA ←',
+  emptyHint,
 }: OnChainTimelineProps) => {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation('dashboard');
   const sorted = [...records].sort(
     (a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
   );
@@ -48,11 +51,19 @@ export const OnChainTimeline = ({
     return (
       <div
         className={cn(
-          'flex items-center justify-center h-32 text-sm text-muted-foreground border border-dashed border-border rounded-md',
+          'relative rounded-lg border border-dashed border-primary/30 bg-card p-12 text-center hash-grid overflow-hidden',
           className
         )}
       >
-        {emptyHint}
+        <div className="text-5xl mb-4" aria-hidden="true">⛓️</div>
+        <p className="font-display text-lg font-semibold tracking-tight">
+          {emptyHint ?? t('timeline.empty.title')}
+        </p>
+        {!emptyHint && (
+          <p className="text-sm text-muted-foreground mt-1">
+            {t('timeline.empty.hint')}
+          </p>
+        )}
       </div>
     );
   }
@@ -94,13 +105,16 @@ export const OnChainTimeline = ({
               <button
                 type="button"
                 onClick={() => navigate(`/module/${r.moduleId}`)}
-                aria-label={`Abrir ${r.module?.title ?? `módulo ${r.moduleId}`} (score ${r.score}%)`}
+                aria-label={t('timeline.moduleAriaLabel', {
+                  title: r.module?.title ?? t('timeline.moduleFallback', { id: r.moduleId }),
+                  score: r.score,
+                })}
                 className="absolute inset-0 rounded-md focus:outline-none"
               />
               <div className="min-w-0 flex-1 pointer-events-none">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-sm truncate">
-                    {r.module?.title ?? `Módulo #${r.moduleId}`}
+                    {r.module?.title ?? t('timeline.moduleFallback', { id: r.moduleId })}
                   </span>
                   <span
                     className={cn(
@@ -114,7 +128,7 @@ export const OnChainTimeline = ({
                   </span>
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground flex items-center gap-2">
-                  <span>{relativeTime(new Date(r.completedAt))}</span>
+                  <span>{formatRelativeTime(new Date(r.completedAt), i18n.language)}</span>
                   {r.module?.topic && (
                     <>
                       <span aria-hidden>·</span>
@@ -129,7 +143,7 @@ export const OnChainTimeline = ({
                   target="_blank"
                   rel="noopener noreferrer"
                   className="relative font-mono text-[11px] text-primary hover:underline shrink-0"
-                  title="Ver no Etherscan"
+                  title={t('timeline.viewOnEtherscan')}
                 >
                   {shortHash(r.transactionHash!)} ↗
                 </a>

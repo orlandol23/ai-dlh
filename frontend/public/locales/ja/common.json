@@ -1,0 +1,19 @@
+{
+  "buttons": {
+    "next": "次へ",
+    "previous": "戻る",
+    "back": "戻る",
+    "skip": "スキップ",
+    "close": "閉じる",
+    "share": "共有",
+    "copyLink": "リンクをコピー"
+  },
+  "language": "言語",
+  "skipToContent": "コンテンツへスキップ",
+  "loading": "読み込み中…",
+  "error": { "generic": "エラーが発生しました" },
+  "footer": {
+    "copyright": "© {{year}} AI-DLH。フロントエンド、フルスタック、生成AI、Web3 のポートフォリオプロジェクト。",
+    "poweredBy": "Powered by React, TypeScript, Gemini AI, Ethereum & Solidity"
+  }
+}

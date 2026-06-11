@@ -7,7 +7,9 @@ import type { RouterOutputs } from '@/lib/trpc';
  * The authenticated user. Derived from the tRPC `auth.login` mutation
  * output instead of redeclared, so any change in the backend's `User`
  * shape (added/renamed fields, type tightening) shows up here as a
- * compile error rather than silently drifting.
+ * compile error rather than silently drifting. On this branch that
+ * includes the i18n preference fields (preferredTier / preferredLocale /
+ * preferredTimezone) coming straight from the server schema.
  */
 export type User = RouterOutputs['auth']['login']['user'];
 

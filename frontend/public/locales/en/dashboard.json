@@ -1,0 +1,137 @@
+{
+  "header": {
+    "title": "Dashboard",
+    "logoAlt": "AI-DLH"
+  },
+  "stats": {
+    "total": { "eyebrow": "Total", "label": "Modules generated" },
+    "passed": { "eyebrow": "Passed", "label": "Score ≥ 70%" },
+    "avgScore": { "eyebrow": "Average score", "label": "Across all quizzes" },
+    "onChain": { "eyebrow": "⛓ On-chain", "label": "Active certificates" }
+  },
+  "sparkline": {
+    "eyebrow": "History",
+    "title": "Score evolution",
+    "descriptionEmpty": "No quiz completed yet — the dashed line marks the 70% threshold",
+    "descriptionWithData": "Last {{count}} quizzes — dashed line marks the 70% threshold",
+    "aria": "Score history",
+    "empty": {
+      "title": "No quiz completed yet",
+      "hint": "Generate your first module with AI"
+    }
+  },
+  "achievements": {
+    "eyebrow": "Achievements",
+    "unlockedSuffix": " (unlocked)",
+    "items": {
+      "first-step": {
+        "label": "First Step",
+        "description": "Complete your first module"
+      },
+      "on-chain": {
+        "label": "On-chain Certificate",
+        "description": "1 certificate recorded on the blockchain"
+      },
+      "perfectionist": {
+        "label": "Perfectionist",
+        "description": "Score 100% on a quiz"
+      },
+      "high-flyer": {
+        "label": "High Flyer",
+        "description": "5 quizzes with score ≥90%"
+      },
+      "polymath": {
+        "label": "Polymath",
+        "description": "Study 3 different topics"
+      },
+      "streak": {
+        "label": "Streak",
+        "description": "3 consecutive passing scores"
+      },
+      "streak-3": {
+        "label": "3-day streak",
+        "description": "Study 3 days in a row"
+      },
+      "streak-7": {
+        "label": "7-day streak",
+        "description": "Study 7 days in a row"
+      },
+      "streak-30": {
+        "label": "30-day streak",
+        "description": "Study 30 days in a row"
+      }
+    }
+  },
+  "streak": {
+    "badge_one": "{{count}} day streak",
+    "badge_other": "{{count}} day streak"
+  },
+  "timeline": {
+    "eyebrow": "Timeline",
+    "title": "On-chain activity",
+    "description": "Completed quizzes and their stamps on the Sepolia blockchain",
+    "moduleAriaLabel": "Open {{title}} (score {{score}}%)",
+    "moduleFallback": "Module #{{id}}",
+    "viewOnEtherscan": "View on Etherscan",
+    "empty": {
+      "title": "No on-chain certificate yet",
+      "hint": "Pass a quiz to mint your first certificate"
+    }
+  },
+  "generator": {
+    "eyebrow": "🤖 AI",
+    "title": "Generate module",
+    "description": "Personalized content on-demand",
+    "topicLabel": "Study topic",
+    "topicPlaceholder": "e.g., TypeScript, React Hooks…",
+    "levelLabel": "Level",
+    "levels": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "submit": "🤖 Generate with AI",
+    "generating": "Generating…",
+    "workingEyebrow": "AI working",
+    "stages": {
+      "0": "Analyzing the topic",
+      "1": "Structuring the module",
+      "2": "Generating personalized content",
+      "3": "Building the quiz",
+      "4": "Almost there"
+    }
+  },
+  "pending": {
+    "eyebrow": "Pending ({{count}})",
+    "minutes": "min"
+  },
+  "generating": {
+    "eyebrow": "Building your module"
+  },
+  "onboarding": {
+    "skip": "Skip",
+    "next": "Next",
+    "start": "Get started",
+    "generator": {
+      "title": "Start here",
+      "body": "Tell us what you want to learn and pick a difficulty."
+    },
+    "sparkline": {
+      "title": "Track your progress",
+      "body": "Your scores will appear here after the first quiz."
+    },
+    "onchain": {
+      "title": "Permanent certificates",
+      "body": "Passed quizzes are recorded on the blockchain."
+    }
+  },
+  "toasts": {
+    "moduleGenerated": "🎉 Module generated!",
+    "moduleGeneratedDesc": "Opening content…",
+    "unexpectedResponse": "Unexpected response when generating module",
+    "unexpectedResponseDesc": "The module was created, but couldn't be opened automatically.",
+    "generationError": "Error generating module",
+    "topicTooShort": "Topic too short",
+    "topicTooShortDesc": "The topic must have at least 3 characters."
+  }
+}

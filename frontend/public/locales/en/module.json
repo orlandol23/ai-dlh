@@ -1,0 +1,29 @@
+{
+  "header": {
+    "back": "Back",
+    "minutes": "min"
+  },
+  "level": {
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced"
+  },
+  "topicLabel": "Topic: {{topic}}",
+  "notFound": {
+    "title": "Module not found",
+    "back": "Back to Dashboard"
+  },
+  "alreadyCompleted": {
+    "title": "You've already completed this module",
+    "scoreLine": "Score: {{score}}% — {{result}}",
+    "passed": "Passed ✅",
+    "failed": "Failed ❌",
+    "viewOnBlockchain": "View on Blockchain"
+  },
+  "startQuiz": "Start Quiz",
+  "retakeQuiz": "Retake Quiz",
+  "focus": {
+    "enter": "Focus mode",
+    "exit": "Exit focus mode"
+  }
+}

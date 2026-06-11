@@ -1,0 +1,29 @@
+{
+  "header": {
+    "back": "رجوع",
+    "minutes": "دقيقة"
+  },
+  "level": {
+    "beginner": "مبتدئ",
+    "intermediate": "متوسط",
+    "advanced": "متقدم"
+  },
+  "topicLabel": "الموضوع: {{topic}}",
+  "notFound": {
+    "title": "لم يتم العثور على الوحدة",
+    "back": "العودة إلى لوحة التحكم"
+  },
+  "alreadyCompleted": {
+    "title": "لقد أكملت هذه الوحدة بالفعل",
+    "scoreLine": "النتيجة: {{score}}٪ — {{result}}",
+    "passed": "مجتاز ✅",
+    "failed": "غير مجتاز ❌",
+    "viewOnBlockchain": "عرض على البلوكتشين"
+  },
+  "startQuiz": "بدء الاختبار",
+  "retakeQuiz": "إعادة الاختبار",
+  "focus": {
+    "enter": "وضع التركيز",
+    "exit": "الخروج من وضع التركيز"
+  }
+}

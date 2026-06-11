@@ -1,4 +1,5 @@
 import { useId, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import type { SparklinePoint } from '@/lib/achievements';
 
@@ -12,6 +13,7 @@ const PAD_X = 6;
 const PAD_Y = 8;
 
 export const Sparkline = ({ points, height = 96, className }: SparklineProps) => {
+  const { t } = useTranslation('dashboard');
   const reactId = useId();
   const strokeId = `spark-stroke-${reactId}`;
   const fillId = `spark-fill-${reactId}`;
@@ -44,11 +46,18 @@ export const Sparkline = ({ points, height = 96, className }: SparklineProps) =>
     return (
       <div
         className={cn(
-          'flex items-center justify-center h-24 text-sm text-muted-foreground border border-dashed border-border rounded-md',
+          'relative rounded-lg border border-dashed border-primary/30 bg-card p-12 text-center hash-grid overflow-hidden',
           className
         )}
       >
-        Sem dados ainda — complete seu primeiro quiz
+        <div className="text-5xl mb-4" aria-hidden="true">📊</div>
+        <p className="font-display text-lg font-semibold tracking-tight">
+          {t('sparkline.empty.title')}
+        </p>
+        <p className="text-sm text-muted-foreground mt-1">
+          {t('sparkline.empty.hint')}{' '}
+          <span className="font-mono inline-block rtl:rotate-180" aria-hidden="true">←</span>
+        </p>
       </div>
     );
   }
@@ -58,7 +67,7 @@ export const Sparkline = ({ points, height = 96, className }: SparklineProps) =>
       viewBox={`0 0 ${width} ${height}`}
       preserveAspectRatio="none"
       className={cn('w-full h-24 spark', className)}
-      aria-label="Histórico de scores"
+      aria-label={t('sparkline.aria')}
     >
       <defs>
         <linearGradient id={strokeId} x1="0" y1="0" x2="1" y2="0">

@@ -1,0 +1,137 @@
+{
+  "header": {
+    "title": "Panel",
+    "logoAlt": "AI-DLH"
+  },
+  "stats": {
+    "total": { "eyebrow": "Total", "label": "Módulos generados" },
+    "passed": { "eyebrow": "Aprobados", "label": "Puntuación ≥ 70%" },
+    "avgScore": { "eyebrow": "Puntuación media", "label": "En todos los quizzes" },
+    "onChain": { "eyebrow": "⛓ On-chain", "label": "Certificados activos" }
+  },
+  "sparkline": {
+    "eyebrow": "Historial",
+    "title": "Evolución de puntuación",
+    "descriptionEmpty": "Ningún quiz completado aún — la línea discontinua marca el umbral del 70%",
+    "descriptionWithData": "Últimos {{count}} quizzes — línea discontinua marca el umbral del 70%",
+    "aria": "Historial de puntuaciones",
+    "empty": {
+      "title": "Aún no hay quizzes completados",
+      "hint": "Genera tu primer módulo con IA"
+    }
+  },
+  "achievements": {
+    "eyebrow": "Logros",
+    "unlockedSuffix": " (desbloqueado)",
+    "items": {
+      "first-step": {
+        "label": "Primer paso",
+        "description": "Completa tu primer módulo"
+      },
+      "on-chain": {
+        "label": "Certificado on-chain",
+        "description": "1 certificado registrado en la blockchain"
+      },
+      "perfectionist": {
+        "label": "Perfeccionista",
+        "description": "Saca 100% en algún quiz"
+      },
+      "high-flyer": {
+        "label": "Vuelo alto",
+        "description": "5 quizzes con puntuación ≥90%"
+      },
+      "polymath": {
+        "label": "Polímata",
+        "description": "Estudia 3 temas diferentes"
+      },
+      "streak": {
+        "label": "Racha",
+        "description": "3 aprobados consecutivos"
+      },
+      "streak-3": {
+        "label": "Racha de 3 días",
+        "description": "Estudia 3 días seguidos"
+      },
+      "streak-7": {
+        "label": "Racha de 7 días",
+        "description": "Estudia 7 días seguidos"
+      },
+      "streak-30": {
+        "label": "Racha de 30 días",
+        "description": "Estudia 30 días seguidos"
+      }
+    }
+  },
+  "streak": {
+    "badge_one": "{{count}} día de racha",
+    "badge_other": "{{count}} días de racha"
+  },
+  "timeline": {
+    "eyebrow": "Cronología",
+    "title": "Actividad on-chain",
+    "description": "Quizzes completados y sus sellos en la blockchain Sepolia",
+    "moduleAriaLabel": "Abrir {{title}} (puntuación {{score}}%)",
+    "moduleFallback": "Módulo #{{id}}",
+    "viewOnEtherscan": "Ver en Etherscan",
+    "empty": {
+      "title": "Aún no hay certificados on-chain",
+      "hint": "Aprueba un quiz para emitir tu primer certificado"
+    }
+  },
+  "generator": {
+    "eyebrow": "🤖 IA",
+    "title": "Generar módulo",
+    "description": "Contenido personalizado bajo demanda",
+    "topicLabel": "Tema de estudio",
+    "topicPlaceholder": "Ej.: TypeScript, React Hooks…",
+    "levelLabel": "Nivel",
+    "levels": {
+      "beginner": "Principiante",
+      "intermediate": "Intermedio",
+      "advanced": "Avanzado"
+    },
+    "submit": "🤖 Generar con IA",
+    "generating": "Generando…",
+    "workingEyebrow": "IA trabajando",
+    "stages": {
+      "0": "Analizando el tema",
+      "1": "Estructurando el módulo",
+      "2": "Generando contenido personalizado",
+      "3": "Construyendo el quiz",
+      "4": "Casi listo"
+    }
+  },
+  "pending": {
+    "eyebrow": "Pendientes ({{count}})",
+    "minutes": "min"
+  },
+  "generating": {
+    "eyebrow": "Construyendo tu módulo"
+  },
+  "onboarding": {
+    "skip": "Omitir",
+    "next": "Siguiente",
+    "start": "Empezar",
+    "generator": {
+      "title": "Empieza aquí",
+      "body": "Dinos qué quieres aprender y elige un nivel."
+    },
+    "sparkline": {
+      "title": "Sigue tu progreso",
+      "body": "Tus puntuaciones aparecerán aquí tras el primer quiz."
+    },
+    "onchain": {
+      "title": "Certificados permanentes",
+      "body": "Los quizzes aprobados quedan registrados en la blockchain."
+    }
+  },
+  "toasts": {
+    "moduleGenerated": "🎉 ¡Módulo generado!",
+    "moduleGeneratedDesc": "Abriendo el contenido…",
+    "unexpectedResponse": "Respuesta inesperada al generar módulo",
+    "unexpectedResponseDesc": "El módulo se creó, pero no se pudo abrir automáticamente.",
+    "generationError": "Error al generar módulo",
+    "topicTooShort": "Tema demasiado corto",
+    "topicTooShortDesc": "El tema debe tener al menos 3 caracteres."
+  }
+}

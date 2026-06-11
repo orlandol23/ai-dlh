@@ -1,0 +1,19 @@
+{
+  "buttons": {
+    "next": "Next",
+    "previous": "Previous",
+    "back": "Back",
+    "skip": "Skip",
+    "close": "Close",
+    "share": "Share",
+    "copyLink": "Copy link"
+  },
+  "language": "Language",
+  "skipToContent": "Skip to content",
+  "loading": "Loading…",
+  "error": { "generic": "Something went wrong" },
+  "footer": {
+    "copyright": "© {{year}} AI-DLH. Portfolio project demonstrating Frontend, Full Stack, Generative AI, and Web3.",
+    "poweredBy": "Powered by React, TypeScript, Gemini AI, Ethereum & Solidity"
+  }
+}

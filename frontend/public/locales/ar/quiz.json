@@ -1,0 +1,32 @@
+{
+  "progressLabel": "السؤال {{current}} من {{total}}",
+  "option": {
+    "aria": "الخيار {{letter}}: {{content}}"
+  },
+  "buttons": {
+    "previous": "السابق",
+    "next": "التالي",
+    "finish": "إنهاء الاختبار",
+    "processing": "جارٍ المعالجة…",
+    "retake": "إعادة الاختبار"
+  },
+  "incomplete": {
+    "title": "الاختبار غير مكتمل",
+    "description": "أجب على جميع الأسئلة قبل الإنهاء."
+  },
+  "submitError": "خطأ في إرسال الاختبار",
+  "results": {
+    "correctOfTotal": "{{correct}} من {{total}} إجابات صحيحة",
+    "passedTitle": "🎉 تهانينا! لقد نجحت!",
+    "passedDescription": "حصلت على الحد الأدنى من النتيجة (70٪)",
+    "failedTitle": "ليست هذه المرة",
+    "failedDescription": "تحتاج إلى 70٪ للنجاح. حاول مرة أخرى!",
+    "onChainBadge": "ON-CHAIN",
+    "onChainTitle": "⛓️ تم التسجيل على البلوكتشين!",
+    "onChainDescription": "تم تسجيل شهادتك بشكل دائم على بلوكتشين إيثيريوم",
+    "viewOnEtherscan": "عرض على Etherscan",
+    "blockchainPendingTitle": "⚠️ تسجيل البلوكتشين قيد الانتظار",
+    "blockchainPendingDescription": "تم حفظ تقدّمك، لكن حدثت مشكلة في التسجيل على البلوكتشين: {{error}}",
+    "backToDashboard": "العودة إلى لوحة التحكم"
+  }
+}

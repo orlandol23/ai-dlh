@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/atoms/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/atoms/Card';
 import { Badge } from '@/components/atoms/Badge';
 import { Skeleton } from '@/components/atoms/Skeleton';
 import { ThemeToggle } from '@/components/atoms/ThemeToggle';
+import { LanguageSelector } from '@/components/molecules/LanguageSelector';
 import { toast } from '@/components/molecules/Toaster';
 import { trpc, type RouterOutputs } from '@/lib/trpc';
 import { getEtherscanUrl } from '@/lib/utils';
@@ -29,6 +31,8 @@ type QuizResult = RouterOutputs['progress']['submitQuiz'];
 export const ModulePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation(['module', 'quiz', 'common', 'cert']);
+  const reduceMotion = useReducedMotion();
   const moduleId = parseInt(id || '0');
 
   const [showQuiz, setShowQuiz] = useState(false);
@@ -37,6 +41,15 @@ export const ModulePage = () => {
   const [showResults, setShowResults] = useState(false);
   const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [focusMode, setFocusMode] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('ai_dlh_focus_mode') === 'true';
+  });
+
+  // Persist focus-mode preference
+  useEffect(() => {
+    localStorage.setItem('ai_dlh_focus_mode', String(focusMode));
+  }, [focusMode]);
 
   // Queries
   const utils = trpc.useUtils();
@@ -58,7 +71,7 @@ export const ModulePage = () => {
     },
     onError: (error) => {
       setIsSubmitting(false);
-      toast.error('Erro ao enviar quiz', { description: error.message });
+      toast.error(t('quiz:submitError'), { description: error.message });
     },
   });
 
@@ -88,9 +101,9 @@ export const ModulePage = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Módulo não encontrado</h1>
+          <h1 className="text-2xl font-bold mb-4">{t('module:notFound.title')}</h1>
           <Button onClick={() => navigate('/dashboard')}>
-            Voltar ao Dashboard
+            {t('module:notFound.back')}
           </Button>
         </div>
       </div>
@@ -127,8 +140,8 @@ export const ModulePage = () => {
 
   const handleSubmitQuiz = async () => {
     if (selectedAnswers.includes(-1)) {
-      toast.warning('Quiz incompleto', {
-        description: 'Responda todas as perguntas antes de finalizar.',
+      toast.warning(t('quiz:incomplete.title'), {
+        description: t('quiz:incomplete.description'),
       });
       return;
     }
@@ -144,43 +157,59 @@ export const ModulePage = () => {
   const currentQ = quizData[currentQuestion];
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card border-b border-border">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Button variant="outline" onClick={() => navigate('/dashboard')}>
-              ← Voltar
-            </Button>
-            <div className="flex items-center gap-2">
-              <Badge
-                variant={
-                  module.level === 'beginner'
-                    ? 'success'
-                    : module.level === 'intermediate'
-                    ? 'warning'
-                    : 'error'
-                }
-              >
-                {module.level}
-              </Badge>
-              <span className="text-sm text-muted-foreground">
-                {module.estimatedTime} min
-              </span>
-              <ThemeToggle />
+    <div className={`min-h-screen bg-background ${focusMode ? 'hash-grid' : ''}`}>
+      {/* Header — escondido em modo focado */}
+      {!focusMode && (
+        <header className="bg-card border-b border-border">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <Button variant="outline" onClick={() => navigate('/dashboard')}>
+                <span className="font-mono inline-block rtl:rotate-180 me-1">←</span>
+                {t('module:header.back')}
+              </Button>
+              <div className="flex items-center gap-2">
+                <Badge
+                  variant={
+                    module.level === 'beginner'
+                      ? 'success'
+                      : module.level === 'intermediate'
+                      ? 'warning'
+                      : 'error'
+                  }
+                >
+                  {t(`module:level.${module.level}`)}
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  {module.estimatedTime} {t('module:header.minutes')}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFocusMode(true)}
+                  aria-label={t('module:focus.enter')}
+                >
+                  {t('module:focus.enter')}
+                </Button>
+                <LanguageSelector />
+                <ThemeToggle />
+              </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
-      <main className="container mx-auto px-4 py-8">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className={focusMode ? 'mx-auto px-4 py-12 max-w-2xl' : 'container mx-auto px-4 py-8'}
+      >
         <div className="max-w-4xl mx-auto">
           {/* Module Content */}
           {!showQuiz && !showResults && (
             <>
               <div className="mb-8">
                 <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight mb-4">{module.title}</h1>
-                <p className="text-muted-foreground">Tópico: {module.topic}</p>
+                <p className="text-muted-foreground">{t('module:topicLabel', { topic: module.topic })}</p>
               </div>
 
               <Card className="mb-8">
@@ -191,17 +220,22 @@ export const ModulePage = () => {
                 </CardContent>
               </Card>
 
-              {progress && (
+              {progress && !focusMode && (
                 <Card className="mb-4 bg-info-bg border-info-border">
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-semibold text-info-fg">
-                          Você já completou este módulo
+                          {t('module:alreadyCompleted.title')}
                         </p>
                         <p className="text-sm text-info-fg/80">
-                          Score: {progress.score}% -{' '}
-                          {progress.score >= 70 ? 'Aprovado ✅' : 'Reprovado ❌'}
+                          {t('module:alreadyCompleted.scoreLine', {
+                            score: progress.score,
+                            result:
+                              progress.score >= 70
+                                ? t('module:alreadyCompleted.passed')
+                                : t('module:alreadyCompleted.failed'),
+                          })}
                         </p>
                       </div>
                       {progress.transactionHash && (
@@ -211,7 +245,8 @@ export const ModulePage = () => {
                           rel="noopener noreferrer"
                           className="text-primary hover:underline text-sm font-mono"
                         >
-                          Ver na Blockchain →
+                          {t('module:alreadyCompleted.viewOnBlockchain')}{' '}
+                          <span className="font-mono inline-block rtl:rotate-180">→</span>
                         </a>
                       )}
                     </div>
@@ -221,7 +256,8 @@ export const ModulePage = () => {
 
               <div className="flex justify-center">
                 <Button size="lg" onClick={handleStartQuiz}>
-                  {progress ? 'Refazer Quiz' : 'Iniciar Quiz'} →
+                  {progress ? t('module:retakeQuiz') : t('module:startQuiz')}{' '}
+                  <span className="font-mono inline-block rtl:rotate-180">→</span>
                 </Button>
               </div>
             </>
@@ -234,34 +270,41 @@ export const ModulePage = () => {
                 <div className="mb-4">
                   <div className="w-full bg-muted rounded-full h-2">
                     <div
-                      className="bg-primary h-2 rounded-full transition-all"
+                      className="h-2 rounded-full transition-all duration-300 bg-gradient-to-r from-primary to-accent"
                       style={{ width: `${progressPercentage}%` }}
                     />
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">
-                    Questão {currentQuestion + 1} de {quizData.length}
+                    {t('quiz:progressLabel', { current: currentQuestion + 1, total: quizData.length })}
                   </p>
                 </div>
-                <CardTitle>{currentQ.question}</CardTitle>
+                <CardTitle id="question-title">{currentQ.question}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3 mb-6">
-                  {currentQ.options.map((option, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSelectAnswer(index)}
-                      className={`w-full text-left px-4 py-3 border rounded-lg transition ${
-                        selectedAnswers[currentQuestion] === index
-                          ? 'bg-primary/10 border-primary ring-2 ring-primary/20'
-                          : 'hover:bg-muted border-border'
-                      }`}
-                    >
-                      <span className="font-medium mr-2">
-                        {String.fromCharCode(65 + index)}.
-                      </span>
-                      {option}
-                    </button>
-                  ))}
+                <div className="space-y-3 mb-6" role="radiogroup" aria-labelledby="question-title">
+                  {currentQ.options.map((option, index) => {
+                    const letter = String.fromCharCode(65 + index);
+                    return (
+                      <button
+                        key={index}
+                        type="button"
+                        role="radio"
+                        aria-checked={selectedAnswers[currentQuestion] === index}
+                        aria-label={t('quiz:option.aria', { letter, content: option })}
+                        onClick={() => handleSelectAnswer(index)}
+                        className={`w-full text-left px-4 py-3 border rounded-lg transition focus-ring-v2 ${
+                          selectedAnswers[currentQuestion] === index
+                            ? 'bg-primary/10 border-primary ring-2 ring-primary/20'
+                            : 'hover:bg-muted border-border'
+                        }`}
+                      >
+                        <span className="font-medium mr-2" aria-hidden="true">
+                          {letter}.
+                        </span>
+                        {option}
+                      </button>
+                    );
+                  })}
                 </div>
 
                 <div className="flex justify-between">
@@ -270,7 +313,8 @@ export const ModulePage = () => {
                     onClick={handlePrevious}
                     disabled={currentQuestion === 0}
                   >
-                    ← Anterior
+                    <span className="font-mono inline-block rtl:rotate-180 me-1">←</span>
+                    {t('quiz:buttons.previous')}
                   </Button>
 
                   {currentQuestion < quizData.length - 1 ? (
@@ -278,7 +322,8 @@ export const ModulePage = () => {
                       onClick={handleNext}
                       disabled={selectedAnswers[currentQuestion] === -1}
                     >
-                      Próxima →
+                      {t('quiz:buttons.next')}{' '}
+                      <span className="font-mono inline-block rtl:rotate-180">→</span>
                     </Button>
                   ) : (
                     <Button
@@ -292,10 +337,10 @@ export const ModulePage = () => {
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
-                          <span>Processando...</span>
+                          <span>{t('quiz:buttons.processing')}</span>
                         </div>
                       ) : (
-                        'Finalizar Quiz'
+                        t('quiz:buttons.finish')
                       )}
                     </Button>
                   )}
@@ -318,26 +363,29 @@ export const ModulePage = () => {
                       {quizResult.score}%
                     </div>
                     <p className="text-xl text-muted-foreground">
-                      {quizResult.correct} de {quizResult.total} corretas
+                      {t('quiz:results.correctOfTotal', {
+                        correct: quizResult.correct,
+                        total: quizResult.total,
+                      })}
                     </p>
                   </div>
 
                   {quizResult.passed ? (
                     <div className="bg-success-bg border border-success-border rounded-lg p-6">
                       <p className="text-xl font-semibold text-success-fg mb-2">
-                        🎉 Parabéns! Você foi aprovado!
+                        {t('quiz:results.passedTitle')}
                       </p>
                       <p className="text-success-fg/80">
-                        Você atingiu a pontuação mínima de 70%
+                        {t('quiz:results.passedDescription')}
                       </p>
                     </div>
                   ) : (
                     <div className="bg-error-bg border border-error-border rounded-lg p-6">
                       <p className="text-xl font-semibold text-error-fg mb-2">
-                        Não foi desta vez
+                        {t('quiz:results.failedTitle')}
                       </p>
                       <p className="text-error-fg/80">
-                        Você precisa de 70% para ser aprovado. Tente novamente!
+                        {t('quiz:results.failedDescription')}
                       </p>
                     </div>
                   )}
@@ -345,20 +393,19 @@ export const ModulePage = () => {
                   {quizResult.transactionHash && (
                     <div className="relative mt-6 bg-onchain-bg border border-onchain-border rounded-lg p-6 hash-grid overflow-hidden">
                       <motion.div
-                        initial={{ opacity: 0, scale: 2, rotate: -12 }}
-                        animate={{ opacity: 1, scale: 1, rotate: -8 }}
-                        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                        initial={reduceMotion ? false : { opacity: 0, scale: 2, rotate: -12 }}
+                        animate={reduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1, rotate: -8 }}
+                        transition={{ duration: reduceMotion ? 0 : 0.6, ease: [0.22, 1, 0.36, 1] }}
                         className="absolute -top-2 right-4 px-3 py-1 rounded-md border-2 border-primary/60 bg-card font-mono text-[11px] font-bold tracking-widest text-primary uppercase shadow-md"
                         aria-hidden="true"
                       >
-                        ⛓ ON-CHAIN
+                        ⛓ {t('quiz:results.onChainBadge')}
                       </motion.div>
                       <p className="font-semibold text-onchain-fg mb-2 mt-4">
-                        ⛓️ Registrado na Blockchain!
+                        {t('quiz:results.onChainTitle')}
                       </p>
                       <p className="text-sm text-onchain-fg/80 mb-3">
-                        Seu certificado foi registrado permanentemente na blockchain
-                        Ethereum
+                        {t('quiz:results.onChainDescription')}
                       </p>
                       <a
                         href={getEtherscanUrl(quizResult.transactionHash)}
@@ -366,19 +413,45 @@ export const ModulePage = () => {
                         rel="noopener noreferrer"
                         className="inline-block bg-primary text-primary-foreground font-mono text-sm px-4 py-2 rounded-md hover:opacity-90 transition"
                       >
-                        Ver no Etherscan →
+                        {t('quiz:results.viewOnEtherscan')}{' '}
+                        <span className="font-mono inline-block rtl:rotate-180">→</span>
                       </a>
                     </div>
                   )}
 
+                  {quizResult.passed && quizResult.transactionHash && (() => {
+                    const shareText = t('cert:share.text', { topic: module.topic, score: quizResult.score });
+                    const shareUrl = `${window.location.origin}/cert/${quizResult.transactionHash}?lang=${i18n.language}`;
+                    const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+                    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+                    const linkClasses = 'inline-flex items-center justify-center h-9 px-3 text-sm rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground transition-colors focus-ring-v2';
+                    const copy = async () => {
+                      await navigator.clipboard.writeText(shareUrl);
+                      toast.success(t('cert:share.copied'));
+                    };
+                    return (
+                      <div className="flex flex-wrap gap-3 mt-6 justify-center">
+                        <a target="_blank" rel="noopener noreferrer" href={linkedInUrl} className={linkClasses}>
+                          {t('cert:share.linkedin')}
+                          <span className="font-mono inline-block rtl:rotate-180 ms-1">→</span>
+                        </a>
+                        <a target="_blank" rel="noopener noreferrer" href={twitterUrl} className={linkClasses}>
+                          {t('cert:share.twitter')}
+                        </a>
+                        <Button variant="outline" size="sm" onClick={copy}>
+                          {t('cert:share.copyLink')}
+                        </Button>
+                      </div>
+                    );
+                  })()}
+
                   {quizResult.blockchainError && (
                     <div className="mt-6 bg-warning-bg border border-warning-border rounded-lg p-6">
                       <p className="font-semibold text-warning-fg mb-2">
-                        ⚠️ Registro blockchain pendente
+                        {t('quiz:results.blockchainPendingTitle')}
                       </p>
                       <p className="text-sm text-warning-fg/80">
-                        Seu progresso foi salvo, mas houve um problema ao registrar na
-                        blockchain: {quizResult.blockchainError}
+                        {t('quiz:results.blockchainPendingDescription', { error: quizResult.blockchainError })}
                       </p>
                     </div>
                   )}
@@ -387,14 +460,26 @@ export const ModulePage = () => {
 
               <div className="flex gap-4 justify-center">
                 <Button variant="outline" onClick={() => navigate('/dashboard')}>
-                  Voltar ao Dashboard
+                  {t('quiz:results.backToDashboard')}
                 </Button>
-                <Button onClick={handleStartQuiz}>Refazer Quiz</Button>
+                <Button onClick={handleStartQuiz}>{t('quiz:buttons.retake')}</Button>
               </div>
             </div>
           )}
         </div>
       </main>
+
+      {/* Floating exit button — modo focado */}
+      {focusMode && (
+        <button
+          type="button"
+          onClick={() => setFocusMode(false)}
+          className="fixed bottom-6 end-6 z-40 px-4 py-2 rounded-full bg-primary text-primary-foreground shadow-lg hover:opacity-90 transition focus-ring-v2 font-medium text-sm"
+          aria-label={t('module:focus.exit')}
+        >
+          {t('module:focus.exit')}
+        </button>
+      )}
     </div>
   );
 };

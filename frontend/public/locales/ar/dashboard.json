@@ -1,0 +1,137 @@
+{
+  "header": {
+    "title": "لوحة التحكم",
+    "logoAlt": "AI-DLH"
+  },
+  "stats": {
+    "total": { "eyebrow": "الإجمالي", "label": "الوحدات المُولَّدة" },
+    "passed": { "eyebrow": "مجتازة", "label": "النتيجة ≥ 70٪" },
+    "avgScore": { "eyebrow": "متوسط النتيجة", "label": "في جميع الاختبارات" },
+    "onChain": { "eyebrow": "⛓ على السلسلة", "label": "الشهادات النشطة" }
+  },
+  "sparkline": {
+    "eyebrow": "السجل",
+    "title": "تطوّر النتيجة",
+    "descriptionEmpty": "لم يُكتمل أي اختبار بعد — يشير الخط المتقطع إلى عتبة 70٪",
+    "descriptionWithData": "آخر {{count}} اختبارات — الخط المتقطع يشير إلى عتبة 70٪",
+    "aria": "سجل النتائج",
+    "empty": {
+      "title": "لم يُكتمل أي اختبار بعد",
+      "hint": "ولّد أول وحدة لك بالذكاء الاصطناعي"
+    }
+  },
+  "achievements": {
+    "eyebrow": "الإنجازات",
+    "unlockedSuffix": " (مفتوح)",
+    "items": {
+      "first-step": {
+        "label": "الخطوة الأولى",
+        "description": "أكمل أول وحدة"
+      },
+      "on-chain": {
+        "label": "شهادة على السلسلة",
+        "description": "شهادة واحدة مسجّلة على البلوكتشين"
+      },
+      "perfectionist": {
+        "label": "المثالي",
+        "description": "احصل على نتيجة 100٪ في اختبار"
+      },
+      "high-flyer": {
+        "label": "تحليق عالٍ",
+        "description": "5 اختبارات بنتيجة ≥ 90٪"
+      },
+      "polymath": {
+        "label": "متعدد المعارف",
+        "description": "ادرس 3 موضوعات مختلفة"
+      },
+      "streak": {
+        "label": "سلسلة",
+        "description": "3 نتائج ناجحة متتالية"
+      },
+      "streak-3": {
+        "label": "سلسلة 3 أيام",
+        "description": "ادرس 3 أيام متتالية"
+      },
+      "streak-7": {
+        "label": "سلسلة 7 أيام",
+        "description": "ادرس 7 أيام متتالية"
+      },
+      "streak-30": {
+        "label": "سلسلة 30 يوم",
+        "description": "ادرس 30 يوم متتالي"
+      }
+    }
+  },
+  "streak": {
+    "badge_one": "سلسلة يوم واحد",
+    "badge_other": "سلسلة {{count}} أيام"
+  },
+  "timeline": {
+    "eyebrow": "الجدول الزمني",
+    "title": "النشاط على السلسلة",
+    "description": "الاختبارات المُكتملة وأختامها على بلوكتشين Sepolia",
+    "moduleAriaLabel": "فتح {{title}} (النتيجة {{score}}٪)",
+    "moduleFallback": "الوحدة #{{id}}",
+    "viewOnEtherscan": "عرض على Etherscan",
+    "empty": {
+      "title": "لا توجد شهادات على السلسلة بعد",
+      "hint": "اجتز اختبارًا لإصدار أول شهادة لك"
+    }
+  },
+  "generator": {
+    "eyebrow": "🤖 الذكاء الاصطناعي",
+    "title": "توليد وحدة",
+    "description": "محتوى مخصّص حسب الطلب",
+    "topicLabel": "موضوع الدراسة",
+    "topicPlaceholder": "مثال: TypeScript، React Hooks…",
+    "levelLabel": "المستوى",
+    "levels": {
+      "beginner": "مبتدئ",
+      "intermediate": "متوسط",
+      "advanced": "متقدم"
+    },
+    "submit": "🤖 توليد بالذكاء الاصطناعي",
+    "generating": "جارٍ التوليد…",
+    "workingEyebrow": "الذكاء الاصطناعي يعمل",
+    "stages": {
+      "0": "تحليل الموضوع",
+      "1": "هيكلة الوحدة",
+      "2": "توليد محتوى مخصّص",
+      "3": "بناء الاختبار",
+      "4": "اقتربنا"
+    }
+  },
+  "pending": {
+    "eyebrow": "قيد الانتظار ({{count}})",
+    "minutes": "دقيقة"
+  },
+  "generating": {
+    "eyebrow": "جارٍ بناء وحدتك"
+  },
+  "onboarding": {
+    "skip": "تخطي",
+    "next": "التالي",
+    "start": "ابدأ",
+    "generator": {
+      "title": "ابدأ من هنا",
+      "body": "أخبرنا ما تريد تعلّمه واختر المستوى."
+    },
+    "sparkline": {
+      "title": "تابع تقدّمك",
+      "body": "ستظهر نتائجك هنا بعد أول اختبار."
+    },
+    "onchain": {
+      "title": "شهادات دائمة",
+      "body": "الاختبارات المُجتازة تُسجَّل على البلوكتشين."
+    }
+  },
+  "toasts": {
+    "moduleGenerated": "🎉 تم توليد الوحدة!",
+    "moduleGeneratedDesc": "جارٍ فتح المحتوى…",
+    "unexpectedResponse": "استجابة غير متوقعة عند توليد الوحدة",
+    "unexpectedResponseDesc": "تم إنشاء الوحدة، لكن تعذّر فتحها تلقائيًا.",
+    "generationError": "خطأ في توليد الوحدة",
+    "topicTooShort": "الموضوع قصير جدًا",
+    "topicTooShortDesc": "يجب أن يحتوي الموضوع على 3 أحرف على الأقل."
+  }
+}

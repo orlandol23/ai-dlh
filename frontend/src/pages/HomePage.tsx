@@ -1,8 +1,10 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Trans, useTranslation } from 'react-i18next';
 import { Button } from '@/components/atoms/Button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/atoms/Card';
 import { ThemeToggle } from '@/components/atoms/ThemeToggle';
+import { LanguageSelector } from '@/components/molecules/LanguageSelector';
 import { useAuth } from '@/hooks/useAuth';
 
 /**
@@ -19,6 +21,7 @@ import { useAuth } from '@/hooks/useAuth';
  */
 export const HomePage = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation(['home', 'common', 'auth']);
   const { isAuthenticated, isConnecting, connectWallet } = useAuth();
 
   // Redirect to dashboard if already authenticated
@@ -39,12 +42,13 @@ export const HomePage = () => {
               <h1 className="text-xl font-bold">AI-DLH</h1>
             </div>
             <div className="flex items-center gap-2">
+              <LanguageSelector />
               <ThemeToggle />
               <Button
                 onClick={connectWallet}
                 disabled={isConnecting}
               >
-                {isConnecting ? 'Conectando...' : 'Conectar Carteira'}
+                {isConnecting ? t('auth:connecting') : t('auth:connectWallet')}
               </Button>
             </div>
           </div>
@@ -52,18 +56,23 @@ export const HomePage = () => {
       </header>
 
       {/* Hero Section */}
-      <main className="container mx-auto px-4 py-16 relative">
+      <main id="main-content" tabIndex={-1} className="container mx-auto px-4 py-16 relative">
         <div className="absolute inset-0 hash-grid opacity-70 pointer-events-none" aria-hidden="true" />
         <div className="max-w-4xl mx-auto text-center space-y-8 relative">
           <div className="space-y-4">
             <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-foreground tracking-tighter leading-[1.02] mt-8">
-              Aprenda com <span className="text-gradient-brand">IA</span>
+              <Trans
+                i18nKey="home:hero.titleLine1"
+                components={[<span className="text-gradient-brand" />]}
+              />
               <br />
-              Certifique em <span className="text-gradient-brand">cadeia</span>
+              <Trans
+                i18nKey="home:hero.titleLine2"
+                components={[<span className="text-gradient-brand" />]}
+              />
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Hub de aprendizado personalizado que usa IA Generativa para criar conteúdo educacional
-              sob demanda e registra seu progresso na blockchain Ethereum.
+              {t('home:hero.subtitle')}
             </p>
           </div>
 
@@ -74,7 +83,7 @@ export const HomePage = () => {
               disabled={isConnecting}
               className="w-full sm:w-auto"
             >
-              {isConnecting ? 'Conectando...' : 'Começar Agora'}
+              {isConnecting ? t('auth:connecting') : t('home:hero.ctaPrimary')}
             </Button>
             <Button
               size="lg"
@@ -82,7 +91,7 @@ export const HomePage = () => {
               className="w-full sm:w-auto"
               onClick={() => window.scrollTo({ top: 600, behavior: 'smooth' })}
             >
-              Saiba Mais
+              {t('home:hero.ctaSecondary')}
             </Button>
           </div>
 
@@ -93,9 +102,9 @@ export const HomePage = () => {
                 <div className="w-12 h-12 bg-info-bg border border-info-border rounded-lg flex items-center justify-center mb-4">
                   <span className="text-2xl">🤖</span>
                 </div>
-                <CardTitle className="text-lg">IA Generativa</CardTitle>
+                <CardTitle className="text-lg">{t('home:features.ai.title')}</CardTitle>
                 <CardDescription>
-                  Conteúdo educacional personalizado gerado pela Google Gemini AI
+                  {t('home:features.ai.description')}
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -105,9 +114,9 @@ export const HomePage = () => {
                 <div className="w-12 h-12 bg-onchain-bg border border-onchain-border rounded-lg flex items-center justify-center mb-4">
                   <span className="text-2xl">⛓️</span>
                 </div>
-                <CardTitle className="text-lg">Blockchain</CardTitle>
+                <CardTitle className="text-lg">{t('home:features.blockchain.title')}</CardTitle>
                 <CardDescription>
-                  Certificados permanentes registrados na blockchain Ethereum
+                  {t('home:features.blockchain.description')}
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -117,9 +126,9 @@ export const HomePage = () => {
                 <div className="w-12 h-12 bg-success-bg border border-success-border rounded-lg flex items-center justify-center mb-4">
                   <span className="text-2xl">📊</span>
                 </div>
-                <CardTitle className="text-lg">Progresso</CardTitle>
+                <CardTitle className="text-lg">{t('home:features.progress.title')}</CardTitle>
                 <CardDescription>
-                  Acompanhe seu progresso e estatísticas de aprendizado
+                  {t('home:features.progress.description')}
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -127,16 +136,16 @@ export const HomePage = () => {
 
           {/* How it works */}
           <div className="mt-20 space-y-8">
-            <h2 className="font-display text-4xl font-bold tracking-tight">Como Funciona</h2>
+            <h2 className="font-display text-4xl font-bold tracking-tight">{t('home:howItWorks.title')}</h2>
             <div className="grid md:grid-cols-4 gap-6 text-left">
               <Card>
                 <CardContent className="pt-6">
                   <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center font-bold mb-4">
                     1
                   </div>
-                  <h3 className="font-semibold mb-2">Conecte sua Carteira</h3>
+                  <h3 className="font-semibold mb-2">{t('home:howItWorks.step1.title')}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Use MetaMask para autenticar via Web3
+                    {t('home:howItWorks.step1.description')}
                   </p>
                 </CardContent>
               </Card>
@@ -146,9 +155,9 @@ export const HomePage = () => {
                   <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center font-bold mb-4">
                     2
                   </div>
-                  <h3 className="font-semibold mb-2">Escolha um Tópico</h3>
+                  <h3 className="font-semibold mb-2">{t('home:howItWorks.step2.title')}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Digite o que deseja aprender e o nível de dificuldade
+                    {t('home:howItWorks.step2.description')}
                   </p>
                 </CardContent>
               </Card>
@@ -158,9 +167,9 @@ export const HomePage = () => {
                   <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center font-bold mb-4">
                     3
                   </div>
-                  <h3 className="font-semibold mb-2">Estude e Pratique</h3>
+                  <h3 className="font-semibold mb-2">{t('home:howItWorks.step3.title')}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Leia o conteúdo gerado e complete o quiz
+                    {t('home:howItWorks.step3.description')}
                   </p>
                 </CardContent>
               </Card>
@@ -170,9 +179,9 @@ export const HomePage = () => {
                   <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center font-bold mb-4">
                     4
                   </div>
-                  <h3 className="font-semibold mb-2">Ganhe Certificado</h3>
+                  <h3 className="font-semibold mb-2">{t('home:howItWorks.step4.title')}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Score ≥ 70% registra na blockchain
+                    {t('home:howItWorks.step4.description')}
                   </p>
                 </CardContent>
               </Card>
@@ -185,9 +194,9 @@ export const HomePage = () => {
       <footer className="border-t border-border bg-card mt-20">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center text-muted-foreground">
-            <p>© 2024 AI-DLH. Projeto de portfólio demonstrando Frontend, Full Stack, IA Generativa e Web3.</p>
+            <p>{t('common:footer.copyright', { year: new Date().getFullYear() })}</p>
             <p className="text-sm mt-2">
-              Powered by React, TypeScript, Gemini AI, Ethereum & Solidity
+              {t('common:footer.poweredBy')}
             </p>
           </div>
         </div>

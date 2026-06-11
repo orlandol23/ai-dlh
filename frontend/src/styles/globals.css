@@ -346,3 +346,66 @@
   margin-left: 2px;
   animation: caret-blink 1s steps(1) infinite;
 }
+
+/* =========================================================
+   Focus ring v2 — anel triplo roxo translúcido com gap
+   Use em qualquer elemento focável que herde design system v2.
+   ========================================================= */
+@layer components {
+  .focus-ring-v2 {
+    @apply focus-visible:outline-none
+           focus-visible:ring-[3px] focus-visible:ring-primary/40
+           focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+}
+
+/* =========================================================
+   Indeterminate progress bar — gradiente animado horizontal
+   Use sobreposto a um botão para indicar trabalho em andamento.
+   ========================================================= */
+@keyframes indeterminate {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.bar-indeterminate {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.bar-indeterminate::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsl(var(--accent) / 0.4),
+    transparent
+  );
+  animation: indeterminate 1.4s linear infinite;
+}
+
+/* =========================================================
+   Reduced motion — respeita prefers-reduced-motion do SO/browser
+   Desliga shimmer, caret blink, transitions e scroll-behavior.
+   ========================================================= */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .skeleton {
+    animation: none;
+    background: hsl(var(--muted));
+  }
+  .caret::after {
+    animation: none;
+    opacity: 1;
+  }
+}

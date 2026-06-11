@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 import { config } from '../utils/env.js';
 import { logger } from '../utils/logger.js';
+import { getErrorCode, getErrorMessage } from '../utils/errors.js';
 
 // Learning Progress ABI (minimal - only what we need)
 const LEARNING_PROGRESS_ABI = [
@@ -100,19 +101,18 @@ export class Web3Service {
         gasUsed: receipt.gasUsed.toString(),
       };
 
-    } catch (error: any) {
-      logger.error('Blockchain transaction error:', error);
+    } catch (error) {
+      logger.error('Blockchain transaction error', { error });
 
-      // Parse common errors
-      if (error.code === 'INSUFFICIENT_FUNDS') {
+      const code = getErrorCode(error);
+      if (code === 'INSUFFICIENT_FUNDS') {
         throw new Error('Insufficient funds for gas fees');
       }
-
-      if (error.code === 'NETWORK_ERROR') {
+      if (code === 'NETWORK_ERROR') {
         throw new Error('Network connection error');
       }
 
-      throw new Error(`Blockchain error: ${error.message || 'Unknown error'}`);
+      throw new Error(`Blockchain error: ${getErrorMessage(error)}`);
     }
   }
 
@@ -132,8 +132,8 @@ export class Web3Service {
         moduleTopic: p.moduleTopic,
       }));
 
-    } catch (error: any) {
-      logger.error('Error fetching user progress:', error);
+    } catch (error) {
+      logger.error('Error fetching user progress', { error });
       throw new Error('Failed to fetch blockchain data');
     }
   }
@@ -145,8 +145,8 @@ export class Web3Service {
     try {
       const count = await this.contract.getUserCompletionCount(walletAddress);
       return Number(count);
-    } catch (error: any) {
-      logger.error('Error fetching completion count:', error);
+    } catch (error) {
+      logger.error('Error fetching completion count', { error });
       throw new Error('Failed to fetch completion count');
     }
   }
@@ -158,8 +158,8 @@ export class Web3Service {
     try {
       const avg = await this.contract.getUserAverageScore(walletAddress);
       return Number(avg);
-    } catch (error: any) {
-      logger.error('Error fetching average score:', error);
+    } catch (error) {
+      logger.error('Error fetching average score', { error });
       throw new Error('Failed to fetch average score');
     }
   }
@@ -171,8 +171,8 @@ export class Web3Service {
     try {
       const total = await this.contract.totalCompletions();
       return Number(total);
-    } catch (error: any) {
-      logger.error('Error fetching total completions:', error);
+    } catch (error) {
+      logger.error('Error fetching total completions', { error });
       throw new Error('Failed to fetch total completions');
     }
   }

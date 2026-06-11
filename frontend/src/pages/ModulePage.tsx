@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/atoms/Skeleton';
 import { ThemeToggle } from '@/components/atoms/ThemeToggle';
 import { LanguageSelector } from '@/components/molecules/LanguageSelector';
 import { toast } from '@/components/molecules/Toaster';
-import { trpc } from '@/lib/trpc';
+import { trpc, type RouterOutputs } from '@/lib/trpc';
 import { getEtherscanUrl } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 
@@ -19,6 +19,14 @@ interface QuizQuestion {
   correctAnswer: number;
   explanation?: string;
 }
+
+/**
+ * Quiz submission result. Inferred from tRPC instead of redeclared so any
+ * change to the backend mutation shape (new fields, type tightening,
+ * removed properties) surfaces here as a compile error rather than a
+ * silent runtime mismatch.
+ */
+type QuizResult = RouterOutputs['progress']['submitQuiz'];
 
 export const ModulePage = () => {
   const { id } = useParams<{ id: string }>();
@@ -31,7 +39,7 @@ export const ModulePage = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   const [showResults, setShowResults] = useState(false);
-  const [quizResult, setQuizResult] = useState<any>(null);
+  const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [focusMode, setFocusMode] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -44,6 +52,7 @@ export const ModulePage = () => {
   }, [focusMode]);
 
   // Queries
+  const utils = trpc.useUtils();
   const { data: module, isLoading } = trpc.ai.getModuleById.useQuery({ moduleId });
   const { data: progress } = trpc.progress.getModuleProgress.useQuery({ moduleId });
 
@@ -53,6 +62,12 @@ export const ModulePage = () => {
       setIsSubmitting(false);
       setQuizResult(data);
       setShowResults(true);
+      // Submitting a quiz changes stats / progress / module-progress —
+      // invalidate every query that derives from progress_records so the
+      // Dashboard, achievements, and "you already completed this" banner
+      // reflect the new state immediately. Without this, the global
+      // staleTime in App.tsx would otherwise show stale data for up to 30s.
+      void utils.progress.invalidate();
     },
     onError: (error) => {
       setIsSubmitting(false);

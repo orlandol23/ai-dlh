@@ -1,6 +1,7 @@
 import { router, protectedProcedure } from '../trpc.js';
 import { web3Service } from '../services/web3.service.js';
 import { TRPCError } from '@trpc/server';
+import { getErrorMessage } from '../utils/errors.js';
 
 export const web3Router = router({
   /**
@@ -10,10 +11,10 @@ export const web3Router = router({
     try {
       const progress = await web3Service.getUserProgress(ctx.user.walletAddress);
       return progress;
-    } catch (error: any) {
+    } catch (error) {
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
-        message: error.message || 'Failed to fetch blockchain data',
+        message: getErrorMessage(error, 'Failed to fetch blockchain data'),
       });
     }
   }),
@@ -25,10 +26,10 @@ export const web3Router = router({
     try {
       const count = await web3Service.getCompletionCount(ctx.user.walletAddress);
       return { count };
-    } catch (error: any) {
+    } catch (error) {
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
-        message: error.message || 'Failed to fetch completion count',
+        message: getErrorMessage(error, 'Failed to fetch completion count'),
       });
     }
   }),
@@ -40,10 +41,10 @@ export const web3Router = router({
     try {
       const average = await web3Service.getAverageScore(ctx.user.walletAddress);
       return { average };
-    } catch (error: any) {
+    } catch (error) {
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
-        message: error.message || 'Failed to fetch average score',
+        message: getErrorMessage(error, 'Failed to fetch average score'),
       });
     }
   }),
@@ -55,10 +56,10 @@ export const web3Router = router({
     try {
       const total = await web3Service.getTotalCompletions();
       return { total };
-    } catch (error: any) {
+    } catch (error) {
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
-        message: error.message || 'Failed to fetch total completions',
+        message: getErrorMessage(error, 'Failed to fetch total completions'),
       });
     }
   }),

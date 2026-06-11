@@ -30,6 +30,11 @@ export interface Achievement {
  *
  * Without timezone awareness, a user in Tokyo could "lose" their streak just
  * because their local day starts ~9h before UTC midnight.
+ *
+ * Note: `getUserProgress` is capped at 50 records server-side, so the day
+ * streak is computed over the most recent 50 attempts. That only under-counts
+ * for users doing 50+ quizzes inside the streak window — acceptable for a
+ * display badge.
  */
 export function calculateStreakDays(records: ProgressLike[], timezone?: string): number {
   if (records.length === 0) return 0;
@@ -53,86 +58,99 @@ export function calculateStreakDays(records: ProgressLike[], timezone?: string):
 }
 
 /**
- * Derives the achievement set client-side from progress records.
- * Backend has no /achievements endpoint yet — this is the source of truth.
+ * All-time aggregates the achievement panel needs. Server computes these
+ * once over the full progress_records table (see progress.getStatistics)
+ * because getUserProgress is capped at 50 records — counting client-side
+ * over a truncated view would lock achievements for power users.
+ */
+export interface AchievementsStats {
+  totalModules: number;
+  passedModules: number;
+  onChainRecords: number;
+  highScoreCount: number;
+  hasPerfectScore: boolean;
+  distinctTopicsCount: number;
+  currentStreakCapped: number;
+}
+
+/**
+ * Derives the achievement set from server-aggregated stats. Pure
+ * function over numbers — no record traversal here, so the result is
+ * correct regardless of how many records exist on the backend.
  *
  * Labels/descriptions are NOT returned here — consumers resolve them via
  * `t('dashboard:achievements.items.<id>.label')` so achievements stay localized.
+ *
+ * When `streakDays` is provided (computed client-side from progress records
+ * via `calculateStreakDays`, since the server stats have no day-granular
+ * data), the day-streak achievements (streak-3/7/30) are appended.
  */
-export function deriveAchievements(records: ProgressLike[], timezone?: string): Achievement[] {
-  const onChain = records.filter((r) => r.blockchainStatus === 'confirmed').length;
-  const perfect = records.some((r) => r.score === 100);
-  const high = records.filter((r) => r.score >= 90).length;
-  const topics = new Set(
-    records.map((r) => r.module?.topic).filter((t): t is string => !!t)
-  );
-
-  const sortedDesc = [...records].sort(
-    (a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
-  );
-  let streak = 0;
-  for (const r of sortedDesc) {
-    if (r.score >= 70) streak += 1;
-    else break;
-  }
-
-  const streakDays = calculateStreakDays(records, timezone);
-
-  return [
+export function deriveAchievements(
+  stats: AchievementsStats,
+  streakDays?: number
+): Achievement[] {
+  const achievements: Achievement[] = [
     {
       id: 'first-step',
       emoji: '🎯',
-      unlocked: records.length >= 1,
-      progress: { current: Math.min(records.length, 1), target: 1 },
+      unlocked: stats.totalModules >= 1,
+      progress: { current: Math.min(stats.totalModules, 1), target: 1 },
     },
     {
       id: 'on-chain',
       emoji: '⛓️',
-      unlocked: onChain >= 1,
-      progress: { current: Math.min(onChain, 1), target: 1 },
+      unlocked: stats.onChainRecords >= 1,
+      progress: { current: Math.min(stats.onChainRecords, 1), target: 1 },
     },
     {
       id: 'perfectionist',
       emoji: '🏆',
-      unlocked: perfect,
+      unlocked: stats.hasPerfectScore,
     },
     {
       id: 'high-flyer',
       emoji: '🔥',
-      unlocked: high >= 5,
-      progress: { current: Math.min(high, 5), target: 5 },
+      unlocked: stats.highScoreCount >= 5,
+      progress: { current: Math.min(stats.highScoreCount, 5), target: 5 },
     },
     {
       id: 'polymath',
       emoji: '📊',
-      unlocked: topics.size >= 3,
-      progress: { current: Math.min(topics.size, 3), target: 3 },
+      unlocked: stats.distinctTopicsCount >= 3,
+      progress: { current: Math.min(stats.distinctTopicsCount, 3), target: 3 },
     },
     {
       id: 'streak',
       emoji: '🎉',
-      unlocked: streak >= 3,
-      progress: { current: Math.min(streak, 3), target: 3 },
-    },
-    {
-      id: 'streak-3',
-      emoji: '🔥',
-      unlocked: streakDays >= 3,
-      progress: { current: Math.min(streakDays, 3), target: 3 },
-    },
-    {
-      id: 'streak-7',
-      emoji: '🔥',
-      unlocked: streakDays >= 7,
-      progress: { current: Math.min(streakDays, 7), target: 7 },
-    },
-    {
-      id: 'streak-30',
-      emoji: '🔥',
-      unlocked: streakDays >= 30,
-      progress: { current: Math.min(streakDays, 30), target: 30 },
+      unlocked: stats.currentStreakCapped >= 3,
+      progress: { current: Math.min(stats.currentStreakCapped, 3), target: 3 },
     },
   ];
+
+  if (streakDays !== undefined) {
+    achievements.push(
+      {
+        id: 'streak-3',
+        emoji: '🔥',
+        unlocked: streakDays >= 3,
+        progress: { current: Math.min(streakDays, 3), target: 3 },
+      },
+      {
+        id: 'streak-7',
+        emoji: '🔥',
+        unlocked: streakDays >= 7,
+        progress: { current: Math.min(streakDays, 7), target: 7 },
+      },
+      {
+        id: 'streak-30',
+        emoji: '🔥',
+        unlocked: streakDays >= 30,
+        progress: { current: Math.min(streakDays, 30), target: 30 },
+      }
+    );
+  }
+
+  return achievements;
 }
 
 export interface SparklinePoint {

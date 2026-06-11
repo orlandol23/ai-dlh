@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Settings } from 'lucide-react';
+import { isLearningStyle } from '@/lib/vark';
 import { Button } from '@/components/atoms/Button';
 import {
   Dialog,
@@ -26,7 +28,11 @@ import { useAuthStore } from '@/store/authStore';
  */
 export function PreferencesPanel() {
   const { t } = useTranslation('auth');
+  const { t: tVark } = useTranslation('vark');
+  const navigate = useNavigate();
   const { user, setUser } = useAuthStore();
+  const rawLearningStyle = user?.learningStyle;
+  const learningStyle = isLearningStyle(rawLearningStyle) ? rawLearningStyle : null;
   const [tier, setTier] = useState<'default' | 'premium'>(
     (user?.preferredTier as 'default' | 'premium') ?? 'default',
   );
@@ -92,6 +98,22 @@ export function PreferencesPanel() {
               </div>
             </label>
           </fieldset>
+
+          {/* VARK learning style — quiz lives at /vark; here we only show
+              the current style and offer to (re)take the questionnaire. */}
+          <div className="space-y-2 border-t border-border pt-4">
+            <p className="font-semibold">{tVark('preferences.legend')}</p>
+            <p className="text-sm text-muted-foreground">
+              {learningStyle
+                ? tVark('preferences.current', {
+                    style: tVark(`styles.${learningStyle}.name`),
+                  })
+                : tVark('preferences.notTaken')}
+            </p>
+            <Button variant="outline" size="sm" onClick={() => navigate('/vark')}>
+              {learningStyle ? tVark('preferences.retake') : tVark('preferences.take')}
+            </Button>
+          </div>
         </div>
 
         <DialogFooter>

@@ -8,7 +8,10 @@ export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 
 export const RTL_LOCALES: SupportedLocale[] = ['ar'];
 
-export const NAMESPACES = ['common', 'home', 'dashboard', 'module', 'quiz', 'cert', 'auth', 'zod'] as const;
+// NOTE: 'vark' currently ships pt-BR and en only — the other locales
+// intentionally fall back to en (fallbackLng) until human-reviewed
+// translations land. See docs/FUSION_APRENDAMAIS.md (Fase 1).
+export const NAMESPACES = ['common', 'home', 'dashboard', 'module', 'quiz', 'cert', 'auth', 'zod', 'vark'] as const;
 
 i18n
   .use(HttpBackend)

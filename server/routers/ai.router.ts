@@ -8,6 +8,7 @@ import { eq, desc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { getErrorMessage } from '../utils/errors.js';
 import type { Region, Tier } from '../services/providers/types.js';
+import { isLearningStyle } from '../services/vark.js';
 
 const SUPPORTED_LOCALES = ['en', 'pt-BR', 'es', 'fr', 'ja', 'ar'] as const;
 
@@ -59,11 +60,18 @@ export const aiRouter = router({
           ctx.user.preferredTier === 'premium' ? 'premium' : 'default';
         const region: Region = detectRegion(ctx.req);
 
+        // VARK adaptation: learning_style is a free varchar in the DB, so
+        // guard it back into the union before it reaches the prompt builder.
+        const learningStyle = isLearningStyle(ctx.user.learningStyle)
+          ? ctx.user.learningStyle
+          : null;
+
         const { content, provider } = await aiService.generateModule(
           input.topic,
           input.level,
           input.locale,
           { tier, region, locale: input.locale },
+          learningStyle,
         );
 
         const [saved] = await db

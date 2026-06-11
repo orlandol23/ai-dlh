@@ -33,9 +33,11 @@ jobs:
         working-directory: contracts
         run: npx hardhat test
 
-      - name: Check contract size
+      # Informational only: the size-contracts plugin is not installed in
+      # this project, so this step must not be able to mask real failures.
+      - name: Check contract size (informational)
         working-directory: contracts
-        run: npx hardhat size-contracts || true
+        run: npx hardhat size-contracts || echo "size-contracts plugin not configured — skipping"
 
   # Test Backend
   test-backend:
@@ -57,7 +59,15 @@ jobs:
 
       - name: Lint
         working-directory: server
-        run: npm run lint || true
+        run: npm run lint
+
+      - name: Type-check (including tests)
+        working-directory: server
+        run: npx tsc --noEmit -p tsconfig.eslint.json
+
+      - name: Unit tests
+        working-directory: server
+        run: npx vitest run
 
       - name: Build
         working-directory: server
@@ -83,22 +93,25 @@ jobs:
 
       - name: Lint
         working-directory: frontend
-        run: npm run lint || true
+        run: npm run lint
+
+      # `vite build` only transpiles (esbuild) and does NOT type-check;
+      # this step is what actually catches type errors in the frontend.
+      - name: Type-check
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+      - name: Unit tests
+        working-directory: frontend
+        run: npx vitest run
 
       - name: Build
         working-directory: frontend
         run: npm run build
 
-  # Deploy to Vercel (only on main branch)
-  deploy:
-    name: Deploy to Vercel
-    runs-on: ubuntu-latest
-    needs: [test-contracts, test-backend, test-frontend]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Deploy to Vercel
-        run: echo "Deploy to Vercel (configure with VERCEL_TOKEN secret)"
-        # Add Vercel deployment step here when ready
+  # NOTE: there is intentionally no deploy job here. Deploys happen via the
+  # platforms' git integrations, outside of GitHub Actions:
+  #   - Frontend: Vercel builds and deploys pushes to main (vercel.json).
+  #   - Backend:  Railway builds and deploys pushes to main (railway.toml).
+  # The previous "Deploy to Vercel" job was an `echo` stub that only created
+  # the illusion of a deploy step; it was removed to keep this pipeline honest.

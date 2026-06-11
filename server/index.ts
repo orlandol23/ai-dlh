@@ -107,7 +107,9 @@ app.use((req, res) => {
 });
 
 // Error handler
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+// The unused 4th parameter is required: Express identifies error-handling
+// middleware by arity (fn.length === 4). Prefixed with _ to satisfy lint.
+app.use((err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   logger.error('Unhandled error:', err);
   res.status(500).json({
     error: 'Internal Server Error',

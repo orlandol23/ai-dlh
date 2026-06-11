@@ -76,7 +76,7 @@ export const useAuth = () => {
       return result;
 
     } catch (error) {
-      // eslint-disable-next-line no-console
+       
       console.error('Connection error:', error);
 
       // EIP-1193 error codes: 4001 = user rejected, -32002 = request pending.

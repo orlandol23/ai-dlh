@@ -12,15 +12,18 @@ import { config } from '../utils/env.js';
  *
  * Configurable via RATE_LIMIT_GLOBAL_MAX / RATE_LIMIT_GLOBAL_WINDOW_MS.
  *
- * Health-check endpoints are skipped so platform probes (Railway hits
- * /healthz frequently) never get throttled into a false "unhealthy".
+ * Only /healthz (Railway's probe, see railway.toml healthcheckPath) is
+ * exempt so the platform probe never gets throttled into a false
+ * "unhealthy". The detailed /health endpoint stays rate limited — it is
+ * unauthenticated and fans out to DB/blockchain/AI checks, so exempting
+ * it would hand attackers an unmetered amplification endpoint.
  */
 export const globalRateLimiter = rateLimit({
   windowMs: config.RATE_LIMIT_GLOBAL_WINDOW_MS,
   limit: config.RATE_LIMIT_GLOBAL_MAX,
   standardHeaders: 'draft-7', // RateLimit-* headers
   legacyHeaders: false, // disable X-RateLimit-* headers
-  skip: (req) => req.path === '/healthz' || req.path === '/health',
+  skip: (req) => req.path === '/healthz',
   message: {
     error: 'Too Many Requests',
     message: 'Rate limit exceeded. Please try again later.',

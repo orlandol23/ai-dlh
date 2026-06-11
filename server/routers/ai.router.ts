@@ -6,7 +6,7 @@ import { db } from '../db/index.js';
 import { modules } from '../db/schema.js';
 import { eq, desc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
-import { getErrorMessage } from '../utils/errors.js';
+import { logger } from '../utils/logger.js';
 import type { Region, Tier } from '../services/providers/types.js';
 import { isLearningStyle } from '../services/vark.js';
 
@@ -91,9 +91,17 @@ export const aiRouter = router({
 
         return saved;
       } catch (error) {
+        // Controlled tRPC errors (e.g. TOO_MANY_REQUESTS from the per-user
+        // rate limiter) carry messages the frontend displays — rethrow as-is.
+        if (error instanceof TRPCError) throw error;
+
+        // Anything else may embed provider/SDK internals (Gemini/axios URLs,
+        // quotas, DB details). Log the full detail server-side and return a
+        // generic, user-friendly message (same pattern as auth.service).
+        logger.error('ai.generateModule failed', { error });
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: getErrorMessage(error, 'Failed to generate module'),
+          message: 'Failed to generate module. Please try again later.',
         });
       }
     }),

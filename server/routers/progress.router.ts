@@ -7,7 +7,6 @@ import { web3Service } from '../services/web3.service.js';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { logger } from '../utils/logger.js';
-import { getErrorMessage } from '../utils/errors.js';
 
 /**
  * Progress Router - Handles quiz submissions and progress tracking
@@ -42,9 +41,15 @@ export const progressRouter = router({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      // Get module
+      // Get module — ownership enforced in the query itself (same rule as
+      // getModuleById/deleteModule). NOT_FOUND is returned for both
+      // "doesn't exist" and "belongs to someone else" so module ids of
+      // other users are not enumerable.
       const module = await db.query.modules.findFirst({
-        where: eq(modules.id, input.moduleId),
+        where: and(
+          eq(modules.id, input.moduleId),
+          eq(modules.userId, ctx.user.id)
+        ),
       });
 
       if (!module) {
@@ -53,6 +58,11 @@ export const progressRouter = router({
           message: 'Module not found',
         });
       }
+
+      // TODO(security, PR próprio): hoje o quiz chega ao frontend com
+      // `correctAnswer` no payload (getModuleById). Mover a correção para
+      // o servidor exige mudança no fluxo do frontend — fora do escopo
+      // deste PR de hardening.
 
       // Validate answers length
       const quizData = module.quizData as QuizQuestion[];
@@ -111,8 +121,12 @@ export const progressRouter = router({
 
           logger.info(`Blockchain transaction confirmed: ${txHash}`);
         } catch (error) {
+          // Full detail (may contain RPC URL, wallet balance, ethers
+          // internals) stays in the server logs; the client gets a
+          // generic, displayable message (ModulePage interpolates it).
           logger.error('Blockchain recording failed', { error });
-          blockchainError = getErrorMessage(error, 'Blockchain recording failed');
+          blockchainError =
+            'Blockchain recording failed. Your score was saved and the on-chain record can be retried later.';
 
           // Update status to failed
           await db

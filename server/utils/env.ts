@@ -143,6 +143,34 @@ const envSchema = z.object({
     .transform((v) => parseInt(v, 10))
     .pipe(z.number().int().min(30_000).max(900_000)),
 
+  // Rate limiting
+  // Global Express limiter: max requests per IP within the window.
+  // Generous by design — it only catches abusive clients, not real users.
+  RATE_LIMIT_GLOBAL_MAX: z
+    .string()
+    .default('300')
+    .transform((v) => parseInt(v, 10))
+    .pipe(z.number().int().min(1)),
+  RATE_LIMIT_GLOBAL_WINDOW_MS: z
+    .string()
+    .default('900000') // 15 min
+    .transform((v) => parseInt(v, 10))
+    .pipe(z.number().int().min(1_000)),
+
+  // Per-user limits for expensive tRPC procedures (sliding 1h window).
+  // ai.generateModule spends Gemini quota; progress.submitQuiz can spend
+  // ETH from the server's custodial wallet on passing scores.
+  RATE_LIMIT_AI_GENERATE_PER_HOUR: z
+    .string()
+    .default('10')
+    .transform((v) => parseInt(v, 10))
+    .pipe(z.number().int().min(1)),
+  RATE_LIMIT_QUIZ_SUBMIT_PER_HOUR: z
+    .string()
+    .default('30')
+    .transform((v) => parseInt(v, 10))
+    .pipe(z.number().int().min(1)),
+
   // Operations
   // Skip drizzle migrate() on boot. Use when migrations are run by a
   // dedicated release-phase job and the running container should never

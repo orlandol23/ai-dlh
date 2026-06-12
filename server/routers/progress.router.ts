@@ -59,10 +59,10 @@ export const progressRouter = router({
         });
       }
 
-      // TODO(security, PR próprio): hoje o quiz chega ao frontend com
-      // `correctAnswer` no payload (getModuleById). Mover a correção para
-      // o servidor exige mudança no fluxo do frontend — fora do escopo
-      // deste PR de hardening.
+      // Security P2 (resolved): getModuleById serves the quiz WITHOUT
+      // `correctAnswer`/`explanation` (see utils/public-module.ts). Grading
+      // happens here, server-side, and the full answer key is only returned
+      // in this mutation's response for the post-submit review screen.
 
       // Validate answers length
       const quizData = module.quizData as QuizQuestion[];
@@ -143,6 +143,14 @@ export const progressRouter = router({
         passed: score >= 70,
         transactionHash: txHash,
         blockchainError,
+        // Answer key for the post-submit review screen. This is the ONLY
+        // place the correct answers leave the server (security P2): the
+        // quiz itself is served without them by ai.getModuleById.
+        review: quizData.map((q, index) => ({
+          correctAnswer: q.correctAnswer,
+          explanation: q.explanation ?? null,
+          isCorrect: input.answers[index] === q.correctAnswer,
+        })),
       };
     }),
 
@@ -166,7 +174,10 @@ export const progressRouter = router({
       orderBy: [desc(progressRecords.completedAt)],
       limit: 50,
       with: {
-        module: true,
+        // The joined module rides along only for title/topic in the UI —
+        // exclude quizData so the answer key never leaks through this
+        // endpoint either (security P2).
+        module: { columns: { quizData: false } },
       },
     });
 

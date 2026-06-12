@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   modulesFindFirst: vi.fn(),
   insertReturning: vi.fn(),
   recordCompletion: vi.fn(),
+  progressFindMany: vi.fn(),
 }));
 
 // env.ts validates process.env and exits on failure — stub it out so the
@@ -27,7 +28,7 @@ vi.mock('../db/index.js', () => ({
   db: {
     query: {
       modules: { findFirst: mocks.modulesFindFirst },
-      progressRecords: { findFirst: vi.fn(), findMany: vi.fn() },
+      progressRecords: { findFirst: vi.fn(), findMany: mocks.progressFindMany },
     },
     insert: vi.fn(() => ({
       values: vi.fn(() => ({ returning: mocks.insertReturning })),
@@ -111,5 +112,77 @@ describe('progress.submitQuiz ownership', () => {
     expect(result.passed).toBe(false);
     expect(result.blockchainError).toBeNull();
     expect(mocks.recordCompletion).not.toHaveBeenCalled();
+  });
+});
+
+describe('progress.submitQuiz server-side grading (security P2)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.modulesFindFirst.mockResolvedValue({
+      id: 1,
+      userId: 1,
+      topic: 'Solidity',
+      quizData,
+    });
+    mocks.insertReturning.mockResolvedValue([{ id: 7 }]);
+  });
+
+  it('returns the full answer key (review) with per-question correctness', async () => {
+    const caller = callerForUser(1);
+
+    // Correct on Q1 and Q2, wrong on Q3 → 2/3 = 67%.
+    const result = await caller.submitQuiz({ moduleId: 1, answers: [0, 1, 0] });
+
+    expect(result.score).toBe(67);
+    expect(result.correct).toBe(2);
+    expect(result.review).toEqual([
+      { correctAnswer: 0, explanation: null, isCorrect: true },
+      { correctAnswer: 1, explanation: null, isCorrect: true },
+      { correctAnswer: 2, explanation: null, isCorrect: false },
+    ]);
+  });
+
+  it('server-side score matches the submitted answers (all correct → 100%, on-chain)', async () => {
+    mocks.recordCompletion.mockResolvedValue({ hash: '0xabc' });
+    const caller = callerForUser(1);
+
+    const result = await caller.submitQuiz({ moduleId: 1, answers: [0, 1, 2] });
+
+    expect(result.score).toBe(100);
+    expect(result.passed).toBe(true);
+    expect(result.transactionHash).toBe('0xabc');
+    expect(result.review.every((r) => r.isCorrect)).toBe(true);
+    expect(mocks.recordCompletion).toHaveBeenCalledWith(1, 100, 'Solidity');
+  });
+
+  it('rejects an answers array that does not match the quiz length', async () => {
+    const caller = callerForUser(1);
+
+    const error = await caller
+      .submitQuiz({ moduleId: 1, answers: [0, 1] })
+      .then(() => null)
+      .catch((e: unknown) => e as TRPCError);
+
+    expect(error).toBeInstanceOf(TRPCError);
+    expect(error?.code).toBe('BAD_REQUEST');
+  });
+});
+
+describe('progress.getUserProgress — joined module carries no answer key', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('excludes quizData from the joined module columns (security P2)', async () => {
+    mocks.progressFindMany.mockResolvedValue([]);
+    const caller = callerForUser(1);
+
+    await caller.getUserProgress();
+
+    expect(mocks.progressFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        with: { module: { columns: { quizData: false } } },
+      })
+    );
   });
 });

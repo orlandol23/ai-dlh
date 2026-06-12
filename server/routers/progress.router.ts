@@ -121,9 +121,11 @@ export const progressRouter = router({
         score,
         correct,
         total: quizData.length,
-        passed: score >= 70,
-        transactionHash: txHash,
-        blockchainError,
+        passed,
+        // Queue-based flow (#20): the chain is NOT touched here — the worker
+        // processes the record asynchronously; tx hash/errors never leave
+        // the server from this mutation.
+        blockchainStatus: record.blockchainStatus,
         // Answer key for the post-submit review screen. This is the ONLY
         // place the correct answers leave the server (security P2): the
         // quiz itself is served without them by ai.getModuleById.

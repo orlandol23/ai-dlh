@@ -259,17 +259,19 @@ describe('progress.submitQuiz server-side grading (security P2)', () => {
     ]);
   });
 
-  it('server-side score matches the submitted answers (all correct → 100%, on-chain)', async () => {
-    mocks.recordCompletion.mockResolvedValue({ hash: '0xabc' });
+  it('server-side score matches the submitted answers (all correct → 100%, enqueued)', async () => {
+    // Queue-based flow (#20): the mutation only enqueues — the chain is
+    // touched later by the worker, never inline.
+    mocks.insertReturning.mockResolvedValue([{ id: 7, blockchainStatus: 'pending' }]);
     const caller = callerForUser(1);
 
     const result = await caller.submitQuiz({ moduleId: 1, answers: [0, 1, 2] });
 
     expect(result.score).toBe(100);
     expect(result.passed).toBe(true);
-    expect(result.transactionHash).toBe('0xabc');
+    expect(result.blockchainStatus).toBe('pending');
     expect(result.review.every((r) => r.isCorrect)).toBe(true);
-    expect(mocks.recordCompletion).toHaveBeenCalledWith(1, 100, 'Solidity');
+    expect(mocks.recordCompletion).not.toHaveBeenCalled();
   });
 
   it('rejects an answers array that does not match the quiz length', async () => {

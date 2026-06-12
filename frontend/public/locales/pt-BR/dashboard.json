@@ -73,6 +73,8 @@
     "moduleAriaLabel": "Abrir {{title}} (score {{score}}%)",
     "moduleFallback": "Módulo #{{id}}",
     "viewOnEtherscan": "Ver no Etherscan",
+    "chainPending": "registrando…",
+    "chainFailed": "falhou",
     "empty": {
       "title": "Nenhum certificado on-chain ainda",
       "hint": "Passe num quiz para emitir seu primeiro certificado"

@@ -13,6 +13,8 @@ import { config } from './utils/env.js';
 import { checkDatabaseConnection, db } from './db/index.js';
 import { web3Service } from './services/web3.service.js';
 import { aiService } from './services/ai.service.js';
+import { blockchainQueueService } from './services/blockchain-queue.service.js';
+import { walletMonitorService } from './services/wallet-monitor.service.js';
 
 /**
  * Apply pending Drizzle migrations on cold boot.
@@ -62,9 +64,15 @@ app.use(globalRateLimiter);
 app.use(express.json());
 app.use(corsMiddleware);
 
-// Simple health check for Railway (always returns 200)
+// Simple health check for Railway (always returns 200).
+// `walletBalanceLow` comes from the wallet monitor's cached snapshot —
+// no RPC round-trip here, so the endpoint stays instant. Null until the
+// first periodic check completes.
 app.get('/healthz', (req, res) => {
-  res.status(200).json({ status: 'ok' });
+  res.status(200).json({
+    status: 'ok',
+    walletBalanceLow: walletMonitorService.isBalanceLow(),
+  });
 });
 
 // Detailed health check endpoint
@@ -83,6 +91,10 @@ app.get('/health', async (req, res) => {
       blockchain: blockchainOk ? 'ok' : 'error',
       ai: aiOk ? 'ok' : 'error',
     },
+    // Cached snapshot from the periodic monitor (null until first check).
+    // A low balance does NOT flip the endpoint to 503 — the service still
+    // works, it's an operational warning to top up the wallet.
+    wallet: walletMonitorService.getStatus(),
   });
 });
 
@@ -139,14 +151,24 @@ app.listen(PORT, HOST, () => {
   logger.info('═══════════════════════════════════════════════════════════');
 });
 
+// Background workers (in-process; see each service for the single-instance
+// caveats). Started after listen so a worker crash on boot never blocks
+// the health check from coming up.
+blockchainQueueService.start();
+walletMonitorService.start();
+
 // Graceful shutdown
 process.on('SIGTERM', () => {
   logger.info('SIGTERM received, shutting down gracefully...');
+  blockchainQueueService.stop();
+  walletMonitorService.stop();
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
   logger.info('SIGINT received, shutting down gracefully...');
+  blockchainQueueService.stop();
+  walletMonitorService.stop();
   process.exit(0);
 });
 

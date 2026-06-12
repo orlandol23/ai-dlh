@@ -25,8 +25,13 @@
     "onChainTitle": "⛓️ تم التسجيل على البلوكتشين!",
     "onChainDescription": "تم تسجيل شهادتك بشكل دائم على بلوكتشين إيثيريوم",
     "viewOnEtherscan": "عرض على Etherscan",
-    "blockchainPendingTitle": "⚠️ تسجيل البلوكتشين قيد الانتظار",
-    "blockchainPendingDescription": "تم حفظ تقدّمك، لكن حدثت مشكلة في التسجيل على البلوكتشين: {{error}}",
+    "blockchainRegisteringTitle": "⛓️ جارٍ التسجيل على البلوكتشين…",
+    "blockchainRegisteringDescription": "يتم تسجيل شهادتك على Sepolia. قد يستغرق ذلك بضع دقائق — يمكنك مغادرة هذه الصفحة وسيستمر التسجيل في الخلفية.",
+    "blockchainFailedTitle": "⚠️ فشل التسجيل على البلوكتشين",
+    "blockchainFailedDescription": "تم حفظ نتيجتك، لكن التسجيل على السلسلة فشل بعد عدة محاولات. يمكنك المحاولة مرة أخرى.",
+    "retryBlockchain": "حاول مرة أخرى",
+    "retryQueued": "أُعيد إدراج التسجيل في قائمة الانتظار — تابع الحالة هنا.",
+    "retryError": "تعذّرت إعادة إدراج التسجيل",
     "backToDashboard": "العودة إلى لوحة التحكم"
   }
 }

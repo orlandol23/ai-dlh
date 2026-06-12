@@ -28,5 +28,13 @@
     "blockchainPendingTitle": "⚠️ تسجيل البلوكتشين قيد الانتظار",
     "blockchainPendingDescription": "تم حفظ تقدّمك، لكن حدثت مشكلة في التسجيل على البلوكتشين: {{error}}",
     "backToDashboard": "العودة إلى لوحة التحكم"
+  },
+  "review": {
+    "title": "مراجعة الإجابات",
+    "questionLabel": "السؤال {{number}}.",
+    "correct": "صحيحة",
+    "incorrect": "غير صحيحة",
+    "yourAnswer": "إجابتك: {{letter}}. {{content}}",
+    "correctAnswer": "الإجابة الصحيحة: {{letter}}. {{content}}"
   }
 }

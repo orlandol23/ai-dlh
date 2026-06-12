@@ -28,5 +28,13 @@
     "blockchainPendingTitle": "⚠️ ブロックチェーン登録は保留中",
     "blockchainPendingDescription": "進捗は保存されましたが、ブロックチェーン登録で問題が発生しました: {{error}}",
     "backToDashboard": "ダッシュボードへ戻る"
+  },
+  "review": {
+    "title": "解答の振り返り",
+    "questionLabel": "問題{{number}}.",
+    "correct": "正解",
+    "incorrect": "不正解",
+    "yourAnswer": "あなたの解答: {{letter}}. {{content}}",
+    "correctAnswer": "正解: {{letter}}. {{content}}"
   }
 }

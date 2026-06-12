@@ -28,5 +28,13 @@
     "blockchainPendingTitle": "⚠️ Enregistrement blockchain en attente",
     "blockchainPendingDescription": "Votre progression a été sauvegardée, mais un problème est survenu lors de l'enregistrement sur la blockchain : {{error}}",
     "backToDashboard": "Retour au tableau de bord"
+  },
+  "review": {
+    "title": "Révision des réponses",
+    "questionLabel": "Question {{number}}.",
+    "correct": "Correcte",
+    "incorrect": "Incorrecte",
+    "yourAnswer": "Votre réponse : {{letter}}. {{content}}",
+    "correctAnswer": "Bonne réponse : {{letter}}. {{content}}"
   }
 }

@@ -28,5 +28,13 @@
     "blockchainPendingTitle": "⚠️ Blockchain registration pending",
     "blockchainPendingDescription": "Your progress was saved, but there was an issue registering on the blockchain: {{error}}",
     "backToDashboard": "Back to Dashboard"
+  },
+  "review": {
+    "title": "Answer review",
+    "questionLabel": "Question {{number}}.",
+    "correct": "Correct",
+    "incorrect": "Incorrect",
+    "yourAnswer": "Your answer: {{letter}}. {{content}}",
+    "correctAnswer": "Correct answer: {{letter}}. {{content}}"
   }
 }

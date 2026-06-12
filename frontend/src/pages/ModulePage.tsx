@@ -11,20 +11,18 @@ import { LanguageSelector } from '@/components/molecules/LanguageSelector';
 import { toast } from '@/components/molecules/Toaster';
 import { trpc, type RouterOutputs } from '@/lib/trpc';
 import { getEtherscanUrl } from '@/lib/utils';
+import { buildQuizReview, answerLetter } from '@/lib/quiz-review';
 import ReactMarkdown from 'react-markdown';
-
-interface QuizQuestion {
-  question: string;
-  options: string[];
-  correctAnswer: number;
-  explanation?: string;
-}
 
 /**
  * Quiz submission result. Inferred from tRPC instead of redeclared so any
  * change to the backend mutation shape (new fields, type tightening,
  * removed properties) surfaces here as a compile error rather than a
  * silent runtime mismatch.
+ *
+ * Security P2: the module's quiz no longer carries `correctAnswer` /
+ * `explanation` — the answer key only exists in `QuizResult.review`,
+ * returned by the server after grading.
  */
 type QuizResult = RouterOutputs['progress']['submitQuiz'];
 
@@ -110,7 +108,8 @@ export const ModulePage = () => {
     );
   }
 
-  const quizData = module.quizData as QuizQuestion[];
+  // Inferred from tRPC: { question, options }[] — no answer key client-side.
+  const quizData = module.quizData;
 
   const handleStartQuiz = () => {
     setShowQuiz(true);
@@ -455,6 +454,67 @@ export const ModulePage = () => {
                       </p>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+
+              {/* Post-submit review — built from the answer key returned by
+                  submitQuiz (the quiz itself never carries correct answers). */}
+              <Card className="text-start">
+                <CardHeader>
+                  <CardTitle>{t('quiz:review.title')}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ol className="space-y-4">
+                    {buildQuizReview(quizData, selectedAnswers, quizResult.review).map(
+                      (item, index) => (
+                        <li
+                          key={index}
+                          className={`rounded-lg border p-4 ${
+                            item.isCorrect
+                              ? 'bg-success-bg border-success-border'
+                              : 'bg-error-bg border-error-border'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <p className="font-medium">
+                              <span className="text-muted-foreground me-2">
+                                {t('quiz:review.questionLabel', { number: index + 1 })}
+                              </span>
+                              {item.question}
+                            </p>
+                            <Badge variant={item.isCorrect ? 'success' : 'error'}>
+                              {item.isCorrect
+                                ? t('quiz:review.correct')
+                                : t('quiz:review.incorrect')}
+                            </Badge>
+                          </div>
+                          <p
+                            className={`text-sm ${
+                              item.isCorrect ? 'text-success-fg' : 'text-error-fg'
+                            }`}
+                          >
+                            {t('quiz:review.yourAnswer', {
+                              letter: answerLetter(item.selectedAnswer),
+                              content: item.options[item.selectedAnswer] ?? '—',
+                            })}
+                          </p>
+                          {!item.isCorrect && (
+                            <p className="text-sm text-success-fg">
+                              {t('quiz:review.correctAnswer', {
+                                letter: answerLetter(item.correctAnswer),
+                                content: item.options[item.correctAnswer] ?? '—',
+                              })}
+                            </p>
+                          )}
+                          {item.explanation && (
+                            <p className="text-sm text-muted-foreground mt-2">
+                              {item.explanation}
+                            </p>
+                          )}
+                        </li>
+                      )
+                    )}
+                  </ol>
                 </CardContent>
               </Card>
 

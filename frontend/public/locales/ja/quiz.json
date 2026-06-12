@@ -25,8 +25,13 @@
     "onChainTitle": "⛓️ ブロックチェーンに記録しました!",
     "onChainDescription": "あなたの証明書はイーサリアムブロックチェーンに永続的に記録されました",
     "viewOnEtherscan": "Etherscanで確認",
-    "blockchainPendingTitle": "⚠️ ブロックチェーン登録は保留中",
-    "blockchainPendingDescription": "進捗は保存されましたが、ブロックチェーン登録で問題が発生しました: {{error}}",
+    "blockchainRegisteringTitle": "⛓️ ブロックチェーンに記録中…",
+    "blockchainRegisteringDescription": "証明書をSepoliaに記録しています。数分かかる場合があります。このページを離れても、記録はバックグラウンドで続行されます。",
+    "blockchainFailedTitle": "⚠️ ブロックチェーンへの記録に失敗しました",
+    "blockchainFailedDescription": "スコアは保存されましたが、複数回の試行後もオンチェーン記録に失敗しました。再試行できます。",
+    "retryBlockchain": "再試行",
+    "retryQueued": "記録を再キューしました。ここでステータスを確認できます。",
+    "retryError": "記録の再キューに失敗しました",
     "backToDashboard": "ダッシュボードへ戻る"
   },
   "review": {

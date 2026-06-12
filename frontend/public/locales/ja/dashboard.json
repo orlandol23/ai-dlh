@@ -73,6 +73,8 @@
     "moduleAriaLabel": "{{title}}を開く (スコア {{score}}%)",
     "moduleFallback": "モジュール #{{id}}",
     "viewOnEtherscan": "Etherscanで確認",
+    "chainPending": "記録中…",
+    "chainFailed": "失敗",
     "empty": {
       "title": "オンチェーン証明書はまだありません",
       "hint": "クイズに合格して最初の証明書を獲得しましょう"

@@ -25,8 +25,13 @@
     "onChainTitle": "⛓️ Registrado na Blockchain!",
     "onChainDescription": "Seu certificado foi registrado permanentemente na blockchain Ethereum",
     "viewOnEtherscan": "Ver no Etherscan",
-    "blockchainPendingTitle": "⚠️ Registro blockchain pendente",
-    "blockchainPendingDescription": "Seu progresso foi salvo, mas houve um problema ao registrar na blockchain: {{error}}",
+    "blockchainRegisteringTitle": "⛓️ Registrando na blockchain…",
+    "blockchainRegisteringDescription": "Seu certificado está sendo gravado na Sepolia. Isso pode levar alguns minutos — você pode sair desta página, o registro continua em segundo plano.",
+    "blockchainFailedTitle": "⚠️ Falha no registro na blockchain",
+    "blockchainFailedDescription": "Sua pontuação foi salva, mas o registro on-chain falhou após várias tentativas. Você pode tentar novamente.",
+    "retryBlockchain": "Tentar novamente",
+    "retryQueued": "Registro reenfileirado — acompanhe o status aqui.",
+    "retryError": "Não foi possível reenfileirar o registro",
     "backToDashboard": "Voltar ao Dashboard"
   },
   "review": {

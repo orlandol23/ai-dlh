@@ -174,6 +174,57 @@ const envSchema = z.object({
     .default('30')
     .transform((v) => parseInt(v, 10))
     .pipe(z.number().int().min(1)),
+  // progress.retryBlockchain re-enqueues a failed on-chain record; each
+  // retry can spend ETH, so keep it tight.
+  RATE_LIMIT_BLOCKCHAIN_RETRY_PER_HOUR: z
+    .string()
+    .default('10')
+    .transform((v) => parseInt(v, 10))
+    .pipe(z.number().int().min(1)),
+
+  // Blockchain queue (async worker that writes completions on-chain).
+  // How often the in-process worker polls for pending/retryable records.
+  BLOCKCHAIN_QUEUE_INTERVAL_MS: z
+    .string()
+    .default('15000')
+    .transform((v) => parseInt(v, 10))
+    .pipe(z.number().int().min(1_000)),
+  // Max send attempts before a record is marked failed_permanent.
+  BLOCKCHAIN_QUEUE_MAX_ATTEMPTS: z
+    .string()
+    .default('5')
+    .transform((v) => parseInt(v, 10))
+    .pipe(z.number().int().min(1)),
+  // How long to wait for 1 confirmation before fee-bumping (replace-by-fee)
+  // a stuck transaction.
+  BLOCKCHAIN_TX_TIMEOUT_MS: z
+    .string()
+    .default('90000')
+    .transform((v) => parseInt(v, 10))
+    .pipe(z.number().int().min(5_000)),
+  // Records stuck in 'processing' longer than this are considered orphaned
+  // (e.g. the server crashed mid-send) and become claimable again.
+  BLOCKCHAIN_STALE_LOCK_MS: z
+    .string()
+    .default('600000') // 10 min
+    .transform((v) => parseInt(v, 10))
+    .pipe(z.number().int().min(60_000)),
+
+  // Custodial wallet balance monitor.
+  // Below this many ETH the server logs a structured warning and flips
+  // `walletBalanceLow` in /healthz. Default sized for Sepolia: ~50 simple
+  // contract writes of headroom at typical testnet gas prices.
+  WALLET_LOW_BALANCE_THRESHOLD_ETH: z
+    .string()
+    .default('0.05')
+    .refine((v) => /^\d+(\.\d+)?$/.test(v), {
+      message: 'WALLET_LOW_BALANCE_THRESHOLD_ETH must be a decimal ETH amount, e.g. "0.05"',
+    }),
+  WALLET_BALANCE_CHECK_INTERVAL_MS: z
+    .string()
+    .default('300000') // 5 min
+    .transform((v) => parseInt(v, 10))
+    .pipe(z.number().int().min(10_000)),
 
   // Operations
   // Skip drizzle migrate() on boot. Use when migrations are run by a

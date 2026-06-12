@@ -26,6 +26,14 @@ import ReactMarkdown from 'react-markdown';
  */
 type QuizResult = RouterOutputs['progress']['submitQuiz'];
 
+/**
+ * Statuses where the async queue worker is still going to (re)try the
+ * on-chain write — the UI shows "registrando na blockchain…" and keeps
+ * polling. `failed` is included: it means "will retry after backoff",
+ * not a dead end (that's `failed_permanent`).
+ */
+const CHAIN_IN_PROGRESS = ['pending', 'processing', 'failed'];
+
 export const ModulePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -52,7 +60,16 @@ export const ModulePage = () => {
   // Queries
   const utils = trpc.useUtils();
   const { data: module, isLoading } = trpc.ai.getModuleById.useQuery({ moduleId });
-  const { data: progress } = trpc.progress.getModuleProgress.useQuery({ moduleId });
+  // submitQuiz responds before the on-chain write happens (async queue on
+  // the server) — while the latest record is still being registered, poll
+  // so the UI flips to confirmed / failed_permanent without a reload.
+  const { data: progress } = trpc.progress.getModuleProgress.useQuery(
+    { moduleId },
+    {
+      refetchInterval: (data) =>
+        data && CHAIN_IN_PROGRESS.includes(data.blockchainStatus) ? 5000 : false,
+    }
+  );
 
   // Mutation
   const submitMutation = trpc.progress.submitQuiz.useMutation({
@@ -70,6 +87,17 @@ export const ModulePage = () => {
     onError: (error) => {
       setIsSubmitting(false);
       toast.error(t('quiz:submitError'), { description: error.message });
+    },
+  });
+
+  // Re-enqueue a record the server-side queue gave up on (failed_permanent).
+  const retryMutation = trpc.progress.retryBlockchain.useMutation({
+    onSuccess: () => {
+      toast.success(t('quiz:results.retryQueued'));
+      void utils.progress.invalidate();
+    },
+    onError: (error) => {
+      toast.error(t('quiz:results.retryError'), { description: error.message });
     },
   });
 
@@ -155,6 +183,18 @@ export const ModulePage = () => {
   const progressPercentage = ((currentQuestion + 1) / quizData.length) * 100;
   const currentQ = quizData[currentQuestion];
 
+  // The record created by THIS submission — getModuleProgress returns the
+  // most recent record for the module, so once the post-submit invalidation
+  // refetches, its id matches quizResult.recordId. Until then a passing
+  // submission is, by definition, still pending on-chain.
+  const submittedRecord =
+    quizResult && progress && progress.id === quizResult.recordId ? progress : null;
+  const chainStatus = quizResult?.passed
+    ? submittedRecord?.blockchainStatus ?? 'pending'
+    : null;
+  const confirmedTxHash =
+    chainStatus === 'confirmed' ? submittedRecord?.transactionHash ?? null : null;
+
   return (
     <div className={`min-h-screen bg-background ${focusMode ? 'hash-grid' : ''}`}>
       {/* Header — escondido em modo focado */}
@@ -236,8 +276,13 @@ export const ModulePage = () => {
                                 : t('module:alreadyCompleted.failed'),
                           })}
                         </p>
+                        {CHAIN_IN_PROGRESS.includes(progress.blockchainStatus) && (
+                          <p className="text-sm text-info-fg/80 mt-1" role="status">
+                            ⏳ {t('quiz:results.blockchainRegisteringTitle')}
+                          </p>
+                        )}
                       </div>
-                      {progress.transactionHash && (
+                      {progress.blockchainStatus === 'confirmed' && progress.transactionHash && (
                         <a
                           href={getEtherscanUrl(progress.transactionHash)}
                           target="_blank"
@@ -247,6 +292,16 @@ export const ModulePage = () => {
                           {t('module:alreadyCompleted.viewOnBlockchain')}{' '}
                           <span className="font-mono inline-block rtl:rotate-180">→</span>
                         </a>
+                      )}
+                      {progress.blockchainStatus === 'failed_permanent' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={retryMutation.isLoading}
+                          onClick={() => retryMutation.mutate({ recordId: progress.id })}
+                        >
+                          {t('quiz:results.retryBlockchain')}
+                        </Button>
                       )}
                     </div>
                   </CardContent>
@@ -389,7 +444,52 @@ export const ModulePage = () => {
                     </div>
                   )}
 
-                  {quizResult.transactionHash && (
+                  {/* On-chain status — driven by the polled progress record, since
+                      submitQuiz now returns before the (async) blockchain write. */}
+                  {chainStatus && CHAIN_IN_PROGRESS.includes(chainStatus) && (
+                    <div
+                      className="mt-6 bg-info-bg border border-info-border rounded-lg p-6"
+                      role="status"
+                      aria-live="polite"
+                    >
+                      <div className="flex items-center justify-center gap-3">
+                        <svg className="animate-spin h-5 w-5 text-info-fg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p className="font-semibold text-info-fg">
+                          {t('quiz:results.blockchainRegisteringTitle')}
+                        </p>
+                      </div>
+                      <p className="text-sm text-info-fg/80 mt-2">
+                        {t('quiz:results.blockchainRegisteringDescription')}
+                      </p>
+                    </div>
+                  )}
+
+                  {chainStatus === 'failed_permanent' && (
+                    <div className="mt-6 bg-error-bg border border-error-border rounded-lg p-6">
+                      <p className="font-semibold text-error-fg mb-2">
+                        {t('quiz:results.blockchainFailedTitle')}
+                      </p>
+                      <p className="text-sm text-error-fg/80 mb-4">
+                        {t('quiz:results.blockchainFailedDescription')}
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={retryMutation.isLoading || !submittedRecord}
+                        onClick={() =>
+                          submittedRecord &&
+                          retryMutation.mutate({ recordId: submittedRecord.id })
+                        }
+                      >
+                        {t('quiz:results.retryBlockchain')}
+                      </Button>
+                    </div>
+                  )}
+
+                  {confirmedTxHash && (
                     <div className="relative mt-6 bg-onchain-bg border border-onchain-border rounded-lg p-6 hash-grid overflow-hidden">
                       <motion.div
                         initial={reduceMotion ? false : { opacity: 0, scale: 2, rotate: -12 }}
@@ -407,7 +507,7 @@ export const ModulePage = () => {
                         {t('quiz:results.onChainDescription')}
                       </p>
                       <a
-                        href={getEtherscanUrl(quizResult.transactionHash)}
+                        href={getEtherscanUrl(confirmedTxHash)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-block bg-primary text-primary-foreground font-mono text-sm px-4 py-2 rounded-md hover:opacity-90 transition"
@@ -418,9 +518,9 @@ export const ModulePage = () => {
                     </div>
                   )}
 
-                  {quizResult.passed && quizResult.transactionHash && (() => {
+                  {confirmedTxHash && (() => {
                     const shareText = t('cert:share.text', { topic: module.topic, score: quizResult.score });
-                    const shareUrl = `${window.location.origin}/cert/${quizResult.transactionHash}?lang=${i18n.language}`;
+                    const shareUrl = `${window.location.origin}/cert/${confirmedTxHash}?lang=${i18n.language}`;
                     const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
                     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
                     const linkClasses = 'inline-flex items-center justify-center h-9 px-3 text-sm rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground transition-colors focus-ring-v2';
@@ -443,17 +543,6 @@ export const ModulePage = () => {
                       </div>
                     );
                   })()}
-
-                  {quizResult.blockchainError && (
-                    <div className="mt-6 bg-warning-bg border border-warning-border rounded-lg p-6">
-                      <p className="font-semibold text-warning-fg mb-2">
-                        {t('quiz:results.blockchainPendingTitle')}
-                      </p>
-                      <p className="text-sm text-warning-fg/80">
-                        {t('quiz:results.blockchainPendingDescription', { error: quizResult.blockchainError })}
-                      </p>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
 

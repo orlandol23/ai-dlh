@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TRPCError } from '@trpc/server';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, ne } from 'drizzle-orm';
 
 const mocks = vi.hoisted(() => ({
   modulesFindFirst: vi.fn(),
+  progressFindFirst: vi.fn(),
   insertValues: vi.fn(),
   insertReturning: vi.fn(),
   updateSet: vi.fn(),
@@ -33,7 +34,7 @@ vi.mock('../db/index.js', () => ({
   db: {
     query: {
       modules: { findFirst: mocks.modulesFindFirst },
-      progressRecords: { findFirst: vi.fn(), findMany: mocks.progressFindMany },
+      progressRecords: { findFirst: mocks.progressFindFirst, findMany: mocks.progressFindMany },
     },
     insert: vi.fn(() => ({
       values: mocks.insertValues.mockReturnValue({ returning: mocks.insertReturning }),
@@ -59,7 +60,9 @@ function callerForUser(userId: number) {
 }
 
 const quizData = [
-  { question: 'Q1 — at least ten chars?', options: ['a', 'b', 'c', 'd'], correctAnswer: 0 },
+  // Q1 carries a real explanation so the "explanation pass-through" assertion
+  // is meaningful (a null-only fixture could never catch a dropped field).
+  { question: 'Q1 — at least ten chars?', options: ['a', 'b', 'c', 'd'], correctAnswer: 0, explanation: 'Because a.' },
   { question: 'Q2 — at least ten chars?', options: ['a', 'b', 'c', 'd'], correctAnswer: 1 },
   { question: 'Q3 — at least ten chars?', options: ['a', 'b', 'c', 'd'], correctAnswer: 2 },
 ];
@@ -67,6 +70,10 @@ const quizData = [
 describe('progress.submitQuiz ownership', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // clearAllMocks() resets call history but NOT mock implementations, so
+    // pin the default here to avoid inheriting a stale value from another
+    // describe block regardless of test execution order.
+    mocks.progressFindFirst.mockResolvedValue(undefined);
   });
 
   it('queries the module scoped by (id, userId) of the caller', async () => {
@@ -128,6 +135,8 @@ describe('progress.submitQuiz async on-chain queue', () => {
       topic: 'Solidity',
       quizData,
     });
+    // No prior payable record → a passing submission enqueues normally.
+    mocks.progressFindFirst.mockResolvedValue(undefined);
   });
 
   it('enqueues a passing score as "pending" and responds without touching the chain', async () => {
@@ -241,37 +250,53 @@ describe('progress.submitQuiz server-side grading (security P2)', () => {
       topic: 'Solidity',
       quizData,
     });
-    mocks.insertReturning.mockResolvedValue([{ id: 7 }]);
-  });
-
-  it('returns the full answer key (review) with per-question correctness', async () => {
-    const caller = callerForUser(1);
-
-    // Correct on Q1 and Q2, wrong on Q3 → 2/3 = 67%.
-    const result = await caller.submitQuiz({ moduleId: 1, answers: [0, 1, 0] });
-
-    expect(result.score).toBe(67);
-    expect(result.correct).toBe(2);
-    expect(result.review).toEqual([
-      { correctAnswer: 0, explanation: null, isCorrect: true },
-      { correctAnswer: 1, explanation: null, isCorrect: true },
-      { correctAnswer: 2, explanation: null, isCorrect: false },
-    ]);
-  });
-
-  it('server-side score matches the submitted answers (all correct → 100%, enqueued)', async () => {
-    // Queue-based flow (#20): the mutation only enqueues — the chain is
-    // touched later by the worker, never inline.
+    // No prior payable record by default.
+    mocks.progressFindFirst.mockResolvedValue(undefined);
     mocks.insertReturning.mockResolvedValue([{ id: 7, blockchainStatus: 'pending' }]);
+  });
+
+  it('reveals the answer key (incl. explanation) in review[] ONLY after passing', async () => {
     const caller = callerForUser(1);
 
+    // All correct → 100% → pass → answers + explanation revealed.
     const result = await caller.submitQuiz({ moduleId: 1, answers: [0, 1, 2] });
 
     expect(result.score).toBe(100);
     expect(result.passed).toBe(true);
+    expect(result.alreadyRecorded).toBe(false);
     expect(result.blockchainStatus).toBe('pending');
-    expect(result.review.every((r) => r.isCorrect)).toBe(true);
-    expect(mocks.recordCompletion).not.toHaveBeenCalled();
+    // The real explanation on Q1 proves the field is carried through (not a
+    // hardcoded null) — and correctAnswer is the actual key per question.
+    expect(result.review).toEqual([
+      { isCorrect: true, correctAnswer: 0, explanation: 'Because a.' },
+      { isCorrect: true, correctAnswer: 1, explanation: null },
+      { isCorrect: true, correctAnswer: 2, explanation: null },
+    ]);
+  });
+
+  it('withholds the answer key on a FAILING attempt (per-question correctness only)', async () => {
+    mocks.insertReturning.mockResolvedValue([{ id: 7, blockchainStatus: 'none' }]);
+    const caller = callerForUser(1);
+
+    // Correct on Q1 and Q2, wrong on Q3 → 2/3 = 67% → fail → key withheld.
+    const result = await caller.submitQuiz({ moduleId: 1, answers: [0, 1, 0] });
+
+    expect(result.score).toBe(67);
+    expect(result.correct).toBe(2);
+    expect(result.passed).toBe(false);
+    // isCorrect still flows (the user's own grade) but no correct answers /
+    // explanations — a deliberate fail cannot harvest the full key.
+    expect(result.review).toEqual([
+      { isCorrect: true, correctAnswer: null, explanation: null },
+      { isCorrect: true, correctAnswer: null, explanation: null },
+      { isCorrect: false, correctAnswer: null, explanation: null },
+    ]);
+    // Defence in depth: the serialized payload must not contain the answer
+    // key or the explanation string anywhere.
+    const serialized = JSON.stringify(result.review);
+    expect(serialized).not.toContain('Because a.');
+    // A failing attempt never even checks for an existing payout.
+    expect(mocks.progressFindFirst).not.toHaveBeenCalled();
   });
 
   it('rejects an answers array that does not match the quiz length', async () => {
@@ -284,6 +309,95 @@ describe('progress.submitQuiz server-side grading (security P2)', () => {
 
     expect(error).toBeInstanceOf(TRPCError);
     expect(error?.code).toBe('BAD_REQUEST');
+  });
+});
+
+describe('progress.submitQuiz on-chain payout farming guard (security P2)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.modulesFindFirst.mockResolvedValue({
+      id: 1,
+      userId: 1,
+      topic: 'Solidity',
+      quizData,
+    });
+  });
+
+  it('does NOT enqueue a second payout when the module already has a payable record', async () => {
+    // A prior passing submission already owns the payout slot.
+    mocks.progressFindFirst.mockResolvedValue({ id: 99 });
+    mocks.insertReturning.mockResolvedValue([{ id: 8, blockchainStatus: 'none' }]);
+    const caller = callerForUser(1);
+
+    const result = await caller.submitQuiz({ moduleId: 1, answers: [0, 1, 2] });
+
+    expect(result.passed).toBe(true);
+    expect(result.alreadyRecorded).toBe(true);
+    expect(result.blockchainStatus).toBe('none');
+    // The record is saved for history, but with NO new on-chain payout.
+    expect(mocks.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ blockchainStatus: 'none' })
+    );
+    expect(mocks.insertValues).not.toHaveBeenCalledWith(
+      expect.objectContaining({ blockchainStatus: 'pending' })
+    );
+    // The existence check is scoped to (user, module) AND a non-'none' status.
+    expect(mocks.progressFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: and(
+          eq(progressRecords.userId, 1),
+          eq(progressRecords.moduleId, 1),
+          ne(progressRecords.blockchainStatus, 'none')
+        ),
+        columns: { id: true },
+      })
+    );
+    expect(mocks.recordCompletion).not.toHaveBeenCalled();
+  });
+
+  it('still enqueues a payout when the only prior record is a non-payable failed attempt', async () => {
+    // A previously FAILED attempt is stored as 'none', which the
+    // (ne blockchain_status, 'none') filter excludes — so findFirst returns
+    // nothing and a later passing attempt earns its first, legitimate payout.
+    mocks.progressFindFirst.mockResolvedValue(undefined);
+    mocks.insertReturning.mockResolvedValue([{ id: 10, blockchainStatus: 'pending' }]);
+    const caller = callerForUser(1);
+
+    const result = await caller.submitQuiz({ moduleId: 1, answers: [0, 1, 2] });
+
+    expect(result.passed).toBe(true);
+    expect(result.alreadyRecorded).toBe(false);
+    expect(result.blockchainStatus).toBe('pending');
+    expect(mocks.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({ blockchainStatus: 'pending' })
+    );
+  });
+
+  it('loses the payout race gracefully: a unique violation downgrades the record to "none"', async () => {
+    // No payable record seen at check time…
+    mocks.progressFindFirst.mockResolvedValue(undefined);
+    // …but the 'pending' insert hits the partial unique index (concurrent
+    // passing submission won). The fallback insert records it as 'none'.
+    mocks.insertReturning
+      .mockRejectedValueOnce({ code: '23505' })
+      .mockResolvedValueOnce([{ id: 9, blockchainStatus: 'none' }]);
+    const caller = callerForUser(1);
+
+    const result = await caller.submitQuiz({ moduleId: 1, answers: [0, 1, 2] });
+
+    expect(result.passed).toBe(true);
+    expect(result.alreadyRecorded).toBe(true);
+    expect(result.blockchainStatus).toBe('none');
+    // First attempt tried 'pending', the retry recorded 'none'.
+    expect(mocks.insertValues).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ blockchainStatus: 'pending' })
+    );
+    expect(mocks.insertValues).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ blockchainStatus: 'none' })
+    );
+    expect(mocks.recordCompletion).not.toHaveBeenCalled();
   });
 });
 

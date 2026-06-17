@@ -19,6 +19,11 @@ export const certRouter = router({
   getByHash: publicProcedure
     .input(z.object({ hash: z.string().regex(/^0x[a-fA-F0-9]{64}$/, 'Invalid tx hash') }))
     .query(async ({ input }) => {
+      // Public, unauthenticated endpoint. The module is joined for the
+      // certificate header only, so this is an EXPLICIT column allow-list —
+      // it selects topic/title/level and NEVER quizData (the answer key,
+      // security P2). Keep it an allow-list: do not switch to `select *` or a
+      // relational `with: { module: true }` here.
       const result = await db
         .select({
           score: progressRecords.score,

@@ -9,9 +9,15 @@ import type { Module, QuizQuestion } from '../db/schema.js';
  * paraphrases the correct option). Since every passing submission (>= 70%)
  * triggers an on-chain transaction paid with ETH from the server's
  * custodial wallet, a module owner could read the answer key from the
- * network tab and farm guaranteed passes. Grading already happens
- * server-side in `progress.submitQuiz`; the full answer key is only
- * returned in that mutation's response, for the post-submit review screen.
+ * network tab and farm guaranteed passes.
+ *
+ * P2 is closed by three layers, all in `progress.submitQuiz`:
+ *   1. The quiz ships without the key (this helper) — grading is server-side.
+ *   2. The key is returned only AFTER passing (failing attempts get
+ *      per-question correctness only), so a deliberate fail can't harvest it.
+ *   3. At most ONE on-chain payout per (user, module) — a partial unique
+ *      index (`progress_one_payout_per_module_idx`) makes resubmission
+ *      farming impossible even if the answers become known.
  */
 export type PublicQuizQuestion = Pick<QuizQuestion, 'question' | 'options'>;
 

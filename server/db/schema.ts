@@ -1,5 +1,5 @@
 import { pgTable, serial, varchar, text, integer, timestamp, json, index, uniqueIndex } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 
 /**
  * Users table - stores wallet addresses and user information
@@ -113,6 +113,19 @@ export const progressRecords = pgTable('progress_records', {
     // The worker polls by (status, next_attempt_at); index keeps the
     // poll cheap as the table grows.
     blockchainStatusIdx: index('progress_blockchain_status_idx').on(table.blockchainStatus),
+    // Security P2 — at most ONE payable record per (user, module). A passing
+    // submission spends ETH from the custodial wallet, so this partial unique
+    // index makes the "resubmit to farm payouts" race impossible at the DB
+    // level: only one row per (user, module) may have a blockchain_status
+    // other than 'none' (pending/processing/confirmed/failed/failed_permanent).
+    // Plain failed-quiz rows ('none') are unconstrained. submitQuiz catches
+    // the 23505 violation and records the loser as 'none'.
+    // NOTE: drizzle-kit 0.20.18 drops this `.where()` predicate when
+    // generating SQL, so the partial clause is hand-maintained in
+    // migrations/0004_ambiguous_rogue.sql — keep the two in sync.
+    onePayoutPerModule: uniqueIndex('progress_one_payout_per_module_idx')
+      .on(table.userId, table.moduleId)
+      .where(sql`${table.blockchainStatus} <> 'none'`),
   };
 });
 

@@ -189,9 +189,13 @@ export const ModulePage = () => {
   // submission is, by definition, still pending on-chain.
   const submittedRecord =
     quizResult && progress && progress.id === quizResult.recordId ? progress : null;
-  const chainStatus = quizResult?.passed
-    ? submittedRecord?.blockchainStatus ?? 'pending'
-    : null;
+  // When the module's on-chain reward was already claimed by an earlier pass
+  // (`alreadyRecorded`), this submission enqueues nothing — skip the chain
+  // status UI and show the "already recorded" note instead.
+  const chainStatus =
+    quizResult?.passed && !quizResult.alreadyRecorded
+      ? submittedRecord?.blockchainStatus ?? 'pending'
+      : null;
   const confirmedTxHash =
     chainStatus === 'confirmed' ? submittedRecord?.transactionHash ?? null : null;
 
@@ -444,6 +448,19 @@ export const ModulePage = () => {
                     </div>
                   )}
 
+                  {/* Module already recorded on-chain by an earlier passing
+                      attempt — no new transaction is spent (security P2). */}
+                  {quizResult.passed && quizResult.alreadyRecorded && (
+                    <div className="mt-6 bg-info-bg border border-info-border rounded-lg p-6">
+                      <p className="font-semibold text-info-fg mb-2">
+                        {t('quiz:results.alreadyRecordedTitle')}
+                      </p>
+                      <p className="text-sm text-info-fg/80">
+                        {t('quiz:results.alreadyRecordedDescription')}
+                      </p>
+                    </div>
+                  )}
+
                   {/* On-chain status — driven by the polled progress record, since
                       submitQuiz now returns before the (async) blockchain write. */}
                   {chainStatus && CHAIN_IN_PROGRESS.includes(chainStatus) && (
@@ -546,11 +563,19 @@ export const ModulePage = () => {
                 </CardContent>
               </Card>
 
-              {/* Post-submit review — built from the answer key returned by
-                  submitQuiz (the quiz itself never carries correct answers). */}
+              {/* Post-submit review — built from the server-graded review[]
+                  (the quiz itself never carries correct answers). The answer
+                  key is only present once the quiz is passed; on a failing
+                  attempt the user sees which questions they missed, not the
+                  answers (security P2). */}
               <Card className="text-start">
                 <CardHeader>
                   <CardTitle>{t('quiz:review.title')}</CardTitle>
+                  {!quizResult.passed && (
+                    <p className="text-sm text-muted-foreground">
+                      {t('quiz:review.hiddenUntilPass')}
+                    </p>
+                  )}
                 </CardHeader>
                 <CardContent>
                   <ol className="space-y-4">
@@ -587,7 +612,7 @@ export const ModulePage = () => {
                               content: item.options[item.selectedAnswer] ?? '—',
                             })}
                           </p>
-                          {!item.isCorrect && (
+                          {!item.isCorrect && item.correctAnswer !== null && (
                             <p className="text-sm text-success-fg">
                               {t('quiz:review.correctAnswer', {
                                 letter: answerLetter(item.correctAnswer),

@@ -42,6 +42,10 @@ const RouteFallback = () => (
     aria-busy="true"
   >
     <Spinner size="lg" className="text-primary" />
+    {/* Non-localized sr-only label: this shell renders before the i18n
+        namespaces have loaded, so a hardcoded word is the only option that
+        announces anything to assistive tech. Visually hidden, RTL-neutral. */}
+    <span className="sr-only">Loading…</span>
   </div>
 );
 

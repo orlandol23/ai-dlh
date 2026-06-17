@@ -32,7 +32,9 @@
     "retryBlockchain": "Try again",
     "retryQueued": "Registration re-queued — follow the status here.",
     "retryError": "Could not re-queue the registration",
-    "backToDashboard": "Back to Dashboard"
+    "backToDashboard": "Back to Dashboard",
+    "alreadyRecordedTitle": "✅ Already recorded on-chain",
+    "alreadyRecordedDescription": "You'd already earned the on-chain record for this module — no new blockchain transaction was needed. Your score was saved."
   },
   "review": {
     "title": "Answer review",
@@ -40,6 +42,7 @@
     "correct": "Correct",
     "incorrect": "Incorrect",
     "yourAnswer": "Your answer: {{letter}}. {{content}}",
-    "correctAnswer": "Correct answer: {{letter}}. {{content}}"
+    "correctAnswer": "Correct answer: {{letter}}. {{content}}",
+    "hiddenUntilPass": "Correct answers are revealed once you pass (70%+). For now, here are the questions you missed."
   }
 }

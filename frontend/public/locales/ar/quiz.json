@@ -32,7 +32,9 @@
     "retryBlockchain": "حاول مرة أخرى",
     "retryQueued": "أُعيد إدراج التسجيل في قائمة الانتظار — تابع الحالة هنا.",
     "retryError": "تعذّرت إعادة إدراج التسجيل",
-    "backToDashboard": "العودة إلى لوحة التحكم"
+    "backToDashboard": "العودة إلى لوحة التحكم",
+    "alreadyRecordedTitle": "✅ مُسجّل بالفعل على السلسلة",
+    "alreadyRecordedDescription": "لقد حصلت بالفعل على التسجيل على السلسلة لهذه الوحدة — لم تكن هناك حاجة إلى معاملة جديدة على البلوكتشين. تم حفظ نتيجتك."
   },
   "review": {
     "title": "مراجعة الإجابات",
@@ -40,6 +42,7 @@
     "correct": "صحيحة",
     "incorrect": "غير صحيحة",
     "yourAnswer": "إجابتك: {{letter}}. {{content}}",
-    "correctAnswer": "الإجابة الصحيحة: {{letter}}. {{content}}"
+    "correctAnswer": "الإجابة الصحيحة: {{letter}}. {{content}}",
+    "hiddenUntilPass": "تظهر الإجابات الصحيحة بعد أن تنجح (70٪ فأكثر). في الوقت الحالي، إليك الأسئلة التي أخطأت فيها."
   }
 }

@@ -42,7 +42,6 @@
     "correct": "Correcta",
     "incorrect": "Incorrecta",
     "yourAnswer": "Tu respuesta: {{letter}}. {{content}}",
-    "correctAnswer": "Respuesta correcta: {{letter}}. {{content}}",
-    "hiddenUntilPass": "Las respuestas correctas se revelan cuando apruebas (70%+). Por ahora, estas son las preguntas que fallaste."
+    "lockedHint": "Las respuestas solo se muestran en las preguntas que acertaste. Repite el cuestionario para desbloquear las que fallaste."
   }
 }

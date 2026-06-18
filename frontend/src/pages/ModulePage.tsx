@@ -564,16 +564,18 @@ export const ModulePage = () => {
               </Card>
 
               {/* Post-submit review — built from the server-graded review[]
-                  (the quiz itself never carries correct answers). The answer
-                  key is only present once the quiz is passed; on a failing
-                  attempt the user sees which questions they missed, not the
-                  answers (security P2). */}
+                  (the quiz itself never carries correct answers). The answer +
+                  explanation are present ONLY for questions answered correctly;
+                  missed ones stay hidden until you get them right on a retake
+                  (security P2). */}
               <Card className="text-start">
                 <CardHeader>
                   <CardTitle>{t('quiz:review.title')}</CardTitle>
-                  {!quizResult.passed && (
+                  {buildQuizReview(quizData, selectedAnswers, quizResult.review).some(
+                    (item) => !item.isCorrect
+                  ) && (
                     <p className="text-sm text-muted-foreground">
-                      {t('quiz:review.hiddenUntilPass')}
+                      {t('quiz:review.lockedHint')}
                     </p>
                   )}
                 </CardHeader>
@@ -612,14 +614,6 @@ export const ModulePage = () => {
                               content: item.options[item.selectedAnswer] ?? '—',
                             })}
                           </p>
-                          {!item.isCorrect && item.correctAnswer !== null && (
-                            <p className="text-sm text-success-fg">
-                              {t('quiz:review.correctAnswer', {
-                                letter: answerLetter(item.correctAnswer),
-                                content: item.options[item.correctAnswer] ?? '—',
-                              })}
-                            </p>
-                          )}
                           {item.explanation && (
                             <p className="text-sm text-muted-foreground mt-2">
                               {item.explanation}

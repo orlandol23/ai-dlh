@@ -180,14 +180,6 @@ export const progressRouter = router({
         );
       }
 
-      // Security P2 — the answer key is revealed ONLY after a passing
-      // submission. A failing attempt gets per-question correctness (the
-      // user's own grade) but NOT the correct answers/explanations, so a
-      // deliberate fail can't harvest the full key to then resubmit. This
-      // mutation's response is the only place correctAnswer/explanation ever
-      // leave the server, and only once the quiz is genuinely passed.
-      const reveal = passed;
-
       return {
         recordId: record.id,
         score,
@@ -202,11 +194,20 @@ export const progressRouter = router({
         // processes 'pending' records asynchronously; tx hash/errors never
         // leave the server from this mutation.
         blockchainStatus: record.blockchainStatus,
-        review: quizData.map((q, index) => ({
-          isCorrect: input.answers[index] === q.correctAnswer,
-          correctAnswer: reveal ? q.correctAnswer : null,
-          explanation: reveal ? q.explanation ?? null : null,
-        })),
+        // Security P2 — reveal the correct answer + explanation PER QUESTION
+        // only for the ones the user answered correctly. A missed question
+        // never exposes its answer (the explanation paraphrases it too),
+        // independent of pass/fail. So you can only ever see an answer you
+        // already got right, which blocks both harvesting the key by failing
+        // on purpose AND retaking-to-100% after a pass reveals the misses.
+        review: quizData.map((q, index) => {
+          const isCorrect = input.answers[index] === q.correctAnswer;
+          return {
+            isCorrect,
+            correctAnswer: isCorrect ? q.correctAnswer : null,
+            explanation: isCorrect ? q.explanation ?? null : null,
+          };
+        }),
       };
     }),
 

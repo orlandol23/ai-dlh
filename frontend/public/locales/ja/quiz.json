@@ -42,7 +42,6 @@
     "correct": "正解",
     "incorrect": "不正解",
     "yourAnswer": "あなたの解答: {{letter}}. {{content}}",
-    "correctAnswer": "正解: {{letter}}. {{content}}",
-    "hiddenUntilPass": "正解は合格（70%以上）すると表示されます。まずは間違えた問題を確認しましょう。"
+    "lockedHint": "正解した問題のみ答えが表示されます。間違えた問題はクイズを再受験すると表示されます。"
   }
 }

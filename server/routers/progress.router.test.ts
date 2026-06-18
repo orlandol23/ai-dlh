@@ -255,18 +255,17 @@ describe('progress.submitQuiz server-side grading (security P2)', () => {
     mocks.insertReturning.mockResolvedValue([{ id: 7, blockchainStatus: 'pending' }]);
   });
 
-  it('reveals the answer key (incl. explanation) in review[] ONLY after passing', async () => {
+  it('reveals answer + explanation only for questions answered correctly (all-correct → all revealed)', async () => {
     const caller = callerForUser(1);
 
-    // All correct → 100% → pass → answers + explanation revealed.
+    // All correct → 100% → every entry revealed (incl. Q1's real explanation,
+    // which proves the field is carried through, not a hardcoded null).
     const result = await caller.submitQuiz({ moduleId: 1, answers: [0, 1, 2] });
 
     expect(result.score).toBe(100);
     expect(result.passed).toBe(true);
     expect(result.alreadyRecorded).toBe(false);
     expect(result.blockchainStatus).toBe('pending');
-    // The real explanation on Q1 proves the field is carried through (not a
-    // hardcoded null) — and correctAnswer is the actual key per question.
     expect(result.review).toEqual([
       { isCorrect: true, correctAnswer: 0, explanation: 'Because a.' },
       { isCorrect: true, correctAnswer: 1, explanation: null },
@@ -274,29 +273,54 @@ describe('progress.submitQuiz server-side grading (security P2)', () => {
     ]);
   });
 
-  it('withholds the answer key on a FAILING attempt (per-question correctness only)', async () => {
+  it('reveals the correct ones but HIDES the missed ones, even on a failing attempt', async () => {
     mocks.insertReturning.mockResolvedValue([{ id: 7, blockchainStatus: 'none' }]);
     const caller = callerForUser(1);
 
-    // Correct on Q1 and Q2, wrong on Q3 → 2/3 = 67% → fail → key withheld.
+    // Correct on Q1 and Q2, wrong on Q3 → 2/3 = 67% → fail.
     const result = await caller.submitQuiz({ moduleId: 1, answers: [0, 1, 0] });
 
     expect(result.score).toBe(67);
     expect(result.correct).toBe(2);
     expect(result.passed).toBe(false);
-    // isCorrect still flows (the user's own grade) but no correct answers /
-    // explanations — a deliberate fail cannot harvest the full key.
+    // The correctly-answered ones are revealed (incl. Q1's explanation); the
+    // missed Q3 exposes neither its correct answer nor its explanation, so a
+    // deliberate fail can't harvest the full key.
     expect(result.review).toEqual([
-      { isCorrect: true, correctAnswer: null, explanation: null },
-      { isCorrect: true, correctAnswer: null, explanation: null },
+      { isCorrect: true, correctAnswer: 0, explanation: 'Because a.' },
+      { isCorrect: true, correctAnswer: 1, explanation: null },
       { isCorrect: false, correctAnswer: null, explanation: null },
     ]);
-    // Defence in depth: the serialized payload must not contain the answer
-    // key or the explanation string anywhere.
-    const serialized = JSON.stringify(result.review);
-    expect(serialized).not.toContain('Because a.');
     // A failing attempt never even checks for an existing payout.
     expect(mocks.progressFindFirst).not.toHaveBeenCalled();
+  });
+
+  it('a passing attempt STILL hides the answers to questions the user missed', async () => {
+    // 5 questions so a pass (>=70%) can coexist with a miss (4/5 = 80%).
+    const quizData5 = [
+      { question: 'Q1 — at least ten chars?', options: ['a', 'b', 'c', 'd'], correctAnswer: 0, explanation: 'Because a.' },
+      { question: 'Q2 — at least ten chars?', options: ['a', 'b', 'c', 'd'], correctAnswer: 1 },
+      { question: 'Q3 — at least ten chars?', options: ['a', 'b', 'c', 'd'], correctAnswer: 2 },
+      { question: 'Q4 — at least ten chars?', options: ['a', 'b', 'c', 'd'], correctAnswer: 0 },
+      { question: 'Q5 — at least ten chars?', options: ['a', 'b', 'c', 'd'], correctAnswer: 1 },
+    ];
+    mocks.modulesFindFirst.mockResolvedValue({ id: 1, userId: 1, topic: 'Solidity', quizData: quizData5 });
+    const caller = callerForUser(1);
+
+    // 4/5 correct, Q5 wrong → 80% → PASS, but Q5 was missed.
+    const result = await caller.submitQuiz({ moduleId: 1, answers: [0, 1, 2, 0, 2] });
+
+    expect(result.score).toBe(80);
+    expect(result.passed).toBe(true);
+    // The missed Q5 stays hidden despite the pass — so retaking can't be gamed
+    // to 100% off answers handed over on the passing screen.
+    expect(result.review[4]).toEqual({ isCorrect: false, correctAnswer: null, explanation: null });
+    expect(result.review.slice(0, 4)).toEqual([
+      { isCorrect: true, correctAnswer: 0, explanation: 'Because a.' },
+      { isCorrect: true, correctAnswer: 1, explanation: null },
+      { isCorrect: true, correctAnswer: 2, explanation: null },
+      { isCorrect: true, correctAnswer: 0, explanation: null },
+    ]);
   });
 
   it('rejects an answers array that does not match the quiz length', async () => {

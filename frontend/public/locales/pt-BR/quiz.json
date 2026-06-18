@@ -42,7 +42,6 @@
     "correct": "Correta",
     "incorrect": "Incorreta",
     "yourAnswer": "Sua resposta: {{letter}}. {{content}}",
-    "correctAnswer": "Resposta correta: {{letter}}. {{content}}",
-    "hiddenUntilPass": "As respostas corretas são reveladas quando você passa (70%+). Por enquanto, veja quais questões você errou."
+    "lockedHint": "As respostas aparecem só nas questões que você acertou. Refaça o quiz para desbloquear as que errou."
   }
 }

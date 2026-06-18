@@ -42,7 +42,6 @@
     "correct": "Correcte",
     "incorrect": "Incorrecte",
     "yourAnswer": "Votre réponse : {{letter}}. {{content}}",
-    "correctAnswer": "Bonne réponse : {{letter}}. {{content}}",
-    "hiddenUntilPass": "Les bonnes réponses sont révélées une fois que vous réussissez (70 % et plus). Pour l'instant, voici les questions que vous avez manquées."
+    "lockedHint": "Les réponses ne s'affichent que pour les questions réussies. Refaites le quiz pour débloquer celles que vous avez manquées."
   }
 }

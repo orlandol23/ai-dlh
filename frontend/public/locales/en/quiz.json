@@ -42,7 +42,6 @@
     "correct": "Correct",
     "incorrect": "Incorrect",
     "yourAnswer": "Your answer: {{letter}}. {{content}}",
-    "correctAnswer": "Correct answer: {{letter}}. {{content}}",
-    "hiddenUntilPass": "Correct answers are revealed once you pass (70%+). For now, here are the questions you missed."
+    "lockedHint": "Answers are shown only for questions you got right. Retake the quiz to unlock the ones you missed."
   }
 }

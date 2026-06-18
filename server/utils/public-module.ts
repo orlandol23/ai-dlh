@@ -13,8 +13,10 @@ import type { Module, QuizQuestion } from '../db/schema.js';
  *
  * P2 is closed by three layers, all in `progress.submitQuiz`:
  *   1. The quiz ships without the key (this helper) — grading is server-side.
- *   2. The key is returned only AFTER passing (failing attempts get
- *      per-question correctness only), so a deliberate fail can't harvest it.
+ *   2. The answer + explanation are returned per question ONLY for the ones
+ *      the user answered correctly (you can only see an answer you already
+ *      got right) — so neither failing on purpose nor retaking after a pass
+ *      can harvest the answers to the questions still missed.
  *   3. At most ONE on-chain payout per (user, module) — a partial unique
  *      index (`progress_one_payout_per_module_idx`) makes resubmission
  *      farming impossible even if the answers become known.

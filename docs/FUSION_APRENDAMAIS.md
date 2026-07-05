@@ -36,9 +36,9 @@ módulos por IA**.
   - CTA no dashboard ("Descubra seu estilo de aprendizagem") quando
     `learning_style` é `null`.
   - Possibilidade de refazer o questionário pelo painel de preferências.
-  - Textos no namespace i18n `vark` com traduções completas em **pt-BR** e
-    **en**; demais idiomas (es/fr/ja/ar) usam fallback para en até que haja
-    revisão humana das traduções.
+  - Textos no namespace i18n `vark` nos 6 idiomas: **pt-BR** e **en**
+    autorais; **es/fr/ja/ar** traduzidos por máquina (paridade de
+    chaves/placeholders verificada) e pendentes de revisão humana.
 - **Prompt condicionado**: o `prompt-builder` (ponto comum a TODOS os
   providers — Gemini, Claude e Qwen) injeta instruções de adaptação
   pedagógica quando o usuário tem estilo definido:
@@ -72,7 +72,7 @@ módulos por IA**.
 - [ ] Refazer o questionário pelas preferências funciona e sobrescreve o estilo.
 - [ ] Prompt de geração inclui a instrução do estilo para os 3 providers
       (verificado por teste no `buildPrompt`).
-- [ ] i18n pt-BR e en completos; fallback en nos demais idiomas.
+- [ ] i18n nos 6 idiomas (pt-BR/en autorais; es/fr/ja/ar máquina, p/ revisão).
 - [ ] `npm run build`, type-check, lint e todos os testes passando.
 
 ---

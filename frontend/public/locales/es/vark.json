@@ -1,0 +1,280 @@
+{
+  "cta": {
+    "eyebrow": "🧠 Perfil de aprendizaje",
+    "title": "Descubre tu estilo de aprendizaje",
+    "description": "Responde 15 preguntas rápidas (modelo VARK) y la IA empezará a generar módulos adaptados a la forma en que aprendes mejor.",
+    "button": "Hacer el cuestionario"
+  },
+  "intro": {
+    "eyebrow": "Cuestionario VARK",
+    "title": "¿Cuál es tu estilo de aprendizaje?",
+    "description": "El modelo VARK identifica cómo prefieres absorber la información: Visual, Auditivo, Lectura/Escritura o Cinestésico. Son 15 preguntas de opción múltiple — unos 5 minutos. El resultado personaliza los módulos generados por la IA.",
+    "start": "Comenzar",
+    "cancel": "Volver al panel"
+  },
+  "quiz": {
+    "progressLabel": "Pregunta {{current}} de {{total}}",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "finish": "Finalizar",
+    "selectAnswer": "Selecciona una opción para continuar"
+  },
+  "questions": {
+    "q1": {
+      "text": "Cuando necesitas aprender un tema nuevo, prefieres:",
+      "options": {
+        "visual": "Ver diagramas, gráficos, mapas mentales o videos sobre el tema.",
+        "auditory": "Escuchar una explicación detallada o discutir el tema con alguien.",
+        "reading_writing": "Leer textos, artículos o libros sobre el tema.",
+        "kinesthetic": "Probarlo en la práctica o aplicar el conocimiento en situaciones reales."
+      }
+    },
+    "q2": {
+      "text": "Al recibir instrucciones para armar un equipo nuevo, prefieres:",
+      "options": {
+        "visual": "Ver imágenes o mirar un video demostrativo.",
+        "auditory": "Escuchar a alguien explicando paso a paso cómo hacerlo.",
+        "reading_writing": "Leer el manual de instrucciones en detalle.",
+        "kinesthetic": "Intentar armarlo por ensayo y error, manipulando las piezas."
+      }
+    },
+    "q3": {
+      "text": "Cuando estás aprendiendo un software o aplicación nueva, normalmente:",
+      "options": {
+        "visual": "Prestas atención a los elementos visuales de la interfaz y los íconos.",
+        "auditory": "Prefieres tutoriales narrados o explicaciones verbales.",
+        "reading_writing": "Buscas guías escritas o documentación detallada.",
+        "kinesthetic": "Exploras el software haciendo clic en diferentes opciones para ver qué pasa."
+      }
+    },
+    "q4": {
+      "text": "En una clase o conferencia, te sientes más comprometido cuando:",
+      "options": {
+        "visual": "El presentador usa recursos visuales como diapositivas, gráficos o videos.",
+        "auditory": "Hay discusiones, sesiones de preguntas y respuestas o debates.",
+        "reading_writing": "Se proporcionan materiales escritos detallados para seguir la clase.",
+        "kinesthetic": "Hay actividades prácticas o demostraciones interactivas."
+      }
+    },
+    "q5": {
+      "text": "Cuando necesitas memorizar información para un examen, normalmente:",
+      "options": {
+        "visual": "Creas mapas mentales, usas diferentes colores o visualizas la información.",
+        "auditory": "Repites la información en voz alta o se la explicas a otra persona.",
+        "reading_writing": "Tomas apuntes detallados y los relees varias veces.",
+        "kinesthetic": "Asocias la información a ejemplos prácticos o creas mnemotecnias físicas."
+      }
+    },
+    "q6": {
+      "text": "Al aprender una habilidad nueva (como tocar un instrumento o practicar un deporte), tú:",
+      "options": {
+        "visual": "Observas atentamente a alguien demostrando la técnica correcta.",
+        "auditory": "Escuchas explicaciones detalladas sobre cómo ejecutar los movimientos.",
+        "reading_writing": "Lees sobre técnicas, estrategias y la teoría detrás de la práctica.",
+        "kinesthetic": "Intentas hacerlo por tu cuenta, ajustando tu técnica a medida que practicas."
+      }
+    },
+    "q7": {
+      "text": "Cuando estás perdido en un lugar desconocido, prefieres:",
+      "options": {
+        "visual": "Mirar un mapa o usar una aplicación con GPS visual.",
+        "auditory": "Preguntar a alguien las direcciones o usar los comandos de voz del GPS.",
+        "reading_writing": "Seguir instrucciones escritas detalladas.",
+        "kinesthetic": "Explorar la zona hasta encontrar el camino correcto."
+      }
+    },
+    "q8": {
+      "text": "Al aprender un idioma nuevo, te resulta más eficaz:",
+      "options": {
+        "visual": "Usar tarjetas con imágenes, ver películas o videos en el idioma.",
+        "auditory": "Conversar con hablantes nativos o escuchar audios y podcasts.",
+        "reading_writing": "Estudiar gramática, vocabulario y hacer ejercicios escritos.",
+        "kinesthetic": "Practicar en situaciones reales o a través de juegos interactivos."
+      }
+    },
+    "q9": {
+      "text": "Cuando necesitas explicarle algo complejo a alguien, tiendes a:",
+      "options": {
+        "visual": "Dibujar diagramas o usar objetos para ilustrar.",
+        "auditory": "Explicar verbalmente con detalles y analogías.",
+        "reading_writing": "Escribir una explicación detallada o proporcionar referencias escritas.",
+        "kinesthetic": "Demostrar en la práctica o guiar a la persona a través de una experiencia."
+      }
+    },
+    "q10": {
+      "text": "En un entorno de trabajo en equipo, prefieres:",
+      "options": {
+        "visual": "Usar tableros visuales, gráficos o presentaciones para comunicar ideas.",
+        "auditory": "Participar en reuniones de lluvia de ideas y discusiones en grupo.",
+        "reading_writing": "Preparar documentos escritos, informes o correos electrónicos detallados.",
+        "kinesthetic": "Crear prototipos, modelos o demostraciones prácticas."
+      }
+    },
+    "q11": {
+      "text": "Al elegir un curso en línea, te sientes más atraído por:",
+      "options": {
+        "visual": "Cursos con muchos recursos visuales, videos e infografías.",
+        "auditory": "Webinars en vivo, podcasts o clases con discusiones.",
+        "reading_writing": "Cursos basados en textos, artículos y materiales de lectura.",
+        "kinesthetic": "Cursos con proyectos prácticos, simulaciones o ejercicios interactivos."
+      }
+    },
+    "q12": {
+      "text": "Cuando estás cocinando una receta nueva, prefieres:",
+      "options": {
+        "visual": "Ver fotos del proceso o mirar un video tutorial.",
+        "auditory": "Escuchar a alguien explicando cómo hacerla o discutir la receta.",
+        "reading_writing": "Seguir las instrucciones escritas paso a paso.",
+        "kinesthetic": "Experimentar con ingredientes y técnicas, ajustando según sea necesario."
+      }
+    },
+    "q13": {
+      "text": "Al resolver un problema complejo, normalmente:",
+      "options": {
+        "visual": "Creas diagramas, diagramas de flujo o mapas visuales del problema.",
+        "auditory": "Hablas del problema en voz alta o lo discutes con otras personas.",
+        "reading_writing": "Listas los pros y los contras o escribes tus ideas en detalle.",
+        "kinesthetic": "Pruebas diferentes enfoques prácticos para ver qué funciona."
+      }
+    },
+    "q14": {
+      "text": "Cuando estás aprendiendo sobre un evento histórico, prefieres:",
+      "options": {
+        "visual": "Ver documentales, líneas de tiempo visuales o recreaciones.",
+        "auditory": "Escuchar podcasts, audiolibros o conferencias sobre el tema.",
+        "reading_writing": "Leer libros de historia, artículos o documentos originales.",
+        "kinesthetic": "Visitar museos, sitios históricos o participar en recreaciones."
+      }
+    },
+    "q15": {
+      "text": "Al recibir comentarios sobre tu trabajo, prefieres:",
+      "options": {
+        "visual": "Ver gráficos de desempeño o ejemplos visuales de qué hacer.",
+        "auditory": "Tener una conversación detallada sobre tus fortalezas y debilidades.",
+        "reading_writing": "Recibir un informe escrito con análisis y recomendaciones.",
+        "kinesthetic": "Trabajar junto a alguien para mejorar en la práctica."
+      }
+    }
+  },
+  "styles": {
+    "visual": {
+      "name": "Visual",
+      "emoji": "👁️",
+      "description": "Aprendes mejor a través de recursos visuales como gráficos, diagramas, mapas mentales y videos. Recuerdas con facilidad lo que ves y prefieres la información organizada visualmente."
+    },
+    "auditory": {
+      "name": "Auditivo",
+      "emoji": "🎧",
+      "description": "Aprendes mejor escuchando y hablando, a través de discusiones, podcasts y explicaciones verbales. Retienes mejor la información cuando puedes oírla y comentarla."
+    },
+    "reading_writing": {
+      "name": "Lectura/Escritura",
+      "emoji": "📖",
+      "description": "Aprendes mejor a través de la palabra escrita, con libros, artículos y apuntes detallados. Absorbes con facilidad la información presentada en formato de texto."
+    },
+    "kinesthetic": {
+      "name": "Cinestésico",
+      "emoji": "✋",
+      "description": "Aprendes mejor a través de la experiencia práctica, con actividades manuales y aplicaciones reales. Retienes mejor el conocimiento cuando puedes experimentar y aplicar lo que estás aprendiendo."
+    },
+    "multimodal": {
+      "name": "Multimodal",
+      "emoji": "🧠",
+      "description": "Tienes un estilo de aprendizaje flexible, que combina rasgos de varios estilos. Esto te permite adaptarte a diferentes métodos de enseñanza y aprovechar muchos tipos de recursos educativos."
+    }
+  },
+  "recommendations": {
+    "title": "Recomendaciones para potenciar tu aprendizaje",
+    "visual": [
+      {
+        "title": "Usa recursos visuales",
+        "description": "Incorpora mapas mentales, diagramas, gráficos y videos en tus estudios. Usa diferentes colores para resaltar la información importante."
+      },
+      {
+        "title": "Crea representaciones visuales",
+        "description": "Convierte textos y conceptos en representaciones visuales como infografías, diagramas de flujo o esquemas."
+      },
+      {
+        "title": "Organiza visualmente",
+        "description": "Mantén tu entorno de estudio organizado visualmente, con códigos de colores y señalización clara."
+      }
+    ],
+    "auditory": [
+      {
+        "title": "Aprende escuchando",
+        "description": "Usa podcasts, audiolibros y grabaciones de clases. Participa en discusiones en grupo y debates sobre los temas que estudias."
+      },
+      {
+        "title": "Verbaliza el conocimiento",
+        "description": "Lee en voz alta, explica conceptos a otras personas o grábate explicando el contenido."
+      },
+      {
+        "title": "Usa mnemotecnias sonoras",
+        "description": "Crea rimas, canciones o patrones sonoros para memorizar información importante."
+      }
+    ],
+    "reading_writing": [
+      {
+        "title": "Prioriza los materiales escritos",
+        "description": "Usa libros, artículos, apuntes y otros materiales escritos. Toma apuntes detallados durante las clases."
+      },
+      {
+        "title": "Reescribe la información",
+        "description": "Reescribe los conceptos importantes con tus propias palabras para mejorar la comprensión y la retención."
+      },
+      {
+        "title": "Organiza por escrito",
+        "description": "Crea listas, resúmenes y esquemas escritos para estructurar tu conocimiento."
+      }
+    ],
+    "kinesthetic": [
+      {
+        "title": "Aprende haciendo",
+        "description": "Busca actividades prácticas, experimentos y aplicaciones reales del conocimiento. Participa en simulaciones y juegos de roles."
+      },
+      {
+        "title": "Muévete mientras estudias",
+        "description": "Camina mientras lees o repasas el contenido. Usa gestos para asociar movimientos físicos a conceptos importantes."
+      },
+      {
+        "title": "Construye modelos físicos",
+        "description": "Construye modelos, maquetas o representaciones físicas de los conceptos que estás estudiando."
+      }
+    ],
+    "multimodal": [
+      {
+        "title": "Combina diferentes enfoques",
+        "description": "Alterna entre métodos de estudio, combinando elementos visuales, auditivos, de lectura/escritura y cinestésicos."
+      },
+      {
+        "title": "Identifica contextos específicos",
+        "description": "Observa qué estilos funcionan mejor para diferentes tipos de contenido o situaciones de aprendizaje."
+      },
+      {
+        "title": "Crea experiencias multisensoriales",
+        "description": "Diseña actividades que estimulen varios sentidos a la vez para maximizar la retención."
+      }
+    ]
+  },
+  "result": {
+    "eyebrow": "Tu resultado",
+    "title": "Tu estilo dominante es",
+    "multimodalNote": "Hubo un empate entre estilos — tu perfil es multimodal. Guardamos \"{{style}}\" como tu estilo dominante para personalizar la IA, pero te beneficias de combinar enfoques.",
+    "aiNote": "A partir de ahora, los módulos generados por la IA se adaptarán a tu estilo de aprendizaje.",
+    "distributionTitle": "Distribución de tus respuestas",
+    "pointsLabel": "{{count}} de {{total}}",
+    "saving": "Guardando tu resultado…",
+    "savedToast": "🧠 ¡Estilo de aprendizaje guardado!",
+    "savedToastDescription": "Tus próximos módulos se adaptarán a tu perfil.",
+    "saveErrorToast": "Error al guardar tu estilo",
+    "backToDashboard": "Volver al panel",
+    "retake": "Repetir cuestionario"
+  },
+  "preferences": {
+    "legend": "Estilo de aprendizaje (VARK)",
+    "current": "Estilo actual: {{style}}",
+    "notTaken": "Aún no has hecho el cuestionario.",
+    "retake": "Repetir cuestionario",
+    "take": "Hacer cuestionario"
+  }
+}

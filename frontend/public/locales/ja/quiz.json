@@ -32,6 +32,16 @@
     "retryBlockchain": "再試行",
     "retryQueued": "記録を再キューしました。ここでステータスを確認できます。",
     "retryError": "記録の再キューに失敗しました",
-    "backToDashboard": "ダッシュボードへ戻る"
+    "backToDashboard": "ダッシュボードへ戻る",
+    "alreadyRecordedTitle": "✅ すでにオンチェーンに記録済み",
+    "alreadyRecordedDescription": "このモジュールのオンチェーン記録はすでに取得済みのため、新しいブロックチェーン取引は不要でした。スコアは保存されました。"
+  },
+  "review": {
+    "title": "解答の振り返り",
+    "questionLabel": "問題{{number}}.",
+    "correct": "正解",
+    "incorrect": "不正解",
+    "yourAnswer": "あなたの解答: {{letter}}. {{content}}",
+    "lockedHint": "正解した問題のみ答えが表示されます。間違えた問題はクイズを再受験すると表示されます。"
   }
 }

@@ -2,10 +2,26 @@ import { z } from 'zod';
 import { router, protectedProcedure, rateLimitByUser } from '../trpc.js';
 import { config } from '../utils/env.js';
 import { db } from '../db/index.js';
-import { modules, progressRecords, type QuizQuestion } from '../db/schema.js';
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { modules, progressRecords, type QuizQuestion, type ProgressRecord } from '../db/schema.js';
+import { eq, and, ne, desc, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { logger } from '../utils/logger.js';
+
+/**
+ * PostgreSQL unique-violation SQLSTATE. Raised when the partial unique index
+ * `progress_one_payout_per_module_idx` rejects a second payable row for the
+ * same (user, module) — i.e. two passing submissions raced for the single
+ * on-chain payout slot. We catch it to downgrade the loser to a no-payout
+ * record instead of surfacing a 500.
+ */
+function isUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code?: unknown }).code === '23505'
+  );
+}
 
 /**
  * `blockchain_error` stores server-side detail (RPC URLs, ethers internals)
@@ -68,10 +84,10 @@ export const progressRouter = router({
         });
       }
 
-      // TODO(security, PR próprio): hoje o quiz chega ao frontend com
-      // `correctAnswer` no payload (getModuleById). Mover a correção para
-      // o servidor exige mudança no fluxo do frontend — fora do escopo
-      // deste PR de hardening.
+      // Security P2: the quiz is served WITHOUT `correctAnswer`/`explanation`
+      // (ai.getModuleById → toPublicModule). Grading is 100% server-side here,
+      // off the stored module — the client never sees the answer key before
+      // submitting, and (see below) only after PASSING.
 
       // Validate answers length
       const quizData = module.quizData as QuizQuestion[];
@@ -93,26 +109,74 @@ export const progressRouter = router({
       const score = Math.round((correct / quizData.length) * 100);
       logger.info(`Quiz submitted: ${correct}/${quizData.length} correct (${score}%)`);
 
-      // Save progress record. Passing scores are enqueued for the async
-      // blockchain queue worker — this mutation no longer waits for the
-      // on-chain confirmation (which can take minutes), it responds
-      // immediately and the frontend polls `getModuleProgress` while the
-      // record is pending/processing.
       const passed = score >= 70;
-      const [record] = await db
-        .insert(progressRecords)
-        .values({
-          userId: ctx.user.id,
-          moduleId: input.moduleId,
-          score,
-          answersData: input.answers,
-          blockchainStatus: passed ? 'pending' : 'none',
-        })
-        .returning();
 
+      // Security P2 — on-chain payout farming guard. Every passing submission
+      // used to enqueue its OWN paid transaction (ETH from the custodial
+      // wallet), so an owner who learned the answers could resubmit to drain
+      // it. We now pay AT MOST ONCE per (user, module): if a payable record
+      // already exists — any blockchain_status other than 'none' (pending,
+      // processing, confirmed, failed, failed_permanent) — a repeat pass is
+      // still recorded for history but does NOT enqueue a second payout.
+      // The partial unique index `progress_one_payout_per_module_idx`
+      // enforces this even under a concurrent race (caught below). A payout
+      // that ended `failed_permanent` is recovered via `retryBlockchain`
+      // (which re-enqueues the existing row), never by resubmitting the quiz.
+      let alreadyRecorded = false;
+      let shouldEnqueue = passed;
       if (passed) {
+        const existingPayout = await db.query.progressRecords.findFirst({
+          where: and(
+            eq(progressRecords.userId, ctx.user.id),
+            eq(progressRecords.moduleId, input.moduleId),
+            ne(progressRecords.blockchainStatus, 'none')
+          ),
+          columns: { id: true },
+        });
+        if (existingPayout) {
+          alreadyRecorded = true;
+          shouldEnqueue = false;
+        }
+      }
+
+      // Save progress record. Passing scores that win the payout slot are
+      // enqueued for the async blockchain queue worker — this mutation never
+      // waits for (or triggers) the on-chain write; the frontend polls
+      // `getModuleProgress` while the record is pending/processing.
+      const baseValues = {
+        userId: ctx.user.id,
+        moduleId: input.moduleId,
+        score,
+        answersData: input.answers,
+      };
+      let record: ProgressRecord;
+      try {
+        const [row] = await db
+          .insert(progressRecords)
+          .values({ ...baseValues, blockchainStatus: shouldEnqueue ? 'pending' : 'none' })
+          .returning();
+        record = row;
+      } catch (error) {
+        // Lost the race for the single payout slot — another passing
+        // submission for this (user, module) enqueued first. Record the score
+        // with no second payout instead of failing the request.
+        if (!(shouldEnqueue && isUniqueViolation(error))) throw error;
+        alreadyRecorded = true;
+        shouldEnqueue = false;
+        const [row] = await db
+          .insert(progressRecords)
+          .values({ ...baseValues, blockchainStatus: 'none' })
+          .returning();
+        record = row;
+      }
+
+      if (shouldEnqueue) {
         logger.info(
           `Progress record ${record.id} enqueued for on-chain recording (module ${input.moduleId})`
+        );
+      } else if (alreadyRecorded) {
+        logger.info(
+          `Module ${input.moduleId} already recorded on-chain for user ${ctx.user.id}; record ${record.id} stored without a duplicate payout`
         );
       }
 
@@ -122,8 +186,28 @@ export const progressRouter = router({
         correct,
         total: quizData.length,
         passed,
-        // 'pending' (worker will pick it up) or 'none' (below threshold).
+        // true when this module's on-chain reward was already claimed by an
+        // earlier passing submission: the score is saved, but no new
+        // transaction is enqueued (the wallet can't be farmed).
+        alreadyRecorded,
+        // Queue-based flow (#20): the chain is NOT touched here — the worker
+        // processes 'pending' records asynchronously; tx hash/errors never
+        // leave the server from this mutation.
         blockchainStatus: record.blockchainStatus,
+        // Security P2 — reveal the correct answer + explanation PER QUESTION
+        // only for the ones the user answered correctly. A missed question
+        // never exposes its answer (the explanation paraphrases it too),
+        // independent of pass/fail. So you can only ever see an answer you
+        // already got right, which blocks both harvesting the key by failing
+        // on purpose AND retaking-to-100% after a pass reveals the misses.
+        review: quizData.map((q, index) => {
+          const isCorrect = input.answers[index] === q.correctAnswer;
+          return {
+            isCorrect,
+            correctAnswer: isCorrect ? q.correctAnswer : null,
+            explanation: isCorrect ? q.explanation ?? null : null,
+          };
+        }),
       };
     }),
 
@@ -202,7 +286,10 @@ export const progressRouter = router({
       limit: 50,
       columns: CLIENT_SAFE_PROGRESS_COLUMNS,
       with: {
-        module: true,
+        // The joined module rides along only for title/topic in the UI —
+        // exclude quizData so the answer key never leaks through this
+        // endpoint either (security P2).
+        module: { columns: { quizData: false } },
       },
     });
 

@@ -11,20 +11,18 @@ import { LanguageSelector } from '@/components/molecules/LanguageSelector';
 import { toast } from '@/components/molecules/Toaster';
 import { trpc, type RouterOutputs } from '@/lib/trpc';
 import { getEtherscanUrl } from '@/lib/utils';
+import { buildQuizReview, answerLetter } from '@/lib/quiz-review';
 import ReactMarkdown from 'react-markdown';
-
-interface QuizQuestion {
-  question: string;
-  options: string[];
-  correctAnswer: number;
-  explanation?: string;
-}
 
 /**
  * Quiz submission result. Inferred from tRPC instead of redeclared so any
  * change to the backend mutation shape (new fields, type tightening,
  * removed properties) surfaces here as a compile error rather than a
  * silent runtime mismatch.
+ *
+ * Security P2: the module's quiz no longer carries `correctAnswer` /
+ * `explanation` — the answer key only exists in `QuizResult.review`,
+ * returned by the server after grading.
  */
 type QuizResult = RouterOutputs['progress']['submitQuiz'];
 
@@ -138,7 +136,8 @@ export const ModulePage = () => {
     );
   }
 
-  const quizData = module.quizData as QuizQuestion[];
+  // Inferred from tRPC: { question, options }[] — no answer key client-side.
+  const quizData = module.quizData;
 
   const handleStartQuiz = () => {
     setShowQuiz(true);
@@ -190,9 +189,13 @@ export const ModulePage = () => {
   // submission is, by definition, still pending on-chain.
   const submittedRecord =
     quizResult && progress && progress.id === quizResult.recordId ? progress : null;
-  const chainStatus = quizResult?.passed
-    ? submittedRecord?.blockchainStatus ?? 'pending'
-    : null;
+  // When the module's on-chain reward was already claimed by an earlier pass
+  // (`alreadyRecorded`), this submission enqueues nothing — skip the chain
+  // status UI and show the "already recorded" note instead.
+  const chainStatus =
+    quizResult?.passed && !quizResult.alreadyRecorded
+      ? submittedRecord?.blockchainStatus ?? 'pending'
+      : null;
   const confirmedTxHash =
     chainStatus === 'confirmed' ? submittedRecord?.transactionHash ?? null : null;
 
@@ -445,6 +448,19 @@ export const ModulePage = () => {
                     </div>
                   )}
 
+                  {/* Module already recorded on-chain by an earlier passing
+                      attempt — no new transaction is spent (security P2). */}
+                  {quizResult.passed && quizResult.alreadyRecorded && (
+                    <div className="mt-6 bg-info-bg border border-info-border rounded-lg p-6">
+                      <p className="font-semibold text-info-fg mb-2">
+                        {t('quiz:results.alreadyRecordedTitle')}
+                      </p>
+                      <p className="text-sm text-info-fg/80">
+                        {t('quiz:results.alreadyRecordedDescription')}
+                      </p>
+                    </div>
+                  )}
+
                   {/* On-chain status — driven by the polled progress record, since
                       submitQuiz now returns before the (async) blockchain write. */}
                   {chainStatus && CHAIN_IN_PROGRESS.includes(chainStatus) && (
@@ -544,6 +560,69 @@ export const ModulePage = () => {
                       </div>
                     );
                   })()}
+                </CardContent>
+              </Card>
+
+              {/* Post-submit review — built from the server-graded review[]
+                  (the quiz itself never carries correct answers). The answer +
+                  explanation are present ONLY for questions answered correctly;
+                  missed ones stay hidden until you get them right on a retake
+                  (security P2). */}
+              <Card className="text-start">
+                <CardHeader>
+                  <CardTitle>{t('quiz:review.title')}</CardTitle>
+                  {buildQuizReview(quizData, selectedAnswers, quizResult.review).some(
+                    (item) => !item.isCorrect
+                  ) && (
+                    <p className="text-sm text-muted-foreground">
+                      {t('quiz:review.lockedHint')}
+                    </p>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <ol className="space-y-4">
+                    {buildQuizReview(quizData, selectedAnswers, quizResult.review).map(
+                      (item, index) => (
+                        <li
+                          key={index}
+                          className={`rounded-lg border p-4 ${
+                            item.isCorrect
+                              ? 'bg-success-bg border-success-border'
+                              : 'bg-error-bg border-error-border'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <p className="font-medium">
+                              <span className="text-muted-foreground me-2">
+                                {t('quiz:review.questionLabel', { number: index + 1 })}
+                              </span>
+                              {item.question}
+                            </p>
+                            <Badge variant={item.isCorrect ? 'success' : 'error'}>
+                              {item.isCorrect
+                                ? t('quiz:review.correct')
+                                : t('quiz:review.incorrect')}
+                            </Badge>
+                          </div>
+                          <p
+                            className={`text-sm ${
+                              item.isCorrect ? 'text-success-fg' : 'text-error-fg'
+                            }`}
+                          >
+                            {t('quiz:review.yourAnswer', {
+                              letter: answerLetter(item.selectedAnswer),
+                              content: item.options[item.selectedAnswer] ?? '—',
+                            })}
+                          </p>
+                          {item.explanation && (
+                            <p className="text-sm text-muted-foreground mt-2">
+                              {item.explanation}
+                            </p>
+                          )}
+                        </li>
+                      )
+                    )}
+                  </ol>
                 </CardContent>
               </Card>
 

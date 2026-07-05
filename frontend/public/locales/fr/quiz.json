@@ -32,6 +32,16 @@
     "retryBlockchain": "Réessayer",
     "retryQueued": "Enregistrement remis en file d'attente — suivez le statut ici.",
     "retryError": "Impossible de remettre l'enregistrement en file d'attente",
-    "backToDashboard": "Retour au tableau de bord"
+    "backToDashboard": "Retour au tableau de bord",
+    "alreadyRecordedTitle": "✅ Déjà enregistré on-chain",
+    "alreadyRecordedDescription": "Vous aviez déjà obtenu l'enregistrement on-chain de ce module — aucune nouvelle transaction blockchain n'était nécessaire. Votre score a été enregistré."
+  },
+  "review": {
+    "title": "Révision des réponses",
+    "questionLabel": "Question {{number}}.",
+    "correct": "Correcte",
+    "incorrect": "Incorrecte",
+    "yourAnswer": "Votre réponse : {{letter}}. {{content}}",
+    "lockedHint": "Les réponses ne s'affichent que pour les questions réussies. Refaites le quiz pour débloquer celles que vous avez manquées."
   }
 }

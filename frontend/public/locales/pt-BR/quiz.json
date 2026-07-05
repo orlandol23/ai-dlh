@@ -32,6 +32,16 @@
     "retryBlockchain": "Tentar novamente",
     "retryQueued": "Registro reenfileirado — acompanhe o status aqui.",
     "retryError": "Não foi possível reenfileirar o registro",
-    "backToDashboard": "Voltar ao Dashboard"
+    "backToDashboard": "Voltar ao Dashboard",
+    "alreadyRecordedTitle": "✅ Já registrado on-chain",
+    "alreadyRecordedDescription": "Você já tinha conquistado o registro on-chain deste módulo — nenhuma nova transação na blockchain foi necessária. Sua pontuação foi salva."
+  },
+  "review": {
+    "title": "Revisão das respostas",
+    "questionLabel": "Questão {{number}}.",
+    "correct": "Correta",
+    "incorrect": "Incorreta",
+    "yourAnswer": "Sua resposta: {{letter}}. {{content}}",
+    "lockedHint": "As respostas aparecem só nas questões que você acertou. Refaça o quiz para desbloquear as que errou."
   }
 }

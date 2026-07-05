@@ -22,14 +22,38 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
-    // Surface bundle-bloat regressions in build/CI logs. The current main
-    // JS bundle sits ~880 KB pre-gzip (~290 KB gzipped) — heavy contributors
-    // are ethers, framer-motion, and react-markdown. The 1100 KB ceiling
-    // gives ~25 % headroom before Vite/Rollup emits the chunk-size warning,
-    // so a stray new dependency shows up as a noisy log instead of silently
-    // drifting bigger. NOTE: this is a warning threshold only — it does NOT
-    // fail the build. To enforce a hard budget, hook `onwarn` in rollupOptions
-    // and process.exit on chunk-size codes, or grep the build log in CI.
-    chunkSizeWarningLimit: 1100,
+    rollupOptions: {
+      output: {
+        // Vendor splitting for the heavy libraries. Combined with the
+        // route-level React.lazy in App.tsx, each of these only downloads
+        // when a page that actually uses it renders:
+        //   - ethers (~310 KB): only useAuth (wallet login) imports it
+        //   - framer-motion (~110 KB): ModulePage / CertPage / OnboardingTour
+        //   - react-markdown + remark/micromark tree (~120 KB): ModulePage
+        // i18n locales are NOT bundled — i18next-http-backend fetches
+        // /locales/{{lng}}/{{ns}}.json at runtime, so there is nothing to
+        // split there. The object form pulls each listed package and its
+        // exclusive dependency subtree into the named chunk.
+        manualChunks: {
+          'vendor-ethers': ['ethers'],
+          'vendor-motion': ['framer-motion'],
+          'vendor-markdown': ['react-markdown'],
+          // React core in its own chunk: it loads eagerly (in parallel with
+          // the entry), but it changes far less often than app code, so
+          // returning visitors keep it cached across deploys.
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+        },
+      },
+    },
+    // Surface bundle-bloat regressions in build/CI logs. After the Onda 2b
+    // code-splitting (route-level React.lazy + manualChunks above), the
+    // largest chunks are vendor-ethers (~263 KB pre-gzip, lazy) and the
+    // entry (~259 KB pre-gzip). The 500 KB ceiling gives headroom before
+    // Vite/Rollup emits the chunk-size warning, so a stray new dependency
+    // shows up as a noisy log instead of silently drifting bigger.
+    // NOTE: this is a warning threshold only — it does NOT fail the build.
+    // To enforce a hard budget, hook `onwarn` in rollupOptions and
+    // process.exit on chunk-size codes, or grep the build log in CI.
+    chunkSizeWarningLimit: 500,
   },
 })

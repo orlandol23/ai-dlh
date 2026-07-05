@@ -7,6 +7,7 @@ import { modules } from '../db/schema.js';
 import { eq, desc } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
 import { logger } from '../utils/logger.js';
+import { toPublicModule } from '../utils/public-module.js';
 import type { Region, Tier } from '../services/providers/types.js';
 import { isLearningStyle } from '../services/vark.js';
 
@@ -89,7 +90,9 @@ export const aiRouter = router({
           })
           .returning();
 
-        return saved;
+        // Never ship the quiz answer key to the client (security P2) —
+        // grading happens server-side in progress.submitQuiz.
+        return toPublicModule(saved);
       } catch (error) {
         // Controlled tRPC errors (e.g. TOO_MANY_REQUESTS from the per-user
         // rate limiter) carry messages the frontend displays — rethrow as-is.
@@ -115,7 +118,8 @@ export const aiRouter = router({
       orderBy: [desc(modules.createdAt)],
     });
 
-    return userModules;
+    // Same output sanitation as getModuleById — no answer key on the wire.
+    return userModules.map(toPublicModule);
   }),
 
   /**
@@ -143,7 +147,10 @@ export const aiRouter = router({
         });
       }
 
-      return module;
+      // Security P2: the quiz is served WITHOUT `correctAnswer`/`explanation`.
+      // Grading is server-side (progress.submitQuiz), which also returns the
+      // full answer key for the post-submit review screen.
+      return toPublicModule(module);
     }),
 
   /**

@@ -4,6 +4,7 @@ import { progressRecords, type BlockchainStatus } from '../db/schema.js';
 import { web3Service, NonRetryableBlockchainError } from './web3.service.js';
 import { config } from '../utils/env.js';
 import { logger } from '../utils/logger.js';
+import { captureException } from '../utils/sentry.js';
 import { getErrorMessage } from '../utils/errors.js';
 
 /**
@@ -110,6 +111,7 @@ export class BlockchainQueueService {
     } catch (error) {
       // Never let a poll failure (e.g. DB hiccup) kill the interval.
       logger.error('Blockchain queue tick failed', { error });
+      captureException(error, { worker: 'blockchain-queue', stage: 'tick' });
     } finally {
       this.ticking = false;
     }
@@ -246,6 +248,15 @@ export class BlockchainQueueService {
     error: unknown
   ): Promise<void> {
     const message = getErrorMessage(error);
+
+    // Observability (C1): every failed send is reported with enough
+    // context to find the row — the wallet address is public by design;
+    // no key material ever leaves this process.
+    captureException(error, {
+      worker: 'blockchain-queue',
+      recordId: record.id,
+      attempt: record.blockchainAttempts,
+    });
 
     if (error instanceof NonRetryableBlockchainError) {
       logger.error(

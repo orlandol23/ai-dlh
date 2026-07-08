@@ -2,6 +2,7 @@ import type { ErrorInfo, ReactNode } from 'react';
 import { Component } from 'react';
 import { Button } from '@/components/atoms/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/atoms/Card';
+import { captureException } from '@/lib/sentry';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -30,8 +31,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
-     
+
     console.error('Uncaught error in React tree:', error, info.componentStack);
+    // Observability (C1): report render/lifecycle crashes to Sentry with
+    // the component stack. No-op when VITE_SENTRY_DSN is not configured.
+    captureException(error, { componentStack: info.componentStack });
   }
 
   private handleReset = () => {

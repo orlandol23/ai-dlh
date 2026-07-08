@@ -27,6 +27,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.91.1",
     "@google/generative-ai": "^0.24.1",
+    "@sentry/node": "^10.64.0",
     "@trpc/server": "^10.45.0",
     "axios": "^1.15.2",
     "cors": "^2.8.5",

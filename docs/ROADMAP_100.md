@@ -5,6 +5,11 @@ Plano em ondas para levar o **all** (AI-Powered Decentralized Learning Hub) de
 **critérios de pronto** objetivos — uma onda só "fecha" quando todos os seus
 critérios são verificáveis (CI verde, comportamento observável, doc atualizada).
 
+> **📌 Documento vigente:** o [PLANO_MESTRE.md](./PLANO_MESTRE.md) (assinatura
+> on-chain, tiers, aprendizado adaptativo, multi-chain) substitui e absorve as
+> **Ondas 3–5** deste roadmap — os itens delas foram re-sequenciados nas fases
+> A/B/C/D do Plano-Mestre. Ondas 1–2 permanecem como registro histórico (✅).
+
 Estado de referência: monorepo `frontend` (React + Vite) / `server`
 (Express + tRPC + Drizzle + PostgreSQL) / `contracts` (Hardhat + Sepolia),
 deploy via integrações git (Vercel + Railway).

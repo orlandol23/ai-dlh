@@ -4,8 +4,8 @@
     "logoAlt": "AI-DLH"
   },
   "stats": {
-    "total": { "eyebrow": "Total", "label": "Modules générés" },
-    "passed": { "eyebrow": "Validés", "label": "Score ≥ 70 %" },
+    "modules": { "eyebrow": "Modules", "label": "Générés avec l'IA" },
+    "quizzes": { "eyebrow": "Quiz", "label": "Réalisés", "sub": "{{passed}} validés ({{rate}} %)" },
     "avgScore": { "eyebrow": "Score moyen", "label": "Sur tous les quiz" },
     "onChain": { "eyebrow": "⛓ On-chain", "label": "Certificats actifs" }
   },

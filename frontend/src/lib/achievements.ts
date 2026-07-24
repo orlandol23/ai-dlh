@@ -64,7 +64,7 @@ export function calculateStreakDays(records: ProgressLike[], timezone?: string):
  * over a truncated view would lock achievements for power users.
  */
 export interface AchievementsStats {
-  totalModules: number;
+  modulesGenerated: number;
   passedModules: number;
   onChainRecords: number;
   highScoreCount: number;
@@ -93,8 +93,8 @@ export function deriveAchievements(
     {
       id: 'first-step',
       emoji: '🎯',
-      unlocked: stats.totalModules >= 1,
-      progress: { current: Math.min(stats.totalModules, 1), target: 1 },
+      unlocked: stats.modulesGenerated >= 1,
+      progress: { current: Math.min(stats.modulesGenerated, 1), target: 1 },
     },
     {
       id: 'on-chain',

@@ -64,7 +64,7 @@ export const DashboardPage = () => {
     () =>
       deriveAchievements(
         stats ?? {
-          totalModules: 0,
+          modulesGenerated: 0,
           passedModules: 0,
           onChainRecords: 0,
           highScoreCount: 0,
@@ -196,21 +196,30 @@ export const DashboardPage = () => {
         <div className="grid grid-cols-2 lg:grid-cols-12 gap-4">
           <Card className="lg:col-span-3">
             <CardContent className="pt-6">
-              <p className="eyebrow">{t('dashboard:stats.total.eyebrow')}</p>
+              <p className="eyebrow">{t('dashboard:stats.modules.eyebrow')}</p>
               <p className="font-display text-5xl font-bold text-primary tabular-nums leading-none mt-2">
-                {stats?.totalModules ?? 0}
+                {stats?.modulesGenerated ?? 0}
               </p>
-              <p className="text-sm text-muted-foreground mt-2">{t('dashboard:stats.total.label')}</p>
+              <p className="text-sm text-muted-foreground mt-2">{t('dashboard:stats.modules.label')}</p>
             </CardContent>
           </Card>
 
           <Card className="lg:col-span-3">
             <CardContent className="pt-6">
-              <p className="eyebrow">{t('dashboard:stats.passed.eyebrow')}</p>
+              <p className="eyebrow">{t('dashboard:stats.quizzes.eyebrow')}</p>
               <p className="font-display text-5xl font-bold text-success-fg tabular-nums leading-none mt-2">
-                {stats?.passedModules ?? 0}
+                {stats?.quizzesTaken ?? 0}
               </p>
-              <p className="text-sm text-muted-foreground mt-2">{t('dashboard:stats.passed.label')}</p>
+              <p className="text-sm text-muted-foreground mt-2">{t('dashboard:stats.quizzes.label')}</p>
+              {/* Passed is a subset of attempts — shown as subtext under the
+                  quizzes-taken headline (kills the "passed N of 1 module"
+                  paradox: the denominator is attempts, not modules). */}
+              <p className="text-xs text-muted-foreground mt-1 tabular-nums">
+                {t('dashboard:stats.quizzes.sub', {
+                  passed: stats?.passedModules ?? 0,
+                  rate: stats?.completionRate ?? 0,
+                })}
+              </p>
             </CardContent>
           </Card>
 

@@ -313,10 +313,10 @@ export const progressRouter = router({
   getStatistics: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.user.id;
 
-    // None of the three queries depend on each other — issue them in
+    // None of these queries depend on each other — issue them in
     // parallel via Promise.all to cut the endpoint's latency to roughly
     // the slowest single query instead of their sum.
-    const [[aggregates], [topics], recentScores] = await Promise.all([
+    const [[aggregates], [topics], recentScores, [moduleCount]] = await Promise.all([
       // Single-table scan for the additive aggregates.
       db
         .select({
@@ -350,6 +350,15 @@ export const progressRouter = router({
         .where(eq(progressRecords.userId, userId))
         .orderBy(desc(progressRecords.completedAt))
         .limit(50),
+
+      // True modules-generated count: COUNT(*) of the modules the user
+      // created (indexed by module_user_id_idx). Distinct from the quiz
+      // attempt count above — powers the "Modules" tile + the first-step
+      // achievement.
+      db
+        .select({ count: sql<number>`COUNT(*)::int` })
+        .from(modules)
+        .where(eq(modules.userId, userId)),
     ]);
 
     let currentStreakCapped = 0;
@@ -360,7 +369,11 @@ export const progressRouter = router({
 
     const total = aggregates.total;
     return {
-      totalModules: total,
+      // Distinct modules the user generated — NOT quiz attempts.
+      modulesGenerated: moduleCount.count,
+      // Quiz attempts = COUNT(*) of progress_records (renamed from the
+      // misleading `totalModules`); each retake counts.
+      quizzesTaken: total,
       passedModules: aggregates.passed,
       avgScore: aggregates.avgScore,
       completionRate: total > 0 ? Math.round((aggregates.passed / total) * 100) : 0,

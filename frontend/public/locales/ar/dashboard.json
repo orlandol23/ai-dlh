@@ -4,8 +4,8 @@
     "logoAlt": "AI-DLH"
   },
   "stats": {
-    "total": { "eyebrow": "الإجمالي", "label": "الوحدات المُولَّدة" },
-    "passed": { "eyebrow": "مجتازة", "label": "النتيجة ≥ 70٪" },
+    "modules": { "eyebrow": "الوحدات", "label": "مُولَّدة بالذكاء الاصطناعي" },
+    "quizzes": { "eyebrow": "الاختبارات", "label": "التي أجريتها", "sub": "{{passed}} ناجحة ({{rate}}٪)" },
     "avgScore": { "eyebrow": "متوسط النتيجة", "label": "في جميع الاختبارات" },
     "onChain": { "eyebrow": "⛓ على السلسلة", "label": "الشهادات النشطة" }
   },

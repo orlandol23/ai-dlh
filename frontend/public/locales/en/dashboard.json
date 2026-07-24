@@ -4,8 +4,8 @@
     "logoAlt": "AI-DLH"
   },
   "stats": {
-    "total": { "eyebrow": "Total", "label": "Modules generated" },
-    "passed": { "eyebrow": "Passed", "label": "Score ≥ 70%" },
+    "modules": { "eyebrow": "Modules", "label": "Generated with AI" },
+    "quizzes": { "eyebrow": "Quizzes", "label": "Taken", "sub": "{{passed}} passed ({{rate}}%)" },
     "avgScore": { "eyebrow": "Average score", "label": "Across all quizzes" },
     "onChain": { "eyebrow": "⛓ On-chain", "label": "Active certificates" }
   },

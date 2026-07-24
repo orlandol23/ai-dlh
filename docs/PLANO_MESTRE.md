@@ -22,8 +22,9 @@ _Atualizado em: 2026-07-24_
 | Fase 4 — D1–D3 | ⬜ | — |
 
 **Pendências imediatas fora do código (dono):**
-- 🔴 **Rotacionar/remover o usuário MongoDB Atlas do aprendaMais** — secret em histórico público é incidente ativo, não "ajuste menor" (~15 min).
-- Arquivar o repositório aprendaMais (FUSION Fase 4): README de redirecionamento + estado `archived` — fechar junto com a rotação acima.
+- ✅ ~~Rotacionar/remover o usuário MongoDB Atlas do aprendaMais~~ — **resolvido em 2026-07-24**: o dono excluiu o banco inteiro; a credencial exposta no histórico ficou sem alvo.
+- Arquivar o repositório aprendaMais (FUSION Fase 4): README de redirecionamento + estado `archived` — pendente, mas **sem urgência de segurança**.
+- Criar projetos no Sentry e configurar `SENTRY_DSN` (Railway) / `VITE_SENTRY_DSN` (Vercel) — ativa o C1 já mergeado (#23).
 - Fiscal BR: receita em cripto tem obrigação acessória (IN 1888) — lembrete não-técnico.
 
 **Nomenclatura (sem colisões):** PRs de execução = `C1/C1b, A1–A7, B1–B7, C2–C8, D1–D3`. Especificações técnicas = **E0–E5**. Bloqueadores das revisões R1–R4 = **RB\*** (ex.: RB4 = creditar o signatário). As invariantes A5/A6 do Passo 0 têm o nome do PR que as implementa.
@@ -37,6 +38,7 @@ _Atualizado em: 2026-07-24_
 | 2026-07-24 | **C1b (Slither + gas-gate)** extraído do A4 — CI de segurança antecipada já roda contra o `LearningProgress.sol` atual e destrava o A4. |
 | 2026-07-24 | **A6 fatiado em A6a/A6b/A6c** (fluxo core / onramp fiat / i18n+QA RTL); o onramp pode deslizar para pós-go-live sem bloquear o A7. |
 | 2026-07-24 | Seções renumeradas **E0–E5** e bloqueadores de revisão renomeados **RB1/RB4/RB6** (colisão de IDs eliminada). |
+| 2026-07-24 | **Incidente MongoDB Atlas encerrado**: o dono excluiu o banco (credencial exposta sem alvo). Resta só o arquivamento do repo aprendaMais, sem urgência de segurança. |
 
 ## Changelog desta revisão (o que mudou vs. versão anterior)
 

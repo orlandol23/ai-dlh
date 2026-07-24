@@ -7,9 +7,9 @@ IA generativa multi-provider + Web3).
 > **📌 Documento vigente:** o [PLANO_MESTRE.md](./PLANO_MESTRE.md) absorveu as
 > Fases 2–3 deste documento (Fase 2 → **B4**; Fase 3 → **B7**). A **Fase 1
 > (VARK) está concluída** ([PR #17](https://github.com/orlandol23/all/pull/17)).
-> A **Fase 4** (arquivamento do aprendaMais) é pendência imediata do dono —
-> junto com a rotação do secret do MongoDB Atlas; ver "Estado de execução" no
-> Plano-Mestre.
+> A **Fase 4** (arquivamento do aprendaMais) segue pendente — sem urgência de
+> segurança: o banco do MongoDB Atlas foi **excluído em 2026-07-24**, matando a
+> credencial exposta. Ver "Estado de execução" no Plano-Mestre.
 
 A decisão estratégica é **portar conceitos, não código**: o aprendaMais foi
 prototipado em JavaScript vanilla sem build, sem tipos e sem backend real; o
@@ -137,7 +137,7 @@ backend de voz).
 
 ---
 
-## Fase 4 — Arquivamento do aprendaMais (⚠️ pendência imediata do dono — inclui rotação do secret MongoDB Atlas)
+## Fase 4 — Arquivamento do aprendaMais (pendente; secret do Atlas resolvido — banco excluído em 2026-07-24)
 
 Encerramento formal do repositório original.
 

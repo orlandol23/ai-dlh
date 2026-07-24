@@ -39,6 +39,7 @@
     "zustand": "^4.4.7"
   },
   "devDependencies": {
+    "@tailwindcss/typography": "^0.5.20",
     "@sentry/vite-plugin": "^5.3.0",
     "@trpc/server": "^10.45.0",
     "@types/react": "^18.2.48",

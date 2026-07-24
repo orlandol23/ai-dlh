@@ -257,7 +257,11 @@ export const ModulePage = () => {
 
               <Card className="mb-8">
                 <CardContent className="pt-6">
-                  <div className="prose prose-lg max-w-none">
+                  {/* `prose-token` maps the typography plugin to the design
+                      tokens (correct in light/dark, no prose-invert). Reading
+                      width is capped on the WRAPPER (Tailwind utilities beat the
+                      plugin's own max-width) and centered in the Card. */}
+                  <div className="prose prose-token max-w-[72ch] mx-auto font-sans">
                     <ReactMarkdown>{module.content}</ReactMarkdown>
                   </div>
                 </CardContent>

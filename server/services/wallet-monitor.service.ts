@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import { web3Service } from './web3.service.js';
 import { config } from '../utils/env.js';
 import { logger } from '../utils/logger.js';
+import { captureException } from '../utils/sentry.js';
 
 /** Snapshot of the custodial wallet balance, as last observed. */
 export interface WalletBalanceStatus {
@@ -79,6 +80,10 @@ export class WalletMonitorService {
       };
     } catch (error) {
       logger.error('Wallet balance check failed', { error });
+      captureException(error, {
+        worker: 'wallet-monitor',
+        wallet: web3Service.walletAddress,
+      });
       this.status = {
         address: web3Service.walletAddress,
         balanceEth: null,

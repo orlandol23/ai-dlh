@@ -409,3 +409,24 @@
     opacity: 1;
   }
 }
+
+/* =========================================================
+   Module prose hardening — supplements theme.extend.typography
+   (the `prose-token` modifier). Scoped to .prose-token so it never
+   bleeds into other prose. RTL-safe: symmetric overflow only.
+   ========================================================= */
+@layer components {
+  /* Wide AI-emitted code blocks scroll instead of blowing out the Card. */
+  .prose-token pre {
+    overflow-x: auto;
+  }
+  /* Long inline tokens (URLs, hashes) wrap instead of overflowing. */
+  .prose-token :not(pre) > code {
+    overflow-wrap: anywhere;
+  }
+  /* Wide tables scroll rather than clip (overflow-x is direction-neutral). */
+  .prose-token table {
+    display: block;
+    overflow-x: auto;
+  }
+}

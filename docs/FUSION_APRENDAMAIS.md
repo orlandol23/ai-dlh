@@ -4,6 +4,13 @@ Roadmap da incorporação do projeto **aprendaMais** (plataforma de aprendizagem
 adaptativa em JS vanilla) ao **all / AI-DLH** (monorepo React + tRPC + Drizzle +
 IA generativa multi-provider + Web3).
 
+> **📌 Documento vigente:** o [PLANO_MESTRE.md](./PLANO_MESTRE.md) absorveu as
+> Fases 2–3 deste documento (Fase 2 → **B4**; Fase 3 → **B7**). A **Fase 1
+> (VARK) está concluída** ([PR #17](https://github.com/orlandol23/all/pull/17)).
+> A **Fase 4** (arquivamento do aprendaMais) segue pendente — sem urgência de
+> segurança: o banco do MongoDB Atlas foi **excluído em 2026-07-24**, matando a
+> credencial exposta. Ver "Estado de execução" no Plano-Mestre.
+
 A decisão estratégica é **portar conceitos, não código**: o aprendaMais foi
 prototipado em JavaScript vanilla sem build, sem tipos e sem backend real; o
 all já possui infraestrutura madura (i18n com 6 idiomas, router multi-provider
@@ -13,7 +20,7 @@ infraestrutura.
 
 ---
 
-## Fase 1 — Questionário VARK + prompt condicionado por estilo (este PR)
+## ✅ Fase 1 — Questionário VARK + prompt condicionado por estilo (PR #17)
 
 O coração do aprendaMais é o questionário **VARK** (Visual, Auditory,
 Reading/Writing, Kinesthetic): 15 perguntas de múltipla escolha que detectam o
@@ -65,19 +72,19 @@ módulos por IA**.
 
 ### Critérios de pronto (DoD)
 
-- [ ] Migration `0002` aplica e o boot do servidor continua íntegro.
-- [ ] `learningStyle.submitVarkResult` valida 15 respostas e persiste o estilo.
-- [ ] Fluxo completo no frontend: CTA → quiz → resultado → persistência →
+- [x] Migration `0002` aplica e o boot do servidor continua íntegro.
+- [x] `learningStyle.submitVarkResult` valida 15 respostas e persiste o estilo.
+- [x] Fluxo completo no frontend: CTA → quiz → resultado → persistência →
       CTA some do dashboard.
-- [ ] Refazer o questionário pelas preferências funciona e sobrescreve o estilo.
-- [ ] Prompt de geração inclui a instrução do estilo para os 3 providers
+- [x] Refazer o questionário pelas preferências funciona e sobrescreve o estilo.
+- [x] Prompt de geração inclui a instrução do estilo para os 3 providers
       (verificado por teste no `buildPrompt`).
-- [ ] i18n nos 6 idiomas (pt-BR/en autorais; es/fr/ja/ar máquina, p/ revisão).
-- [ ] `npm run build`, type-check, lint e todos os testes passando.
+- [x] i18n nos 6 idiomas (pt-BR/en autorais; es/fr/ja/ar máquina, p/ revisão).
+- [x] `npm run build`, type-check, lint e todos os testes passando.
 
 ---
 
-## Fase 2 — Gerador de perguntas extras / regeneração de quiz por estilo
+## Fase 2 — Gerador de perguntas extras / regeneração de quiz por estilo (→ **B4** do Plano-Mestre)
 
 O aprendaMais tinha integração de IA experimental (`ia-integration.js`) para
 gerar conteúdo complementar. No all, isso vira uma feature de primeira classe
@@ -104,7 +111,7 @@ usando o **router multi-provider** já existente.
 
 ---
 
-## Fase 3 — Prática verbal de idiomas (Web Speech API)
+## Fase 3 — Prática verbal de idiomas (Web Speech API) (→ **B7** do Plano-Mestre)
 
 O aprendaMais tinha módulos de idiomas com áudio (`frontend/audio/`). No all,
 isso evolui para prática **falada** usando Web Speech API (sem custo de
@@ -130,7 +137,7 @@ backend de voz).
 
 ---
 
-## Fase 4 — Arquivamento do aprendaMais
+## Fase 4 — Arquivamento do aprendaMais (pendente; secret do Atlas resolvido — banco excluído em 2026-07-24)
 
 Encerramento formal do repositório original.
 

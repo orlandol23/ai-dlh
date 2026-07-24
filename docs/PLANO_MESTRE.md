@@ -1,6 +1,44 @@
 # Plano-Mestre — all (AI-DLH)
 
-> Status: **REVISADO (R1+R2+R3 aplicadas)** — pronto para aprovação e execução PR a PR.
+> Status: **VIGENTE na main** (PR #22) — em execução PR a PR. Revisões R1–R4 + correções de gestão (PR-0.5) aplicadas.
+
+## Estado de execução (fonte da verdade)
+
+> Regra (herdada do ROADMAP): **nada de checkbox por intenção** — o status de um item só muda no PR que o conclui (com link) ou por decisão datada em "Decisões durante a execução".
+
+_Atualizado em: 2026-07-24_
+
+| Item | Status | Referência |
+|---|---|---|
+| PR-0 — Plano-Mestre na main | ✅ | [#22](https://github.com/orlandol23/all/pull/22) |
+| PR-0.5 — correções de gestão do plano | ✅ | [#26](https://github.com/orlandol23/all/pull/26) |
+| C1 — Sentry front+server | ✅ | [#23](https://github.com/orlandol23/all/pull/23) |
+| Órfão resgatado: stats do dashboard | ✅ | [#24](https://github.com/orlandol23/all/pull/24) |
+| Órfão resgatado: legibilidade do módulo | 🔄 PR aberto | [#25](https://github.com/orlandol23/all/pull/25) |
+| C1b — Slither + gas-gate no CI | ⬜ | — |
+| Fase 1 — A1–A7 | ⬜ | — |
+| Fase 2 — B1–B7 | ⬜ | — |
+| Fase 3 — C2–C8 | ⬜ | — |
+| Fase 4 — D1–D3 | ⬜ | — |
+
+**Pendências imediatas fora do código (dono):**
+- ✅ ~~Rotacionar/remover o usuário MongoDB Atlas do aprendaMais~~ — **resolvido em 2026-07-24**: o dono excluiu o banco inteiro; a credencial exposta no histórico ficou sem alvo.
+- Arquivar o repositório aprendaMais (FUSION Fase 4): README de redirecionamento + estado `archived` — pendente, mas **sem urgência de segurança**.
+- Criar projetos no Sentry e configurar `SENTRY_DSN` (Railway) / `VITE_SENTRY_DSN` (Vercel) — ativa o C1 já mergeado (#23).
+- Fiscal BR: receita em cripto tem obrigação acessória (IN 1888) — lembrete não-técnico.
+
+**Nomenclatura (sem colisões):** PRs de execução = `C1/C1b, A1–A7, B1–B7, C2–C8, D1–D3`. Especificações técnicas = **E0–E5**. Bloqueadores das revisões R1–R4 = **RB\*** (ex.: RB4 = creditar o signatário). As invariantes A5/A6 do Passo 0 têm o nome do PR que as implementa.
+
+### Decisões durante a execução
+
+| Data | Decisão |
+|---|---|
+| 2026-07-24 | **A7 passa a depender de B1+B5** (telemetria+tutor): o go-live não vende features inexistentes — no lançamento, premium = modelo top + quotas + tutor. |
+| 2026-07-24 | **C6a (smoke E2E)** extraído do C6 e promovido a gate do A7 — o gate precisa fechar **antes** do evento irreversível (mainnet), não depois. |
+| 2026-07-24 | **C1b (Slither + gas-gate)** extraído do A4 — CI de segurança antecipada já roda contra o `LearningProgress.sol` atual e destrava o A4. |
+| 2026-07-24 | **A6 fatiado em A6a/A6b/A6c** (fluxo core / onramp fiat / i18n+QA RTL); o onramp pode deslizar para pós-go-live sem bloquear o A7. |
+| 2026-07-24 | Seções renumeradas **E0–E5** e bloqueadores de revisão renomeados **RB1/RB4/RB6** (colisão de IDs eliminada). |
+| 2026-07-24 | **Incidente MongoDB Atlas encerrado**: o dono excluiu o banco (credencial exposta sem alvo). Resta só o arquivamento do repo aprendaMais, sem urgência de segurança. |
 
 ## Changelog desta revisão (o que mudou vs. versão anterior)
 
@@ -60,7 +98,7 @@ Transição de carreira do dono para Web3. O **all** é o produto principal: Hub
 
 # A. Sistema de assinatura + PAYG on-chain (núcleo novo)
 
-## A.0 Estratégia de chains
+## E0 — Estratégia de chains
 
 | Tier | Chain | Certificado | Gas real |
 |---|---|---|---|
@@ -70,11 +108,11 @@ Transição de carreira do dono para Web3. O **all** é o produto principal: Hub
 
 Coluna `chain` (`'sepolia'|'base'|'solana'`) entra em `progress_records` **no C4** (migrations livres a partir da 0005) — Solana depois não exige migração de schema.
 
-## A.1 Contrato `SubscriptionManager.sol` — Base mainnet, USDC nativo
+## E1 — Contrato `SubscriptionManager.sol` — Base mainnet, USDC nativo
 
 **Assinatura + créditos PAYG no mesmo contrato.** OZ 5: `Ownable2Step` + `Pausable` + `SafeERC20`. **Sem ReentrancyGuard** (USDC sem hooks, nenhum ETH; CEI basta).
 
-### Preço por plano (corrige a tabela — B1)
+### Preço por plano (corrige a tabela — RB1)
 ```solidity
 struct Plan { uint32 weeks; uint256 priceUsdc; }   // priceUsdc em unidades de 6 casas
 mapping(uint8 => Plan) public plans;               // plans[1]={1, 1_990_000}  → US$ 1,99 / 1 semana
@@ -104,7 +142,7 @@ mapping(address => uint32) public creditsPurchased;       // TOTAL CUMULATIVO (n
 **Eventos (lista completa — transparência sem timelock, barata):**
 `Subscribed(address indexed account, address indexed payer, uint8 planId, uint32 qty, uint64 newExpiresAt, uint256 amountPaid)` · `CreditsPurchased(address indexed account, address indexed payer, uint32 credits, uint256 amountPaid)` · `PlanUpdated(uint8 indexed planId, uint32 weeks, uint256 priceUsdc)` · `PricePerCreditUpdated(uint256 oldPrice, uint256 newPrice)` · `Withdrawn(address indexed to, uint256 amount)` · `Paused/Unpaused` (herdados de Pausable).
 
-**REGRA CRÍTICA (B4):** todo caminho assinado credita o **signatário** (`from`/`owner`), nunca `msg.sender` (pode ser relayer). Teste obrigatório: **"relayer submete a tx, signatário recebe a assinatura/créditos"**.
+**REGRA CRÍTICA (RB4):** todo caminho assinado credita o **signatário** (`from`/`owner`), nunca `msg.sender` (pode ser relayer). Teste obrigatório: **"relayer submete a tx, signatário recebe a assinatura/créditos"**.
 
 **Fora de escopo v1 (decisões certas):** ETH nativo, refund, auto-renovação pull (allowance infinita = anti-pattern), proxy upgradeable.
 
@@ -122,7 +160,7 @@ mapping(address => uint32) public creditsPurchased;       // TOTAL CUMULATIVO (n
 
 Regras p/ todos os contratos: custom errors, `calldata`>`memory`, `immutable`/`constant`, `unchecked` só com prova, CEI, eventos `indexed` certos.
 
-### Segurança/tooling — TUDO NOVO no A4 (corrige "já existe")
+### Segurança/tooling — TUDO NOVO, entregue em C1b + A4 (corrige "já existe")
 - **Adicionar Slither ao CI** (job novo em `ci.yml`).
 - **Gate de regressão de gas**: job de CI que commita/diffa `gasReporterOutput.json` como artifact (ou `forge snapshot` + action de gas-diff) — o "snapshot por PR via Codechecks" mencionado antes **não existe mais**; nomear a ferramenta escolhida no PR.
 - **USDC nativo da Base fixo**: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`; **nunca USDbC** (bridged, sem permit). Validar em runtime `decimals()==6` + `symbol()`.
@@ -134,7 +172,7 @@ Regras p/ todos os contratos: custom errors, `calldata`>`memory`, `immutable`/`c
 ### Checklist de verificação manual do dono
 Ownable2Step · SafeERC20 · sem reentrância (CEI mesmo assim) · Pausable kill-switch · sem loop unbounded/selfdestruct/delegatecall/assembly · `unchecked` só com prova · fuzz/invariantes: `expiresAt` nunca diminui, `creditsPurchased` monotônico, prepay ≤ 104 semanas · deploy testnet → **revisão manual do dono** → mainnet (owner=Safe).
 
-## A.2 Verificação server-side do plano
+## E2 — Verificação server-side do plano
 
 **Leitura RPC on-demand + cache em coluna com TTL** (rejeitados listener/subgraph). `server/services/billing.service.ts`:
 - `getPlan(user)` — **input vazio; wallet só de `ctx.user.walletAddress`** (invariante A5). Cache no DB (`BILLING_SYNC_TTL_MS`, default 10 min); expirado → `eth_call subscriptions(wallet)` na Base e persiste.
@@ -145,14 +183,14 @@ Ownable2Step · SafeERC20 · sem reentrância (CEI mesmo assim) · Pausable kill
 - Observabilidade dentro do A5: alerta de falhas RPC consecutivas; idade de `plan_synced_at` exposta no `/healthz`; teto de staleness documentado.
 - **Downgrade gracioso**: expirou → `free`; modelo volta a Gemini; quotas free; módulos/certificados/histórico intactos; tutor/trilhas ficam read-only com CTA. `BILLING_GRACE_HOURS` (default 0).
 
-## A.3 Modelo de dados + quotas
+## E3 — Modelo de dados + quotas
 
 Migration `0005` em `users`: `plan` (default 'free'), `plan_expires_at`, `plan_synced_at`, `plan_tx_hash`. `preferredTier` continua = preferência de modelo DENTRO do plano. Novo `server/services/entitlements.ts`: `resolvePlan(user)`, `resolveEffectiveTier(user)`.
 **Critério de aceite (grep no review):** nenhuma leitura crua de `preferredTier` fora de `entitlements.ts` (hoje `ai.router.ts:61` lê cru — corrigir). Definir precedência **`cn` vs `premium`** (hoje `region==='cn'` ganha → um pagante em região cn receberia Qwen; decidir).
 
 Gates: `updatePreferences` premium sem plano = `FORBIDDEN 'PLAN_REQUIRED'`. Flag `BILLING_ENFORCED` (default false até go-live; legados premium-grátis resolvem `default` quando ligar — changelog).
 
-### Quotas (dimensionadas por COGS de pior caso — B6, ajuste R4)
+### Quotas (dimensionadas por COGS de pior caso — RB6, ajuste R4)
 
 | Quota | Free | Premium | Semanal (=¼ das mensais) |
 |---|---|---|---|
@@ -171,13 +209,13 @@ Gates: `updatePreferences` premium sem plano = `FORBIDDEN 'PLAN_REQUIRED'`. Flag
 - Tutor roteia para **Haiku 4.5** (mais barato) por padrão; Claude Sonnet só se a conversa exigir.
 - **Quotas MENSAIS vão para Postgres** (não in-memory): tabela `usage_counters(user_id, metric, period 'YYYY-MM', count)` com `UNIQUE(user_id, metric, period)`; consumo em **um único statement atômico** `INSERT ... ON CONFLICT DO UPDATE SET count = count+1 WHERE count < $max RETURNING` (precedente: claim atômico da fila `blockchain-queue.service.ts`, índice parcial `schema.ts`). Horária continua no SlidingWindow in-memory. `rate-limit.ts`: `consume(key, maxOverride?)`; `trpc.ts`: `max` como função; log usa o **max efetivo**.
 
-## A.4 Router de modelo por plano + provider Fugu
+## E4 — Router de modelo por plano + provider Fugu
 
 `server/services/providers/fugu.provider.ts` — reusa do `qwen.provider.ts` **só a estrutura** (classe/axios/Zod). ⚠️ o qwen usa DashScope nativo (`/services/aigc/text-generation/generation`, body `{input:{prompt}}`), NÃO OpenAI-compatible — o endpoint/body/parse do Fugu (`/chat/completions`, `response_format: json_object` com fallback) são diferentes. Envs `SAKANA_API_KEY`/`SAKANA_BASE_URL`/`FUGU_MODEL`. **Timeout curto + circuit breaker agressivo** (fallback só funciona com timeout curto).
 
 Flag `PREMIUM_PROVIDER=claude|fugu` (**Claude default**, estável e com caching garantido; Fugu atrás de flag). Premium só roteia Claude se `ANTHROPIC_API_KEY` setada (refletir no runbook). Roteamento: `cn→qwen | premium→(flag) | senão→gemini`; fallbacks preservam "free nunca piora"; badge do provider no módulo; alerta se degradação premium >5%/dia.
 
-## A.5 UX de upgrade (frontend — ethers v6 existente, sem wagmi)
+## E5 — UX de upgrade (frontend — ethers v6 existente, sem wagmi)
 
 - `/plans` (lazy): cards Free/Premium/PAYG, preços/domain **lidos do contrato**, seletor semanal(planId 1)/mensal(planId 2)/créditos.
 - `lib/subscription.ts`: 3009 `receiveWithAuthorization` (1 tx) → fallback permit → fallback approve+subscribe. Estados: rede/saldo → assinar (**exibir claramente o valor assinado — anti-phishing**) → tx (link Basescan) → `billing.refresh(hash)` → premium.
@@ -205,6 +243,7 @@ Flag `PREMIUM_PROVIDER=claude|fugu` (**Claude default**, estável e com caching 
 | PR | Escopo | Esf. |
 |---|---|---|
 | C1 | Sentry front+server (release/sourcemaps) — cobre Fases 1-2 inteiras | P |
+| C1b | **Slither + gate de regressão de gas no CI** (extraído do A4) — já roda contra o `LearningProgress.sol` atual e destrava o A4 | P |
 
 ## Fase 1 — Receita
 | PR | Escopo | Esf. | Dep. | Pronto quando |
@@ -212,22 +251,36 @@ Flag `PREMIUM_PROVIDER=claude|fugu` (**Claude default**, estável e com caching 
 | A1 | Provider Fugu (endpoint próprio) + flag `PREMIUM_PROVIDER` + timeout/circuit-breaker + fallback + testes HTTP-mock | M | C1 | módulo real via Fugu em staging; `provider` gravado |
 | A2 | Migration 0005 + `entitlements.ts` + gate `PLAN_REQUIRED` + `resolveEffectiveTier` (grep: zero leitura crua de preferredTier) — atrás de `BILLING_ENFORCED=false`; decidir cn×premium | M | — | flag off = idêntico; flag on = FORBIDDEN sem plano |
 | A3 | Quotas por plano: horária (in-memory) + **mensal DB-backed** (`usage_counters`, UPDATE atômico) | M | A2 | tetos por plano; free inalterado; mensal sobrevive a redeploy (teste) |
-| A4 | `SubscriptionManager.sol` (planos+PAYG, 3009+permit, maxTotal, owner=Safe) + Slither+gas-gate no CI + fork test USDC + deploy/verify **Base Sepolia** + runbook | G | — | orçamento de gas batido; **checkpoint de revisão manual do dono** |
+| A4 | `SubscriptionManager.sol` (planos+PAYG, 3009+permit, maxTotal, owner=Safe) + fork test USDC + deploy/verify **Base Sepolia** + runbook (incl. **rollback**: playbook de `pause()`, migração de contrato honrando `subscriptions`/`creditsPurchased` do antigo, refund manual via `withdraw`) | G | C1b | orçamento de gas batido no gate do C1b; **checkpoint de revisão manual do dono** |
 | A5 | `billing.service.ts` (wallet só do ctx; transporte×"sem assinatura"; ponto único de escrita) + `billing.refresh(hash→receipt)` + **consumo PAYG atômico** (UPDATE condicional, débito antes do provider + estorno em falha, idempotência) + validação vs `creditsPurchased` confirmado + ingestão on-chain (polling da view + diff persistido) + saúde no /healthz | M | A2,A4,C1 | subscribe/purchaseCredits refletem no DB; double-spend impossível sob concorrência (teste); re-check antes de rebaixar |
-| A6 | `/plans` (3009→permit→approve; valor assinado visível; onramp fiat; wallet match) + saldo/plano no perfil + banners + i18n ×6 (RTL ar) + drop-off instrumentado | G | A4,A5 | fluxo completo Base Sepolia <30s; QA 6 idiomas |
-| A7 | Go-live: deploy Base mainnet (owner=Safe, pós-revisão) + `BILLING_ENFORCED=true` + quotas mensais + changelog legados | P | A1–A6 | 1º pagamento real |
+| A6a | `/plans` core: 3009→permit→approve; **valor assinado visível** (anti-phishing); wallet match (invariante A6); saldo/plano no perfil + banners; **ToS + política de reembolso**; drop-off instrumentado | M | A4,A5 | fluxo completo Base Sepolia <30s (pt-BR/en) |
+| A6b | Onramp fiat→USDC (Coinbase Onramp na Base: Apple Pay/cartão) — **pode deslizar p/ pós-go-live** | M | A6a | compra fiat em staging |
+| A6c | i18n ×6 da `/plans` + QA RTL (ar) — exige **revisão humana** das traduções de máquina; go-live mínimo aceitável: pt-BR/en | M | A6a | QA 6 idiomas OU escopo reduzido documentado no changelog |
+| C6a | **Smoke E2E** (Playwright: login→generate→quiz + `/plans` com chain mockada) rodando em todo PR | M | A6a | verde no CI; **gate do A7** |
+| A7 | Go-live: deploy Base mainnet (owner=Safe, pós-revisão) + `BILLING_ENFORCED=true` + quotas mensais + changelog legados | P | A1–A5, A6a, **B1, B5, C6a** | 1º pagamento real; smoke E2E verde; kill-switch de rollback (`BILLING_ENFORCED=false`) documentado |
 
-## Fase 2 — Adaptativo (intercalável a partir do A2)
-B1 (telemetria) · B2 (prompt adaptativo, free) · B3 (insights, free) · B4 (quiz por estilo, free) · B5 (tutor, premium; dep. A2/A3/B1) · B6 (trilhas, premium; dep. B2/B5) · B7 (verbal, premium; dep. B5).
+**Esforço somado (honesto):** Fase 1 + B1/B5 ≈ 25–33 dias úteis focados — **~3 meses em ritmo part-time**. Plano completo (Fases 1–3) ≈ 4–6 meses. **Marco intermediário demonstrável:** A1–A3 + B1 + B2 (adaptativo free melhorado) já tem valor de portfólio mesmo se o billing atrasar — não existe cenário em que meses de trabalho fiquem sem nada mostrável.
+
+## Fase 2 — Adaptativo (intercalável a partir do A2; **B1+B5 são gate do A7**)
+
+| PR | Escopo | Esf. | Dep. | Pronto quando |
+|---|---|---|---|---|
+| B1 | Telemetria (migration 0006: `learning_events` + `topic_mastery`) + coleta no `submitQuiz` | M | A2 | quiz grava eventos e mastery (teste) |
+| B2 | Prompt adaptativo free (`adaptive.service.ts`, `performanceContext`) | M | B1 | snapshot tests do prompt + verificação manual (histórico bom×ruim) |
+| B3 | Insights free (`learning.getInsights` + card "revisar agora") | P | B1 | card no Dashboard com dados reais |
+| B4 | Quiz por estilo VARK (F2 da FUSION) | M | — | variante por estilo validada pelo schema |
+| B5 | Tutor premium (`tutor.*` + `tutor_sessions`/`tutor_messages`; **prompt caching auditado**) | **G** | A2, A3, B1 | `usage.cache_read_input_tokens > 0` comprovado; quotas diária+mensal aplicadas |
+| B6 | Trilhas premium (`path.*` + `learning_paths`; pré-geração via Batch API −50%) | M–G | B2, B5 | trilha pré-gerada em batch e navegável |
+| B7 | Prática verbal premium (F3 da FUSION, Web Speech API) | M | B5 | prática funcional em Chrome/Edge com fallback gracioso |
 
 ## Fase 3 — Web3 core + ops
 | PR | Escopo | Esf. | Dep. |
 |---|---|---|---|
-| C2 | Alertas: gas das wallets custodiais **por chain** + **saldo USDC do contrato** (lembrete de withdraw) + degradação de provider + falha de tx | M | C1 |
+| C2 | Alertas: gas das wallets custodiais **por chain** + **saldo USDC do contrato** (lembrete de withdraw) + degradação de provider + falha de tx + **uptime monitoring externo** de `/healthz` (UptimeRobot/BetterStack) | M | C1 |
 | C3 | SIWE/EIP-4361 (padronização) | M | — |
-| C4 | **Fila multi-chain**: destino (chain+contrato+tipo) gravado no **enqueue** conforme plano; 2º `Web3Service` (RPC/wallet Base + ABI ERC-5192); regra p/ plano que expira entre enqueue e processamento; coluna `chain`; `LearningCertificate.sol` ERC-5192 soulbound com `mint(to=wallet provada)` restrito ao minter custodial; `/cert` dual-chain (Sepolia legado verificável); gas report | G | A4, Passo 0 |
+| C4 | **Fila multi-chain**: destino (chain+contrato+tipo) gravado no **enqueue** conforme plano; 2º `Web3Service` (RPC/wallet Base + ABI ERC-5192); regra p/ plano que expira entre enqueue e processamento; coluna `chain`; `LearningCertificate.sol` ERC-5192 soulbound com `mint(to=wallet provada)` restrito ao minter custodial; `/cert` dual-chain (Sepolia legado verificável); gas report — **entregar em 2 PRs**: C4a (contrato ERC-5192 + testes de soulbound) e C4b (fila multi-chain + `/cert`) | G | A4, Passo 0 |
 | C5 | Certificado NFT **premium** (metadata/arte no tokenURI) + **pinning IPFS/Arweave** | M | C4,A5 |
-| C6 | E2E Playwright (login/generate/quiz/cert + plans com chain mockada) no CI | G | A6 |
+| C6b | Suíte E2E completa (Playwright: cert público, retries, i18n) — expande o smoke C6a | G | C6a |
 | C7 | OG image do certificado + demo polish | M | C4 |
 | C8 | ERC-4337/vouchers + subgraph — **adiado até volume** | G | C4 |
 
@@ -255,7 +308,7 @@ D1 (formaliza `CertChain`, se preciso; a coluna `chain` já veio no C4) · **D2*
 
 ## COGS de pior caso e dimensionamento (matemática fechada — R4)
 
-Sem tetos mensais, um premium de US$ 6,99 chegaria a **US$ 34–49/mês**. Com as quotas de A.3, a conta fecha assim (assinante mensal de US$ 6,99, **pior caso absoluto**):
+Sem tetos mensais, um premium de US$ 6,99 chegaria a **US$ 34–49/mês**. Com as quotas de E3, a conta fecha assim (assinante mensal de US$ 6,99, **pior caso absoluto**):
 
 | Componente | Cap | Custo pior caso |
 |---|---|---|
@@ -291,7 +344,7 @@ Break-even da infra fixa ≈ **5 assinantes** (margem de contribuição ~US$ 4�
 | Risco | Mitigação |
 |---|---|
 | Domain EIP-712 errado quebra 100% das assinaturas | Ler do contrato + fork test contra USDC real |
-| Creditar `msg.sender` em vez do signatário | Regra B4 + teste de relayer |
+| Creditar `msg.sender` em vez do signatário | Regra RB4 + teste de relayer |
 | Double-spend de crédito sob concorrência | UPDATE condicional atômico + débito-antes-estorno |
 | Quota mensal in-memory = paywall furado | `usage_counters` em Postgres |
 | Pagou e não virou premium | `billing.refresh(hash)` + validação de receipt + stale-while-error |
@@ -302,17 +355,17 @@ Break-even da infra fixa ≈ **5 assinantes** (margem de contribuição ~US$ 4�
 
 # Verificação (fim a fim)
 1. Cada PR: CI estrita + testes novos; nada mergeia sem verde + **review do dono**.
-2. Contrato: Hardhat + **Slither + gas-gate (novos)** + **fork test** do USDC; deploy/verify Base Sepolia antes do mainnet; runbook em `docs/`.
+2. Contrato: Hardhat + **Slither + gas-gate (C1b)** + **fork test** do USDC; deploy/verify Base Sepolia antes do mainnet; runbook (incl. rollback) em `docs/`.
 3. Billing: teste manual Base Sepolia (sem USDC→msg; com USDC→premium <30s; expiração→downgrade; **relayer→signatário recebe**; concorrência→sem double-spend).
 4. Adaptativo: snapshot tests do prompt + verificação manual (histórico bom×ruim).
 5. Go-live: 1º pagamento real mainnet + smoke.
-6. E2E Playwright (C6) como gate final.
+6. Smoke E2E (C6a) é **gate do go-live A7**; a suíte completa (C6b) fecha a Fase 3.
 
 # Ajustes menores / pendências do dono
 - Backup do Postgres é parte do dinheiro (consumo de créditos é off-chain) — no runbook.
 - Quota mensal free é anti-abuso (hoje não há teto) — registrar honestamente no changelog ("free nunca piora" preservado no essencial).
-- **Fiscal BR**: receita em cripto tem obrigação (IN 1888 / declaração) — lembrete não-técnico.
-- Rotação/remoção do usuário MongoDB Atlas do aprendaMais (secret no histórico público).
+- Reescrever `docs/DEPLOYMENT.md` para a realidade **Railway (backend) + Vercel (frontend)** — banner de aviso adicionado no PR-0.5; reescrita completa pendente.
+- Rotação do MongoDB Atlas, arquivamento do aprendaMais e fiscal BR: **promovidos para "Pendências imediatas" no topo** (Estado de execução).
 
 # Fora do escopo deste plano
 - **boxing-instructor** (plano separado, depois): 🔴 `api/coach.ts` público sem rate limit/origin/budget (mitigação provisória: alerta de billing Anthropic + `max_tokens:400`); sem CSP no vercel.json; pose na main thread; modelo MediaPipe sem cache offline; engine frame-based; F8/F9/F10/F6b.

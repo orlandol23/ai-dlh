@@ -4,8 +4,8 @@
     "logoAlt": "AI-DLH"
   },
   "stats": {
-    "total": { "eyebrow": "合計", "label": "生成したモジュール" },
-    "passed": { "eyebrow": "合格", "label": "スコア70%以上" },
+    "modules": { "eyebrow": "モジュール", "label": "AIで生成" },
+    "quizzes": { "eyebrow": "クイズ", "label": "受験数", "sub": "{{passed}}件合格（{{rate}}%）" },
     "avgScore": { "eyebrow": "平均スコア", "label": "全クイズの平均" },
     "onChain": { "eyebrow": "⛓ オンチェーン", "label": "有効な証明書" }
   },

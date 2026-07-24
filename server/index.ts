@@ -10,6 +10,7 @@ import { corsMiddleware } from './middleware/cors.middleware.js';
 import { globalRateLimiter } from './middleware/rate-limit.middleware.js';
 import { logger } from './utils/logger.js';
 import { config } from './utils/env.js';
+import { initSentry, captureException } from './utils/sentry.js';
 import { checkDatabaseConnection, db } from './db/index.js';
 import { web3Service } from './services/web3.service.js';
 import { aiService } from './services/ai.service.js';
@@ -50,6 +51,9 @@ async function runMigrations(): Promise<void> {
   await migrate(db, { migrationsFolder });
   logger.info('Migrations applied');
 }
+
+// Observability (C1): no-op unless SENTRY_DSN is set — see utils/sentry.ts.
+initSentry();
 
 // Create Express app
 const app = express();
@@ -106,6 +110,12 @@ app.use(
     createContext,
     onError({ error, type, path }) {
       logger.error(`tRPC Error [${type}] ${path}:`, error);
+      // Only unexpected failures go to Sentry. Expected client errors
+      // (UNAUTHORIZED, BAD_REQUEST, TOO_MANY_REQUESTS, ...) are part of
+      // normal operation and would drown the free tier in noise.
+      if (error.code === 'INTERNAL_SERVER_ERROR') {
+        captureException(error.cause ?? error, { trpcType: type, trpcPath: path });
+      }
     },
   })
 );
@@ -123,6 +133,7 @@ app.use((req, res) => {
 // middleware by arity (fn.length === 4). Prefixed with _ to satisfy lint.
 app.use((err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   logger.error('Unhandled error:', err);
+  captureException(err, { method: req.method, path: req.path });
   res.status(500).json({
     error: 'Internal Server Error',
     message: config.NODE_ENV === 'development' ? err.message : 'An error occurred',

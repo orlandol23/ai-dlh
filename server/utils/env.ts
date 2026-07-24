@@ -136,6 +136,14 @@ const envSchema = z.object({
   ANTHROPIC_API_KEY: z.string().optional(),
   DASHSCOPE_API_KEY: z.string().optional(),
 
+  // Observability (optional). When unset, Sentry is a silent no-op —
+  // dev/test environments behave exactly as before. Empty string is
+  // treated as unset so a blank platform variable doesn't fail the boot.
+  SENTRY_DSN: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.string().url('SENTRY_DSN must be a valid DSN URL').optional()
+  ),
+
   // Auth
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   JWT_EXPIRES_IN: z.string().default('7d'),

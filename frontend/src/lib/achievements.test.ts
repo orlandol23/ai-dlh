@@ -7,7 +7,7 @@ import {
 } from './achievements';
 
 const makeStats = (overrides: Partial<AchievementsStats> = {}): AchievementsStats => ({
-  totalModules: 0,
+  modulesGenerated: 0,
   passedModules: 0,
   onChainRecords: 0,
   highScoreCount: 0,
@@ -33,16 +33,16 @@ describe('deriveAchievements', () => {
     expect(out.every((a) => !a.unlocked)).toBe(true);
   });
 
-  it('unlocks first-step at totalModules >= 1', () => {
-    const out = deriveAchievements(makeStats({ totalModules: 1 }));
+  it('unlocks first-step at modulesGenerated >= 1', () => {
+    const out = deriveAchievements(makeStats({ modulesGenerated: 1 }));
 
     expect(out.find((a) => a.id === 'first-step')?.unlocked).toBe(true);
   });
 
   it('unlocks on-chain only when onChainRecords >= 1', () => {
-    const noOnChain = deriveAchievements(makeStats({ totalModules: 1 }));
+    const noOnChain = deriveAchievements(makeStats({ modulesGenerated: 1 }));
     const oneOnChain = deriveAchievements(
-      makeStats({ totalModules: 1, onChainRecords: 1 })
+      makeStats({ modulesGenerated: 1, onChainRecords: 1 })
     );
 
     expect(noOnChain.find((a) => a.id === 'on-chain')?.unlocked).toBe(false);

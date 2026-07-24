@@ -143,7 +143,7 @@ For detailed setup instructions, see [docs/SETUP.md](docs/SETUP.md).
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/YOUR_USERNAME/ai-dlh.git
+git clone https://github.com/orlandol23/all.git
 cd ai-dlh
 
 # 2. Install all dependencies
@@ -334,13 +334,13 @@ ai-dlh/
 - [x] AI module generation
 - [x] Quiz system
 - [x] Blockchain recording
-- [ ] Individual module page
-- [ ] Complete interactive quiz
+- [x] Individual module page
+- [x] Complete interactive quiz
 - [ ] User profile
 - [ ] Rankings and badges
 - [ ] Mobile responsive
 - [ ] PWA support
-- [ ] Internationalization (i18n)
+- [x] Internationalization (i18n) — 6 idiomas (en, pt-BR, es, fr, ja, ar) com RTL
 
 ---
 
@@ -393,4 +393,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ⭐ If you found this project useful, please consider giving it a star!
 
-📧 Contact: your-email@example.com
+📧 Contact: [@orlandol23](https://github.com/orlandol23)

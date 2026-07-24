@@ -1,5 +1,10 @@
 # AI-DLH — Plano de Improvements v2.1 (i18n-first)
 
+> **📌 Status: ✅ CONCLUÍDO** (PRs [#14](https://github.com/orlandol23/all/pull/14) e
+> [#15](https://github.com/orlandol23/all/pull/15)) — mantido como registro
+> histórico. Única pendência remanescente: **OG image dinâmica do certificado**
+> (item D.5), absorvida pelo [PLANO_MESTRE.md](./PLANO_MESTRE.md) como **C7**.
+
 > Sequência de melhorias após a migração v2 "Circuit & Ink".
 > Cole este arquivo no Claude Code dentro do repo `orlandol23/all` numa branch nova.
 > Ordem importa: **A0 → A → B → C → D → E**.

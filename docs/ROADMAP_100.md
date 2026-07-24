@@ -43,22 +43,22 @@ workspaces com exit 0; nenhum stub enganoso no workflow.
 
 ---
 
-## 🌊 Onda 2 — Confiabilidade do fluxo principal
+## ✅ Onda 2 — Confiabilidade do fluxo principal (PRs [#20](https://github.com/orlandol23/all/pull/20) e [#21](https://github.com/orlandol23/all/pull/21))
 
 Fechar os pontos onde o produto perde dados ou mente para o usuário.
 
-- [ ] **Fila/retry para escrita on-chain**: `recordCompletion` hoje é
+- [x] **Fila/retry para escrita on-chain**: `recordCompletion` hoje é
       fire-and-forget; falha de RPC/gas = conclusão perdida. Persistir intenção
       em tabela `pending_tx`, worker com retry exponencial e idempotência
       (dedupe por `(userId, moduleId)`), status visível no dashboard
-- [ ] **Monitor de saldo da wallet custodial**: checagem periódica + endpoint
+- [x] **Monitor de saldo da wallet custodial**: checagem periódica + endpoint
       de status; logar/alertar quando o saldo cair abaixo do custo estimado de
       N transações (evita descobrir wallet vazia em produção)
-- [ ] **Correção do `correctAnswer` no payload do quiz**: a resposta correta
+- [x] **Correção do `correctAnswer` no payload do quiz**: a resposta correta
       não pode viajar para o cliente antes da submissão (hoje permite gabarito
       via DevTools). Servir o quiz sem `correctAnswer`/`explanation` e corrigir
       somente server-side
-- [ ] **Code-splitting do bundle do frontend**: ~880 KB pré-gzip; separar
+- [x] **Code-splitting do bundle do frontend**: ~880 KB pré-gzip; separar
       vendors pesados (ethers, framer-motion, react-markdown) com
       `manualChunks`/`React.lazy` por rota
 
@@ -66,6 +66,12 @@ Fechar os pontos onde o produto perde dados ou mente para o usuário.
 restart do server e a RPC fora do ar — verificável por teste); alerta de saldo
 disparando em ambiente de teste; impossível obter o gabarito pelo network tab;
 chunk inicial < 300 KB gzip com rotas pesadas em lazy load.
+
+> ✅ Critérios verificados nos PRs #20/#21 (fila com claim atômico + índice
+> único de payout; monitor no `/healthz`; quiz sem gabarito no payload; entry
+> de 259 KB / 82 KB gzip). Checkboxes marcados retroativamente no PR-0.5 —
+> a Onda 2 fechou sem marcar este documento, o que motivou o bloco "Estado de
+> execução" do PLANO_MESTRE.md.
 
 ---
 

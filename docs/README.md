@@ -6,6 +6,10 @@ Welcome to the AI-Powered Decentralized Learning Hub documentation.
 
 | Document                                   | Description                                                |
 | ------------------------------------------ | ---------------------------------------------------------- |
+| [PLANO_MESTRE.md](./PLANO_MESTRE.md)       | **Plano vigente** — billing on-chain, adaptativo v2, fases de execução e estado atual |
+| [ROADMAP_100.md](./ROADMAP_100.md)         | Registro histórico (Ondas 1–2 ✅; 3–5 absorvidas pelo Plano-Mestre) |
+| [IMPROVEMENTS_v2.1.md](./IMPROVEMENTS_v2.1.md) | Registro histórico (✅ concluído)                       |
+| [FUSION_APRENDAMAIS.md](./FUSION_APRENDAMAIS.md) | Fusão aprendaMais (Fase 1 ✅; 2–3 absorvidas; 4 pendente) |
 | [SETUP.md](./SETUP.md)                     | Complete setup guide (prerequisites, API keys, deployment) |
 | [ARCHITECTURE.md](./ARCHITECTURE.md)       | System architecture and design patterns                    |
 | [API.md](./API.md)                         | tRPC API reference and endpoints                           |
@@ -18,8 +22,8 @@ Welcome to the AI-Powered Decentralized Learning Hub documentation.
 
 ```bash
 # 1. Clone and install
-git clone https://github.com/YOUR_USERNAME/ai-dlh.git
-cd ai-dlh
+git clone https://github.com/orlandol23/all.git
+cd all
 npm run setup
 
 # 2. Configure environment

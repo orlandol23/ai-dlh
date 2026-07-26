@@ -39,6 +39,7 @@ _Atualizado em: 2026-07-24_
 | 2026-07-24 | **A6 fatiado em A6a/A6b/A6c** (fluxo core / onramp fiat / i18n+QA RTL); o onramp pode deslizar para pós-go-live sem bloquear o A7. |
 | 2026-07-24 | Seções renumeradas **E0–E5** e bloqueadores de revisão renomeados **RB1/RB4/RB6** (colisão de IDs eliminada). |
 | 2026-07-24 | **Incidente MongoDB Atlas encerrado**: o dono excluiu o banco (credencial exposta sem alvo). Resta só o arquivamento do repo aprendaMais, sem urgência de segurança. |
+| 2026-07-26 | **Camada de ADRs criada** (`docs/adr/`, 6 decisões já tomadas registradas com fonte do curso) + seção "Itens do curso" (CU-1…CU-8, aditivos — sequência de PRs inalterada) + `docs/SOLIDITY_REVIEW_CHECKLIST.md` como gate de todo PR de contrato. **Decisão pendente aberta: CU-5** (Arweave como primário no C5). |
 
 ## Changelog desta revisão (o que mudou vs. versão anterior)
 
@@ -366,6 +367,23 @@ Break-even da infra fixa ≈ **5 assinantes** (margem de contribuição ~US$ 4�
 - Quota mensal free é anti-abuso (hoje não há teto) — registrar honestamente no changelog ("free nunca piora" preservado no essencial).
 - Reescrever `docs/DEPLOYMENT.md` para a realidade **Railway (backend) + Vercel (frontend)** — banner de aviso adicionado no PR-0.5; reescrita completa pendente.
 - Rotação do MongoDB Atlas, arquivamento do aprendaMais e fiscal BR: **promovidos para "Pendências imediatas" no topo** (Estado de execução).
+
+# Itens do curso (Bootcamp Borderless) — registrados em 2026-07-26
+
+> Origem: compilado "Melhorias × Conhecimento do Bootcamp", validado item a item contra este plano (tags de fonte: `docs/adr/README.md`). **Aditivos** — não alteram a sequência de PRs (§C) nem escopos já definidos; cada item indica onde se ancora. Decisões já tomadas que o curso valida viraram ADRs (`docs/adr/`), não itens.
+
+| # | Âncora | Item | Fonte |
+|---|---|---|---|
+| CU-1 | C1b/A4 | Formalizar os invariantes do checklist E1 (`expiresAt` nunca diminui; `creditsPurchased` monotônico; prepay ≤ 104 semanas; Σ créditos/semanas concedidos ↔ USDC recebido por vendas, via eventos) como **suíte de invariant tests com handlers** rodando no CI — não só verificação manual do dono | `[W5P1]` |
+| CU-2 | A4+ (gate) | Todo PR de contrato passa pelo `docs/SOLIDITY_REVIEW_CHECKLIST.md` (complementa o checklist E1) | `[W5P2]` `[QA-JT]` |
+| CU-3 | E1 (nota) | Automação on-chain de expiração/renovação: **não é necessária no design v1** — expiração é `expiresAt` lido por view; renovação é iniciada pelo usuário; nenhum keeper. Trade-off documentado: se algum job on-chain surgir, usar Chainlink Automation/Gelato/Defender em vez de cron centralizado | `[QA-JT]` |
+| CU-4 | C2, pré-A7 | Monitoramento **on-chain** do contrato (eventos + acionamento de `pause()`): avaliar OpenZeppelin Defender/Forta ou watcher próprio. O runbook de pausa já existe no A4; este item escolhe o tooling e o torna **pré-requisito do `BILLING_ENFORCED=true`** (soma-se aos gates do A7) | `[W5P2]` |
+| CU-5 | C5 — **decisão pendente do dono** | Metadata do certificado: **Arweave como primário** (pay-once permanente — certificado não pode "despinar") com IPFS como espelho. O C5 já cita "IPFS/Arweave"; falta fixar o primário. Registrado como pendente, sem sobrescrever | `[W4]` |
+| CU-6 | C4b | Importar o modelo de **reorg/finalidade** do relayer do stablerails (`docs/design/relayer.md` v2 no repo irmão): mint premium na Base só após profundidade de finalidade adequada; re-check canônico antes de marcar confirmado | sinergia irmã |
+| CU-7 | E5 (avaliação, não compromisso) | Avaliar migração ethers v6 → **wagmi/viem** no frontend — skill provada no exercício W9 (DonationContract + reown); alinha stack com stablerails e mercado-alvo. Custo não-trivial: decidir **depois** da Fase 1 | `[W9]` |
+| CU-8 | D2 (spike de 1 dia) | Spike Anchor: PDA schema do certificado com seeds `[b"cert", user_pubkey, module_id]` — endereço determinístico substitui mapping; 1 registro por (user, módulo) de graça; PDA como tree authority do cNFT (detalhe: ADR-0006) | `[RS2–4]` |
+
+**Validados como já cobertos (sem ação):** fuzz/invariantes nomeados no checklist E1 (CU-1 só os formaliza em CI); Arweave já citado no C5 (CU-5 só fixa o primário); SIWE já é o C3; pause/rollback já no runbook do A4; revisão humana das traduções es/fr/ja/ar já é critério do A6c.
 
 # Fora do escopo deste plano
 - **boxing-instructor** (plano separado, depois): 🔴 `api/coach.ts` público sem rate limit/origin/budget (mitigação provisória: alerta de billing Anthropic + `max_tokens:400`); sem CSP no vercel.json; pose na main thread; modelo MediaPipe sem cache offline; engine frame-based; F8/F9/F10/F6b.

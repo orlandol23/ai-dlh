@@ -6,7 +6,7 @@ Thank you for considering contributing to AI-DLH! 🎉
 
 ### Reporting Bugs
 
-1. Check if the bug has already been reported in [Issues](https://github.com/YOUR_USERNAME/ai-dlh/issues)
+1. Check if the bug has already been reported in [Issues](https://github.com/orlandol23/all/issues)
 2. If not, create a new issue with:
    - Clear description of the problem
    - Steps to reproduce
@@ -27,7 +27,7 @@ Thank you for considering contributing to AI-DLH! 🎉
 2. **Clone** your fork:
 
    ```bash
-   git clone https://github.com/YOUR_USERNAME/ai-dlh.git
+   git clone https://github.com/orlandol23/all.git
    ```
 
 3. **Create a branch** for your feature:

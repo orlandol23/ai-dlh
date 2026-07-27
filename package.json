@@ -42,7 +42,7 @@
     "education",
     "generative-ai"
   ],
-  "author": "Your Name",
+  "author": "Orlando Fernandes",
   "license": "MIT",
   "devDependencies": {
     "concurrently": "^8.2.2"

@@ -14,7 +14,7 @@ import {
 /**
  * Learning Style Router — VARK questionnaire persistence.
  *
- * Fase 1 da fusão aprendaMais (docs/FUSION_APRENDAMAIS.md): the frontend
+ * Fase 1 da fusão aprendaMais: the frontend
  * sends the raw per-question answers (one style per question) and the
  * dominant style is computed and persisted server-side, so the stored
  * value can never disagree with the submitted answers.

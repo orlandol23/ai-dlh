@@ -20,7 +20,6 @@
     "test": "npm run test:contract && npm run test:backend",
     "test:contract": "cd contracts && npx hardhat test",
     "test:backend": "cd server && npm test",
-    "test:e2e": "cd frontend && npm run test:e2e",
     "deploy:contract": "cd contracts && npx hardhat run scripts/deploy.ts --network sepolia",
     "deploy:verify": "cd contracts && npx hardhat verify --network sepolia",
     "generate:wallet": "cd contracts && npx ts-node scripts/generate-wallet.ts",

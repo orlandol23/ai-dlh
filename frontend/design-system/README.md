@@ -11,7 +11,7 @@ Esta pasta é o design system destilado do produto — tokens, fundamentos, UI k
 
 Tudo aqui foi derivado de um único repositório — sem Figma, sem decks.
 
-- **Codebase (GitHub, privado):** `orlandol23/all`, branch `claude/implement-production-changes-01JXqiwpavgBemxhwUUfKnko`
+- **Codebase (GitHub, privado):** `orlandol23/ai-dlh`, branch `claude/implement-production-changes-01JXqiwpavgBemxhwUUfKnko`
 - Espelho do frontend para referência: `_source/` neste projeto
 - Arquivos-chave lidos: `frontend/src/styles/globals.css`, `frontend/tailwind.config.js`, `frontend/src/pages/{HomePage,DashboardPage,ModulePage}.tsx`, `frontend/src/components/atoms/*`, `frontend/src/lib/utils.ts`
 
@@ -22,7 +22,6 @@ Há uma única superfície de produto: a **AI-DLH web app** (React 18 + Vite + T
 | Path | O que tem |
 |---|---|
 | `README.md` | Este arquivo. Contexto do produto, fundamentos de conteúdo + visuais, iconografia. |
-| `PLANO_IMPLEMENTACAO_V2.md` | Guia passo a passo pra migrar o codebase da v1 pra v2. Cole no Claude Code. |
 | `SKILL.md` | Manifesto de Skill — torna a pasta usável como skill do Claude. |
 | `colors_and_type.css` | Tokens completos v2: cores, type, radii, shadows, spacing, motion. Importe primeiro. |
 | `fonts/` | Referências de fontes (Space Grotesk + Inter + JetBrains Mono via Google Fonts). |
@@ -146,7 +145,7 @@ Não adicione emoji em labels neutros ou nav.
 - **Fontes:** o codebase ainda não pina fontes custom — v2 adiciona Space Grotesk + Inter + JetBrains Mono via Google Fonts. Se o user trouxer fontes de marca, dropar `.woff2` em `fonts/` e atualizar `--font-display` / `--font-sans` / `--font-mono`.
 - **Ícones:** sem sistema próprio. Lucide via CDN é o fallback documentado.
 - **Imagery:** nenhuma no codebase. Todos os previews usam hash-grid + tinta sólida + emoji.
-- **Migração v1→v2:** siga `PLANO_IMPLEMENTACAO_V2.md`. Começa pelos tokens (transforma 80% em 1h), termina em polish de copy.
+- **Migração v1→v2:** comece pelos tokens em `colors_and_type.css` (transforma 80% em 1h) e termine em polish de copy.
 
 ## Como usar este sistema
 
@@ -154,4 +153,4 @@ Não adicione emoji em labels neutros ou nav.
 2. Leia as regras de voz / casing acima antes de escrever copy.
 3. Para trabalho de componente, abra `ui_kits/web/v2.html` e copie o JSX — é a fonte da verdade pra hover, borda, padding, estados especiais.
 4. Respeite: um gradiente decorativo (hero), um gradiente de acento (roxo→ciano, só em acentos), um motivo gráfico (hash-grid), sem SVG à mão, sem emoji em labels neutros.
-5. Para dev handoff no codebase, use `PLANO_IMPLEMENTACAO_V2.md`.
+5. Para dev handoff no codebase, comece pelos tokens em `colors_and_type.css` e siga com os componentes de `ui_kits/web/v2.html`.

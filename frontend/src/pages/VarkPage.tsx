@@ -31,7 +31,7 @@ interface Recommendation {
 
 /**
  * VARK learning-style questionnaire — onboarding flow ported from
- * aprendaMais (Fase 1 da fusão, docs/FUSION_APRENDAMAIS.md).
+ * aprendaMais (Fase 1 da fusão).
  *
  * 15 questions, one option per style each. The result screen renders the
  * locally-computed outcome immediately (same deterministic rule as the

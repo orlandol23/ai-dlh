@@ -17,8 +17,7 @@ const LEVEL_DESCRIPTIONS: Record<string, string> = {
 };
 
 /**
- * VARK learning-style adaptation (Fase 1 da fusão aprendaMais —
- * docs/FUSION_APRENDAMAIS.md).
+ * VARK learning-style adaptation (Fase 1 da fusão aprendaMais).
  *
  * Injected into the shared prompt when the user has a stored
  * learning_style, so EVERY provider (Gemini / Claude / Qwen) adapts the

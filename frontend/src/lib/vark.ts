@@ -2,7 +2,7 @@
  * VARK learning-style model — frontend mirror of server/services/vark.ts.
  *
  * Ported (concept, not code) from aprendaMais `frontend/js/quiz.js` as
- * Fase 1 of the fusion roadmap (docs/FUSION_APRENDAMAIS.md). The
+ * Fase 1 of the aprendaMais fusion roadmap. The
  * frontend computes the result only for instant display; the persisted
  * value always comes from `learningStyle.submitVarkResult`, which applies
  * the exact same deterministic rules server-side on the raw answers.

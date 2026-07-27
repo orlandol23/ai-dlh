@@ -2,7 +2,7 @@
 
 A full-stack Web3 learning platform: generative AI builds a study module on demand, the quiz is graded entirely server-side, and a passing score is written to Ethereum by an asynchronous, crash-safe on-chain queue.
 
-![CI](https://github.com/orlandol23/all/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/orlandol23/ai-dlh/actions/workflows/ci.yml/badge.svg)
 ![Solidity](https://img.shields.io/badge/Solidity-0.8.20-363636)
 ![Hardhat](https://img.shields.io/badge/Hardhat-2.19-FFF100)
 ![ethers](https://img.shields.io/badge/ethers.js-v6-2535a0)
@@ -10,12 +10,49 @@ A full-stack Web3 learning platform: generative AI builds a study module on dema
 ![React](https://img.shields.io/badge/React-18-61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6)
 ![tRPC](https://img.shields.io/badge/tRPC-10-398CCB)
-![Tests](https://img.shields.io/badge/tests-175%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-196%20passing-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
+**🔗 Live demo:** **[ai-dlh.vercel.app](https://ai-dlh.vercel.app)** — **requires MetaMask.** Login is a wallet signature, so without an injected wallet the app stops at the connect screen. The screenshots below show what is behind it.
+
 > **Contract on Sepolia:** [`0x3C399AdD53c70DC828db096d6b953757494427CE`](https://sepolia.etherscan.io/address/0x3C399AdD53c70DC828db096d6b953757494427CE#code) - deployed, with **verified source**, so you can read the Solidity on Etherscan without cloning anything.
-> **Live demo:** _not deployed yet. The URL goes here once it is up._
-> **Screenshots:** _to be added._
+
+---
+
+## Screenshots
+
+The live demo is gated behind a wallet connection, so these show the screens
+that a reviewer without MetaMask cannot reach. The public certificate page is
+the one exception — it needs no wallet and can be opened directly.
+
+<!--
+  Drop the images in docs/screenshots/ using exactly these filenames and the
+  references below will resolve with no further edits.
+
+  Capture at 1440px wide, in light mode, with the UI in English (use the
+  language selector in the header, or open in a private window with an
+  English browser locale). Crop out browser chrome and any real wallet
+  address.
+-->
+
+| Screen | Route | Image |
+|---|---|---|
+| **Dashboard** — progress, generated modules, on-chain status | `/dashboard` | `docs/screenshots/dashboard.png` |
+| **Module + quiz** — AI-generated content, server-graded quiz | `/module/:id` | `docs/screenshots/module.png` |
+| **Certificate** — public, no wallet needed | `/cert/:hash` | `docs/screenshots/certificate.png` |
+| **VARK profile** — learning-style questionnaire | `/vark` | `docs/screenshots/vark.png` |
+
+<!-- Uncomment each line once the corresponding file exists:
+
+![Dashboard](docs/screenshots/dashboard.png)
+![Module and quiz](docs/screenshots/module.png)
+![Public certificate](docs/screenshots/certificate.png)
+![VARK profile](docs/screenshots/vark.png)
+
+-->
+
+> **Not added yet.** The table above is the placeholder; the images are still
+> to be captured.
 
 ---
 
@@ -155,8 +192,8 @@ Postgres is the system of record for queue state, which is why a restart never l
 Requires Node 20+, PostgreSQL, a Sepolia RPC URL, a funded test wallet, and at least a Gemini API key. The backend validates its environment on boot and exits if anything required is missing, so there is no half-configured state.
 
 ```bash
-git clone https://github.com/orlandol23/all.git
-cd all
+git clone https://github.com/orlandol23/ai-dlh.git
+cd ai-dlh
 npm install
 
 cp .env.example .env
@@ -174,11 +211,11 @@ There is no Docker setup and no mock mode: a real database, a real RPC endpoint 
 
 ## Tests
 
-175 tests pass across the three workspaces. Run each one directly:
+196 tests pass across the three workspaces. Run each one directly:
 
 ```bash
 cd server    && npx vitest run     # 124 tests, 12 files
-cd frontend  && npx vitest run     #  28 tests,  4 files
+cd frontend  && npx vitest run     #  49 tests,  5 files
 cd contracts && npx hardhat test   #  23 tests
 ```
 
@@ -210,13 +247,13 @@ Measured by building the commit before the change and the current HEAD with the 
 
 Stated explicitly, because a portfolio that hides its edges is not worth reading:
 
-- **The app is not hosted anywhere.** The contract is live on Sepolia, but there is no public URL for the frontend or the API yet, so the only thing you can inspect without running it yourself is the contract on Etherscan.
+- **The frontend and the API are deployed separately.** The frontend runs on Vercel, the backend on Railway, and the contract lives on Sepolia. The frontend reaches the API through `VITE_API_URL`, which is baked in at build time, so a frontend redeploy is required whenever the API URL changes.
 - **The contract writes custodially.** As a consequence, the per-user read endpoints in `server/routers/web3.router.ts` query the learner's address while the data sits under the backend wallet's address, so they return empty. The UI does not use them: it reads the persisted queue status and transaction hash from Postgres. Those endpoints are stale and are removed or reworked as part of the ERC-5192 redesign.
 - **Rate limiting is in-memory.** It is per-instance and resets on redeploy. That is a deliberate trade-off for a single-instance deployment and needs Redis before scaling horizontally.
 - **Translations are partly machine-generated.** English and Brazilian Portuguese are human-written; Spanish, French, Japanese and Arabic are machine-translated and flagged in the source as pending human review.
-- **No end-to-end tests.** Cypress is present as a dependency but no specs exist. The test suite is unit-level, and router tests mock the database.
+- **No end-to-end tests.** The test suite is unit-level, and router tests mock the database. E2E coverage is planned, not present, and is tracked in the roadmap below.
 - **No Solidity static analysis in CI.** Slither and a gas regression gate are planned, not present.
-- **`docs/ARCHITECTURE.md` and `docs/API.md` are outdated.** They describe an earlier single-provider version without the queue or VARK. `docs/DEPLOYMENT.md` carries a staleness banner.
+- **Reference documentation is thin.** The standalone architecture and API documents described an earlier single-provider version without the queue or VARK, so they were removed rather than left to mislead. This README and the ADRs under `docs/adr/` are the current source of truth; `docs/DEPLOYMENT.md` carries a staleness banner.
 
 ## Roadmap
 

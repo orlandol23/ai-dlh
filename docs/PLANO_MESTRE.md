@@ -10,11 +10,11 @@ _Atualizado em: 2026-07-24_
 
 | Item | Status | Referência |
 |---|---|---|
-| PR-0 — Plano-Mestre na main | ✅ | [#22](https://github.com/orlandol23/all/pull/22) |
-| PR-0.5 — correções de gestão do plano | ✅ | [#26](https://github.com/orlandol23/all/pull/26) |
-| C1 — Sentry front+server | ✅ | [#23](https://github.com/orlandol23/all/pull/23) |
-| Órfão resgatado: stats do dashboard | ✅ | [#24](https://github.com/orlandol23/all/pull/24) |
-| Órfão resgatado: legibilidade do módulo | 🔄 PR aberto | [#25](https://github.com/orlandol23/all/pull/25) |
+| PR-0 — Plano-Mestre na main | ✅ | [#22](https://github.com/orlandol23/ai-dlh/pull/22) |
+| PR-0.5 — correções de gestão do plano | ✅ | [#26](https://github.com/orlandol23/ai-dlh/pull/26) |
+| C1 — Sentry front+server | ✅ | [#23](https://github.com/orlandol23/ai-dlh/pull/23) |
+| Órfão resgatado: stats do dashboard | ✅ | [#24](https://github.com/orlandol23/ai-dlh/pull/24) |
+| Órfão resgatado: legibilidade do módulo | 🔄 PR aberto | [#25](https://github.com/orlandol23/ai-dlh/pull/25) |
 | C1b — Slither + gas-gate no CI | ⬜ | — |
 | Fase 1 — A1–A7 | ⬜ | — |
 | Fase 2 — B1–B7 | ⬜ | — |

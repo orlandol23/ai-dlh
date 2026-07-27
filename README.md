@@ -10,7 +10,7 @@ A full-stack Web3 learning platform: generative AI builds a study module on dema
 ![React](https://img.shields.io/badge/React-18-61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6)
 ![tRPC](https://img.shields.io/badge/tRPC-10-398CCB)
-![Tests](https://img.shields.io/badge/tests-196%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-206%20passing-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
 > ### 🔗 The fastest way to inspect this project
@@ -219,10 +219,10 @@ There is no Docker setup and no mock mode: a real database, a real RPC endpoint 
 
 ## Tests
 
-196 tests pass across the three workspaces. Run each one directly:
+206 tests pass across the three workspaces. Run each one directly:
 
 ```bash
-cd server    && npx vitest run     # 124 tests, 12 files
+cd server    && npx vitest run     # 134 tests, 12 files
 cd frontend  && npx vitest run     #  49 tests,  5 files
 cd contracts && npx hardhat test   #  23 tests
 ```

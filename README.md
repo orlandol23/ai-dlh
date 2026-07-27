@@ -214,7 +214,7 @@ Stated explicitly, because a portfolio that hides its edges is not worth reading
 - **The contract writes custodially.** As a consequence, the per-user read endpoints in `server/routers/web3.router.ts` query the learner's address while the data sits under the backend wallet's address, so they return empty. The UI does not use them: it reads the persisted queue status and transaction hash from Postgres. Those endpoints are stale and are removed or reworked as part of the ERC-5192 redesign.
 - **Rate limiting is in-memory.** It is per-instance and resets on redeploy. That is a deliberate trade-off for a single-instance deployment and needs Redis before scaling horizontally.
 - **Translations are partly machine-generated.** English and Brazilian Portuguese are human-written; Spanish, French, Japanese and Arabic are machine-translated and flagged in the source as pending human review.
-- **No end-to-end tests.** Cypress is present as a dependency but no specs exist. The test suite is unit-level, and router tests mock the database.
+- **No end-to-end tests.** The test suite is unit-level, and router tests mock the database. E2E coverage is planned, not present, and is tracked in the roadmap below.
 - **No Solidity static analysis in CI.** Slither and a gas regression gate are planned, not present.
 - **`docs/ARCHITECTURE.md` and `docs/API.md` are outdated.** They describe an earlier single-provider version without the queue or VARK. `docs/DEPLOYMENT.md` carries a staleness banner.
 

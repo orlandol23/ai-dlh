@@ -76,52 +76,107 @@ interface QueueCandidate {
 export class BlockchainQueueService {
   private timer: NodeJS.Timeout | null = null;
   private ticking = false;
+  private running = false;
+  /** Current wait between polls. Grows while idle, snaps back on work. */
+  private intervalMs = config.BLOCKCHAIN_QUEUE_INTERVAL_MS;
+
+  /** Current poll interval in ms. Exposed for tests and diagnostics. */
+  get currentIntervalMs(): number {
+    return this.intervalMs;
+  }
 
   /** Start the polling loop. No-op if already started. */
   start(): void {
-    if (this.timer) return;
+    if (this.running) return;
+    this.running = true;
+    this.intervalMs = config.BLOCKCHAIN_QUEUE_INTERVAL_MS;
     logger.info(
       `Blockchain queue worker started (interval ${config.BLOCKCHAIN_QUEUE_INTERVAL_MS}ms, ` +
+        `idle backoff up to ${config.BLOCKCHAIN_QUEUE_MAX_INTERVAL_MS}ms, ` +
         `max ${config.BLOCKCHAIN_QUEUE_MAX_ATTEMPTS} attempts)`
     );
-    this.timer = setInterval(() => {
-      void this.tick();
-    }, config.BLOCKCHAIN_QUEUE_INTERVAL_MS);
-    // Don't keep the process alive just for the poller.
-    this.timer.unref?.();
-    // Drain anything left over from a previous run right away.
+    // Drain anything left over from a previous run right away. This also
+    // schedules the next poll, so start() never needs its own timer.
     void this.tick();
   }
 
   /** Stop the polling loop (graceful shutdown). */
   stop(): void {
+    if (!this.running) return;
+    this.running = false;
     if (this.timer) {
-      clearInterval(this.timer);
+      clearTimeout(this.timer);
       this.timer = null;
-      logger.info('Blockchain queue worker stopped');
     }
+    this.intervalMs = config.BLOCKCHAIN_QUEUE_INTERVAL_MS;
+    logger.info('Blockchain queue worker stopped');
   }
 
-  /** One guarded tick — never overlaps with a previous tick still running. */
+  /**
+   * Decide the next wait from the outcome of a poll.
+   *
+   * Found work  -> back to the base interval; a busy queue should drain at
+   *                full speed rather than crawl.
+   * Empty poll  -> double the wait, capped at the configured ceiling.
+   *
+   * The doubling is what lets a serverless Postgres actually suspend: at the
+   * 15s default the worker reaches the 30min ceiling after seven empty polls
+   * (~32 min), and from then on an idle deployment touches the database twice
+   * an hour instead of 240 times.
+   */
+  private nextInterval(processed: number): number {
+    if (processed > 0) return config.BLOCKCHAIN_QUEUE_INTERVAL_MS;
+    return Math.min(this.intervalMs * 2, config.BLOCKCHAIN_QUEUE_MAX_INTERVAL_MS);
+  }
+
+  /** Schedule the next poll, unless the worker has been stopped. */
+  private scheduleNext(): void {
+    if (!this.running) return;
+    this.timer = setTimeout(() => {
+      void this.tick();
+    }, this.intervalMs);
+    // Don't keep the process alive just for the poller.
+    this.timer.unref?.();
+  }
+
+  /**
+   * One guarded tick — never overlaps with a previous tick still running,
+   * and always schedules the next one, success or failure.
+   */
   private async tick(): Promise<void> {
     if (this.ticking) return;
     this.ticking = true;
     try {
-      await this.processOnce();
+      const processed = await this.processOnce();
+      const previous = this.intervalMs;
+      this.intervalMs = this.nextInterval(processed);
+      if (this.intervalMs !== previous) {
+        logger.debug(
+          `Blockchain queue poll interval ${previous}ms -> ${this.intervalMs}ms ` +
+            `(${processed} record(s) processed)`
+        );
+      }
     } catch (error) {
-      // Never let a poll failure (e.g. DB hiccup) kill the interval.
+      // Never let a poll failure (e.g. DB hiccup) kill the loop. Treat it as
+      // an empty poll so a database that is down or over quota gets backed
+      // off from instead of hammered every base interval.
       logger.error('Blockchain queue tick failed', { error });
       captureException(error, { worker: 'blockchain-queue', stage: 'tick' });
+      this.intervalMs = this.nextInterval(0);
     } finally {
       this.ticking = false;
+      this.scheduleNext();
     }
   }
 
   /**
    * Process up to BATCH_SIZE eligible records, sequentially.
    * Public for tests and for the manual drain on start().
+   *
+   * @returns how many records were picked up. The poll loop uses this to
+   *          decide whether to keep the fast cadence or back off.
    */
-  async processOnce(): Promise<void> {
+  async processOnce(): Promise<number> {
     const now = new Date();
     const staleBefore = new Date(now.getTime() - config.BLOCKCHAIN_STALE_LOCK_MS);
 
@@ -159,6 +214,8 @@ export class BlockchainQueueService {
       // strategy in web3.service simple and correct.
       await this.processCandidate(candidate, staleBefore);
     }
+
+    return candidates.length;
   }
 
   /** Claim a single record and attempt the on-chain write. */

@@ -6,12 +6,14 @@ A full-stack Web3 learning platform: generative AI builds a study module on dema
 ![Solidity](https://img.shields.io/badge/Solidity-0.8.20-363636)
 ![Hardhat](https://img.shields.io/badge/Hardhat-2.19-FFF100)
 ![ethers](https://img.shields.io/badge/ethers.js-v6-2535a0)
+[![Sepolia](https://img.shields.io/badge/Sepolia-contract%20verified-2ea44f)](https://sepolia.etherscan.io/address/0x3C399AdD53c70DC828db096d6b953757494427CE#code)
 ![React](https://img.shields.io/badge/React-18-61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6)
 ![tRPC](https://img.shields.io/badge/tRPC-10-398CCB)
 ![Tests](https://img.shields.io/badge/tests-175%20passing-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
+> **Contract on Sepolia:** [`0x3C399AdD53c70DC828db096d6b953757494427CE`](https://sepolia.etherscan.io/address/0x3C399AdD53c70DC828db096d6b953757494427CE#code) - deployed, with **verified source**, so you can read the Solidity on Etherscan without cloning anything.
 > **Live demo:** _not deployed yet. The URL goes here once it is up._
 > **Screenshots:** _to be added._
 
@@ -53,11 +55,23 @@ This is a hand-rolled scheme with the properties SIWE standardizes. Adopting EIP
 
 [`contracts/contracts/LearningProgress.sol`](contracts/contracts/LearningProgress.sol) is a small append-only progress registry: Solidity 0.8.20, OpenZeppelin v5, one state-changing function, four views, one indexed event, covered by 23 Hardhat tests using ethers v6 and TypeChain bindings.
 
+**It is live on Sepolia, with verified source:**
+
+| | |
+|---|---|
+| Address | [`0x3C399AdD53c70DC828db096d6b953757494427CE`](https://sepolia.etherscan.io/address/0x3C399AdD53c70DC828db096d6b953757494427CE) |
+| Network | Ethereum Sepolia (chain ID 11155111) |
+| Source code | [Verified on Etherscan](https://sepolia.etherscan.io/address/0x3C399AdD53c70DC828db096d6b953757494427CE#code), readable without cloning |
+| On-chain activity | Two `recordCompletion` calls, both sent by the custodial backend wallet |
+
+Deployment is the tail end of the pipeline described above, so those two transactions are the pipeline proving itself end to end: quiz graded server-side, row queued in Postgres, worker claimed it, transaction signed and broadcast, receipt confirmed.
+
 **Honest scope.** This contract is deliberately simple, and it is worth being precise about what it is and is not:
 
-- Writes are made by a **custodial backend wallet**, so `msg.sender` is the server, not the learner. Records are attributable through the indexed `ModuleCompleted` event, not through per-user on-chain ownership.
+- Writes are made by a **custodial backend wallet**, so `msg.sender` is the server, not the learner. That is visible on Etherscan: the contract creator and the sender of both transactions are the same backend address. Records are attributable through the indexed `ModuleCompleted` event, not through per-user on-chain ownership.
 - It is **not** a token, an NFT, a soulbound credential, or an ERC-4626 vault. There is no `onlyOwner` logic, no pausing, no upgradeability.
-- It targets **Sepolia testnet**. No contract address is published in this repository: `CONTRACT_ADDRESS` is an environment variable you fill in after deploying it yourself.
+- Two transactions is **demo volume**, not production traffic. The interesting engineering is the queue that puts them there reliably, not the count.
+- To run your own instance, deploy your own copy and set `CONTRACT_ADDRESS`, or point it at the address above for read-only use.
 
 Moving to a user-owned, soulbound credential (ERC-5192) is the next step on the contract roadmap, and it is a redesign rather than a patch, for the reason stated above.
 
@@ -196,7 +210,7 @@ Measured by building the commit before the change and the current HEAD with the 
 
 Stated explicitly, because a portfolio that hides its edges is not worth reading:
 
-- **No deployment is live.** No production URL and no contract address are published in this repository.
+- **The app is not hosted anywhere.** The contract is live on Sepolia, but there is no public URL for the frontend or the API yet, so the only thing you can inspect without running it yourself is the contract on Etherscan.
 - **The contract writes custodially.** As a consequence, the per-user read endpoints in `server/routers/web3.router.ts` query the learner's address while the data sits under the backend wallet's address, so they return empty. The UI does not use them: it reads the persisted queue status and transaction hash from Postgres. Those endpoints are stale and are removed or reworked as part of the ERC-5192 redesign.
 - **Rate limiting is in-memory.** It is per-instance and resets on redeploy. That is a deliberate trade-off for a single-instance deployment and needs Redis before scaling horizontally.
 - **Translations are partly machine-generated.** English and Brazilian Portuguese are human-written; Spanish, French, Japanese and Arabic are machine-translated and flagged in the source as pending human review.

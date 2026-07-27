@@ -192,9 +192,25 @@ const envSchema = z.object({
 
   // Blockchain queue (async worker that writes completions on-chain).
   // How often the in-process worker polls for pending/retryable records.
+  // Base poll interval — the *fast* cadence, used while the queue has work.
   BLOCKCHAIN_QUEUE_INTERVAL_MS: z
     .string()
     .default('15000')
+    .transform((v) => parseInt(v, 10))
+    .pipe(z.number().int().min(1_000)),
+  // Ceiling for the idle backoff. After an empty poll the worker doubles its
+  // wait, up to this value, and snaps back to the base interval the moment it
+  // finds work again.
+  //
+  // This exists for serverless Postgres. Neon (and equivalents) bill compute
+  // by time-awake and suspend after a few minutes of inactivity; a poller that
+  // fires more often than that idle window keeps the database awake forever
+  // and burns the monthly allowance with zero traffic. The default sits well
+  // above any usual suspend threshold so an idle deployment actually lets the
+  // database sleep.
+  BLOCKCHAIN_QUEUE_MAX_INTERVAL_MS: z
+    .string()
+    .default('1800000') // 30 min
     .transform((v) => parseInt(v, 10))
     .pipe(z.number().int().min(1_000)),
   // Max send attempts before a record is marked failed_permanent.
@@ -250,6 +266,19 @@ const envSchema = z.object({
       code: z.ZodIssueCode.custom,
       path: ['JWT_SECRET'],
       message: 'JWT_SECRET is a known placeholder. Rotate it before running in production.',
+    });
+  }
+
+  // The backoff ceiling must not sit below the base interval, or the worker
+  // would "back off" to a *shorter* wait than it started with. Caught at boot
+  // rather than producing a confusing schedule at runtime.
+  if (env.BLOCKCHAIN_QUEUE_MAX_INTERVAL_MS < env.BLOCKCHAIN_QUEUE_INTERVAL_MS) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['BLOCKCHAIN_QUEUE_MAX_INTERVAL_MS'],
+      message:
+        `must be >= BLOCKCHAIN_QUEUE_INTERVAL_MS ` +
+        `(got ${env.BLOCKCHAIN_QUEUE_MAX_INTERVAL_MS}, base is ${env.BLOCKCHAIN_QUEUE_INTERVAL_MS})`,
     });
   }
 });

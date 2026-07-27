@@ -13,9 +13,16 @@ A full-stack Web3 learning platform: generative AI builds a study module on dema
 ![Tests](https://img.shields.io/badge/tests-196%20passing-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-**🔗 Live demo:** **[ai-dlh.vercel.app](https://ai-dlh.vercel.app)** — **requires MetaMask.** Login is a wallet signature, so without an injected wallet the app stops at the connect screen. The screenshots below show what is behind it.
+> ### 🔗 The fastest way to inspect this project
+>
+> **[Read the contract on Etherscan](https://sepolia.etherscan.io/address/0x3C399AdD53c70DC828db096d6b953757494427CE#code)** — [`0x3C399AdD53c70DC828db096d6b953757494427CE`](https://sepolia.etherscan.io/address/0x3C399AdD53c70DC828db096d6b953757494427CE) on Sepolia, deployed with **verified source**. No wallet, no signup, no clone, and nothing that can go offline. The two `recordCompletion` transactions on it were placed by the queue described below, so it is also the pipeline's own receipt.
 
-> **Contract on Sepolia:** [`0x3C399AdD53c70DC828db096d6b953757494427CE`](https://sepolia.etherscan.io/address/0x3C399AdD53c70DC828db096d6b953757494427CE#code) - deployed, with **verified source**, so you can read the Solidity on Etherscan without cloning anything.
+**🔗 Live demo:** **[ai-dlh.vercel.app](https://ai-dlh.vercel.app)**
+
+Two caveats worth knowing before you click, because both are deliberate trade-offs rather than bugs:
+
+- **It requires MetaMask.** Login is a wallet signature, so without an injected wallet the app stops at the connect screen. The screenshots below show what is behind it.
+- **The backend may be temporarily unavailable.** The API runs against serverless Postgres on a free tier with a monthly compute allowance. When that allowance is exhausted the database refuses connections until it resets, and the API goes down with it — the frontend still loads, but anything that needs data will fail. The contract link above is the artefact that never has this problem.
 
 ---
 
@@ -73,6 +80,7 @@ When a user passes a quiz (score >= 70), the API returns immediately and the wri
 - **Idempotency enforced by the database.** A partial unique index guarantees at most one on-chain payout per (user, module). The application also checks first, and a lost race surfaces as a `23505` unique violation that is caught and downgraded instead of double-paying.
 - **Stale lock recovery.** Rows stuck in `processing` past a timeout are reclaimed, so a hard kill does not strand work.
 - **Wallet balance monitor.** The custodial wallet balance is polled and exposed on the health endpoint, because a rail that runs out of gas should be visible before it fails.
+- **Idle backoff on the poller.** Every empty poll doubles the wait, up to a configurable ceiling; the first record found snaps it straight back to the fast interval. This is not micro-optimisation — it is what stops a background worker from bankrupting a serverless database. A fixed 15-second poll never lets a scale-to-zero Postgres suspend, so the deployment burned its entire monthly compute allowance with zero traffic and took itself offline. Polling cost is a real cost when the database bills for being awake.
 
 State machine: `pending -> processing -> confirmed | failed | failed_permanent`.
 
@@ -250,6 +258,7 @@ Stated explicitly, because a portfolio that hides its edges is not worth reading
 - **The frontend and the API are deployed separately.** The frontend runs on Vercel, the backend on Railway, and the contract lives on Sepolia. The frontend reaches the API through `VITE_API_URL`, which is baked in at build time, so a frontend redeploy is required whenever the API URL changes.
 - **The contract writes custodially.** As a consequence, the per-user read endpoints in `server/routers/web3.router.ts` query the learner's address while the data sits under the backend wallet's address, so they return empty. The UI does not use them: it reads the persisted queue status and transaction hash from Postgres. Those endpoints are stale and are removed or reworked as part of the ERC-5192 redesign.
 - **Rate limiting is in-memory.** It is per-instance and resets on redeploy. That is a deliberate trade-off for a single-instance deployment and needs Redis before scaling horizontally.
+- **The database is a free-tier serverless Postgres with a monthly compute allowance.** When it is exhausted the database refuses connections until the allowance resets, and the API is down for the remainder of the month. The poller's idle backoff exists to keep idle consumption low enough that this does not happen, but the ceiling is a free-tier constraint, not an architectural one.
 - **Translations are partly machine-generated.** English and Brazilian Portuguese are human-written; Spanish, French, Japanese and Arabic are machine-translated and flagged in the source as pending human review.
 - **No end-to-end tests.** The test suite is unit-level, and router tests mock the database. E2E coverage is planned, not present, and is tracked in the roadmap below.
 - **No Solidity static analysis in CI.** Slither and a gas regression gate are planned, not present.

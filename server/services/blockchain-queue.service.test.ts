@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   findMany: vi.fn(),
@@ -16,6 +16,7 @@ vi.mock('../utils/env.js', () => ({
   config: {
     NODE_ENV: 'test',
     BLOCKCHAIN_QUEUE_INTERVAL_MS: 15_000,
+    BLOCKCHAIN_QUEUE_MAX_INTERVAL_MS: 120_000,
     BLOCKCHAIN_QUEUE_MAX_ATTEMPTS: 3,
     BLOCKCHAIN_TX_TIMEOUT_MS: 90_000,
     BLOCKCHAIN_STALE_LOCK_MS: 600_000,
@@ -279,5 +280,176 @@ describe('BlockchainQueueService.processOnce', () => {
 
     expect(mocks.recordCompletion).not.toHaveBeenCalled();
     expect(mocks.setCalls).toHaveLength(0);
+  });
+
+  it('reports how many records it picked up', async () => {
+    mocks.findMany.mockResolvedValue([]);
+    await expect(service.processOnce()).resolves.toBe(0);
+
+    const a = makeCandidate({ id: 'rec-a' });
+    const b = makeCandidate({ id: 'rec-b' });
+    mocks.findMany.mockResolvedValue([a, b]);
+    mocks.returningQueue.push(claimedRow(a, 1), claimedRow(b, 1));
+    mocks.recordCompletion.mockResolvedValue({
+      hash: '0xabc',
+      blockNumber: 1,
+      gasUsed: '21000',
+    });
+
+    await expect(service.processOnce()).resolves.toBe(2);
+  });
+});
+
+// The worker used to poll on a fixed setInterval. Against a serverless
+// Postgres that bills for time-awake and suspends after a few minutes idle,
+// a fixed 15s poll keeps the database permanently awake and burns the whole
+// monthly compute allowance with zero traffic — which is exactly how this
+// deployment took its database offline. The loop now backs off while idle.
+describe('BlockchainQueueService idle backoff', () => {
+  let service: BlockchainQueueService;
+
+  const BASE = 15_000;
+  const CEILING = 120_000;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    mocks.setCalls.length = 0;
+    mocks.returningQueue.length = 0;
+    service = new BlockchainQueueService();
+  });
+
+  afterEach(() => {
+    service.stop();
+    vi.useRealTimers();
+  });
+
+  /** Let the in-flight tick's promise chain settle without advancing time. */
+  const settle = () => vi.advanceTimersByTimeAsync(0);
+
+  it('starts at the base interval', async () => {
+    mocks.findMany.mockResolvedValue([]);
+    expect(service.currentIntervalMs).toBe(BASE);
+  });
+
+  it('doubles the interval after an empty poll', async () => {
+    mocks.findMany.mockResolvedValue([]);
+
+    service.start();
+    await settle();
+    expect(service.currentIntervalMs).toBe(BASE * 2);
+
+    await vi.advanceTimersByTimeAsync(BASE * 2);
+    expect(service.currentIntervalMs).toBe(BASE * 4);
+  });
+
+  it('stops doubling at the configured ceiling', async () => {
+    mocks.findMany.mockResolvedValue([]);
+
+    service.start();
+    await settle();
+
+    // 15s -> 30s -> 60s -> 120s (ceiling) and no further.
+    for (let i = 0; i < 10; i += 1) {
+      await vi.advanceTimersByTimeAsync(service.currentIntervalMs);
+    }
+
+    expect(service.currentIntervalMs).toBe(CEILING);
+  });
+
+  it('snaps back to the base interval as soon as work appears', async () => {
+    mocks.findMany.mockResolvedValue([]);
+
+    service.start();
+    await settle();
+    for (let i = 0; i < 5; i += 1) {
+      await vi.advanceTimersByTimeAsync(service.currentIntervalMs);
+    }
+    expect(service.currentIntervalMs).toBe(CEILING);
+
+    const candidate = makeCandidate();
+    mocks.findMany.mockResolvedValue([candidate]);
+    mocks.returningQueue.push(claimedRow(candidate, 1));
+    mocks.recordCompletion.mockResolvedValue({
+      hash: '0xabc',
+      blockNumber: 1,
+      gasUsed: '21000',
+    });
+
+    await vi.advanceTimersByTimeAsync(CEILING);
+
+    expect(service.currentIntervalMs).toBe(BASE);
+  });
+
+  it('backs off when a poll throws, instead of hammering a failing database', async () => {
+    // The failure mode that matters: the database is down or over quota.
+    // Retrying every 15s makes it worse; the loop must treat it like an
+    // empty poll and space out.
+    mocks.findMany.mockRejectedValue(new Error('connection refused'));
+
+    service.start();
+    await settle();
+    expect(service.currentIntervalMs).toBe(BASE * 2);
+
+    await vi.advanceTimersByTimeAsync(BASE * 2);
+    expect(service.currentIntervalMs).toBe(BASE * 4);
+  });
+
+  it('keeps polling after a failure rather than dying', async () => {
+    mocks.findMany.mockRejectedValue(new Error('transient'));
+
+    service.start();
+    await settle();
+    const callsAfterFirst = mocks.findMany.mock.calls.length;
+
+    await vi.advanceTimersByTimeAsync(service.currentIntervalMs);
+
+    expect(mocks.findMany.mock.calls.length).toBeGreaterThan(callsAfterFirst);
+  });
+
+  it('stops scheduling once stopped, and resets the interval', async () => {
+    mocks.findMany.mockResolvedValue([]);
+
+    service.start();
+    await settle();
+    await vi.advanceTimersByTimeAsync(service.currentIntervalMs);
+    const callsBeforeStop = mocks.findMany.mock.calls.length;
+
+    service.stop();
+    expect(service.currentIntervalMs).toBe(BASE);
+
+    await vi.advanceTimersByTimeAsync(CEILING * 4);
+    expect(mocks.findMany.mock.calls.length).toBe(callsBeforeStop);
+  });
+
+  it('is idempotent: a second start() does not create a parallel loop', async () => {
+    mocks.findMany.mockResolvedValue([]);
+
+    service.start();
+    await settle();
+    service.start();
+    await settle();
+
+    const before = mocks.findMany.mock.calls.length;
+    await vi.advanceTimersByTimeAsync(service.currentIntervalMs);
+
+    // Exactly one additional poll, not two.
+    expect(mocks.findMany.mock.calls.length).toBe(before + 1);
+  });
+
+  it('can be restarted after stop() and begins fast again', async () => {
+    mocks.findMany.mockResolvedValue([]);
+
+    service.start();
+    await settle();
+    for (let i = 0; i < 5; i += 1) {
+      await vi.advanceTimersByTimeAsync(service.currentIntervalMs);
+    }
+    expect(service.currentIntervalMs).toBe(CEILING);
+
+    service.stop();
+    service.start();
+
+    expect(service.currentIntervalMs).toBe(BASE);
   });
 });

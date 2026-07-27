@@ -1,4 +1,26 @@
-[build]
+# Railway configuration for the backend service (ai-dlh-server).
+#
+# This is the ONLY deploy config the platform reads. Two things make that
+# non-obvious, and both cost real debugging time before they were written down:
+#
+#  1. The service's Root Directory is set to `/server`, so Railway looks for
+#     config here, not at the repository root. A railway.toml at the root is
+#     never read.
+#  2. The build uses **Railpack**, not Nixpacks (build logs say
+#     `using build driver railpack-v0.33.0`). Railpack ignores nixpacks.toml
+#     entirely and takes the Node version from `.nvmrc`.
+#
+# Build and start commands are intentionally absent: Railpack auto-detects
+# `npm install && npm run build` plus the `start` script from package.json,
+# which is correct for this workspace. Do not switch the build to `npm ci` —
+# there is no server/package-lock.json (the lockfile lives at the repository
+# root, outside this Root Directory), so `npm ci` would fail.
+#
+# The health check hits /healthz, which performs no I/O and always returns 200
+# (see server/index.ts). Note that migrations run before app.listen(), so a
+# database that is unreachable or over quota kills the process before anything
+# can answer this probe — the deploy then fails at the health check even though
+# build and deploy both succeeded.
 
 [deploy]
 healthcheckPath = "/healthz"

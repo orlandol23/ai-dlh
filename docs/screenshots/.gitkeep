@@ -1,0 +1,9 @@
+Place README screenshots here. Expected filenames:
+
+  dashboard.png     /dashboard    progress, generated modules, on-chain status
+  module.png        /module/:id   AI-generated content + server-graded quiz
+  certificate.png   /cert/:hash   public certificate (no wallet required)
+  vark.png          /vark         learning-style questionnaire
+
+Capture at 1440px wide, light mode, UI in English. Crop out browser chrome
+and any real wallet address. Then uncomment the image lines in README.md.

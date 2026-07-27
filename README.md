@@ -13,10 +13,46 @@ A full-stack Web3 learning platform: generative AI builds a study module on dema
 ![Tests](https://img.shields.io/badge/tests-196%20passing-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-**🔗 Live demo:** **[ai-dlh.vercel.app](https://ai-dlh.vercel.app)**
+**🔗 Live demo:** **[ai-dlh.vercel.app](https://ai-dlh.vercel.app)** — **requires MetaMask.** Login is a wallet signature, so without an injected wallet the app stops at the connect screen. The screenshots below show what is behind it.
 
 > **Contract on Sepolia:** [`0x3C399AdD53c70DC828db096d6b953757494427CE`](https://sepolia.etherscan.io/address/0x3C399AdD53c70DC828db096d6b953757494427CE#code) - deployed, with **verified source**, so you can read the Solidity on Etherscan without cloning anything.
-> **Screenshots:** _to be added._
+
+---
+
+## Screenshots
+
+The live demo is gated behind a wallet connection, so these show the screens
+that a reviewer without MetaMask cannot reach. The public certificate page is
+the one exception — it needs no wallet and can be opened directly.
+
+<!--
+  Drop the images in docs/screenshots/ using exactly these filenames and the
+  references below will resolve with no further edits.
+
+  Capture at 1440px wide, in light mode, with the UI in English (use the
+  language selector in the header, or open in a private window with an
+  English browser locale). Crop out browser chrome and any real wallet
+  address.
+-->
+
+| Screen | Route | Image |
+|---|---|---|
+| **Dashboard** — progress, generated modules, on-chain status | `/dashboard` | `docs/screenshots/dashboard.png` |
+| **Module + quiz** — AI-generated content, server-graded quiz | `/module/:id` | `docs/screenshots/module.png` |
+| **Certificate** — public, no wallet needed | `/cert/:hash` | `docs/screenshots/certificate.png` |
+| **VARK profile** — learning-style questionnaire | `/vark` | `docs/screenshots/vark.png` |
+
+<!-- Uncomment each line once the corresponding file exists:
+
+![Dashboard](docs/screenshots/dashboard.png)
+![Module and quiz](docs/screenshots/module.png)
+![Public certificate](docs/screenshots/certificate.png)
+![VARK profile](docs/screenshots/vark.png)
+
+-->
+
+> **Not added yet.** The table above is the placeholder; the images are still
+> to be captured.
 
 ---
 

@@ -13,8 +13,9 @@ A full-stack Web3 learning platform: generative AI builds a study module on dema
 ![Tests](https://img.shields.io/badge/tests-196%20passing-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
+**🔗 Live demo:** **[ai-dlh.vercel.app](https://ai-dlh.vercel.app)**
+
 > **Contract on Sepolia:** [`0x3C399AdD53c70DC828db096d6b953757494427CE`](https://sepolia.etherscan.io/address/0x3C399AdD53c70DC828db096d6b953757494427CE#code) - deployed, with **verified source**, so you can read the Solidity on Etherscan without cloning anything.
-> **Live demo:** _not deployed yet. The URL goes here once it is up._
 > **Screenshots:** _to be added._
 
 ---
@@ -210,7 +211,7 @@ Measured by building the commit before the change and the current HEAD with the 
 
 Stated explicitly, because a portfolio that hides its edges is not worth reading:
 
-- **The app is not hosted anywhere.** The contract is live on Sepolia, but there is no public URL for the frontend or the API yet, so the only thing you can inspect without running it yourself is the contract on Etherscan.
+- **The frontend and the API are deployed separately.** The frontend runs on Vercel, the backend on Railway, and the contract lives on Sepolia. The frontend reaches the API through `VITE_API_URL`, which is baked in at build time, so a frontend redeploy is required whenever the API URL changes.
 - **The contract writes custodially.** As a consequence, the per-user read endpoints in `server/routers/web3.router.ts` query the learner's address while the data sits under the backend wallet's address, so they return empty. The UI does not use them: it reads the persisted queue status and transaction hash from Postgres. Those endpoints are stale and are removed or reworked as part of the ERC-5192 redesign.
 - **Rate limiting is in-memory.** It is per-instance and resets on redeploy. That is a deliberate trade-off for a single-instance deployment and needs Redis before scaling horizontally.
 - **Translations are partly machine-generated.** English and Brazilian Portuguese are human-written; Spanish, French, Japanese and Arabic are machine-translated and flagged in the source as pending human review.

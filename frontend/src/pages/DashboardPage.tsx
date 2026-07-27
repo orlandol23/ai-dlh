@@ -2,6 +2,7 @@ import type { FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { SUPPORTED_LOCALES, type SupportedLocale } from '@/i18n';
 import { Button } from '@/components/atoms/Button';
 import { Input } from '@/components/atoms/Input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/atoms/Card';
@@ -120,10 +121,19 @@ export const DashboardPage = () => {
       return;
     }
     setIsGenerating(true);
-    // Send the user's active i18n locale so the AI generates content in
-    // the language they are reading the UI in. Backend defaults to pt-BR
-    // for backwards compatibility if for some reason the locale is missing.
-    const locale = (i18n.language as 'en' | 'pt-BR' | 'es' | 'fr' | 'ja' | 'ar') ?? 'pt-BR';
+    // Send the user's active i18n locale so the AI generates content in the
+    // language they are reading the UI in. Read resolvedLanguage rather than
+    // language: the latter is what was *requested* (it can be a region tag
+    // like "en-US", or anything the browser reported), while the former is
+    // what i18next actually settled on. Validate it against the supported
+    // list anyway, so a value outside the enum can never reach the server,
+    // and fall back to the same default as `fallbackLng`.
+    const active = i18n.resolvedLanguage ?? i18n.language;
+    const locale: SupportedLocale = SUPPORTED_LOCALES.includes(
+      active as SupportedLocale
+    )
+      ? (active as SupportedLocale)
+      : 'en';
     generateMutation.mutate({ topic, level, locale });
   };
 

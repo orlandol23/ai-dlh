@@ -171,7 +171,7 @@ export const DashboardPage = () => {
 
       <main id="main-content" tabIndex={-1} className="container mx-auto px-4 py-8 space-y-6">
         {/* VARK onboarding CTA — only until the user takes the questionnaire.
-            Fase 1 da fusão aprendaMais (docs/FUSION_APRENDAMAIS.md); the
+            Fase 1 da fusão aprendaMais; the
             quiz can be retaken later from the preferences panel. */}
         {user && user.learningStyle == null && (
           <Card className="border-primary/40">

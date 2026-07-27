@@ -216,7 +216,7 @@ Stated explicitly, because a portfolio that hides its edges is not worth reading
 - **Translations are partly machine-generated.** English and Brazilian Portuguese are human-written; Spanish, French, Japanese and Arabic are machine-translated and flagged in the source as pending human review.
 - **No end-to-end tests.** The test suite is unit-level, and router tests mock the database. E2E coverage is planned, not present, and is tracked in the roadmap below.
 - **No Solidity static analysis in CI.** Slither and a gas regression gate are planned, not present.
-- **`docs/ARCHITECTURE.md` and `docs/API.md` are outdated.** They describe an earlier single-provider version without the queue or VARK. `docs/DEPLOYMENT.md` carries a staleness banner.
+- **Reference documentation is thin.** The standalone architecture and API documents described an earlier single-provider version without the queue or VARK, so they were removed rather than left to mislead. This README and the ADRs under `docs/adr/` are the current source of truth; `docs/DEPLOYMENT.md` carries a staleness banner.
 
 ## Roadmap
 

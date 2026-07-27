@@ -239,6 +239,6 @@ See [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for common issues.
 
 ## 📚 Next Steps
 
-- [ARCHITECTURE.md](./ARCHITECTURE.md) - Understand the system design
-- [API.md](./API.md) - tRPC endpoints documentation
 - [DEPLOYMENT.md](./DEPLOYMENT.md) - Production deployment
+- [adr/](./adr/) - Architecture decision records
+- [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) - Common issues and solutions

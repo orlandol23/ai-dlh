@@ -10,7 +10,7 @@ export const RTL_LOCALES: SupportedLocale[] = ['ar'];
 
 // NOTE: 'vark' now ships all six locales. pt-BR and en are authored; es, fr,
 // ja and ar are machine-translated (structure/placeholder-parity verified)
-// and pending human review — see docs/FUSION_APRENDAMAIS.md (Fase 1).
+// and pending human review.
 export const NAMESPACES = ['common', 'home', 'dashboard', 'module', 'quiz', 'cert', 'auth', 'zod', 'vark'] as const;
 
 i18n

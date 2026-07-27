@@ -2,7 +2,7 @@
  * VARK learning-style model — shared, dependency-free domain logic.
  *
  * Ported (concept, not code) from aprendaMais `frontend/js/quiz.js` as
- * Fase 1 of the fusion roadmap (docs/FUSION_APRENDAMAIS.md). The same
+ * Fase 1 of the aprendaMais fusion roadmap. The same
  * deterministic rules are mirrored on the frontend
  * (frontend/src/lib/vark.ts) for instant result display; the server-side
  * computation here is the source of truth for what gets persisted.

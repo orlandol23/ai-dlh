@@ -16,8 +16,7 @@ export const users = pgTable('users', {
   // VARK learning style detected by the onboarding questionnaire.
   // 'visual' | 'auditory' | 'reading_writing' | 'kinesthetic' — nullable
   // until the user takes the quiz. Conditions AI module generation
-  // (see services/prompt-builder.ts). Fase 1 da fusão aprendaMais
-  // (docs/FUSION_APRENDAMAIS.md).
+  // (see services/prompt-builder.ts). Fase 1 da fusão aprendaMais.
   learningStyle: varchar('learning_style', { length: 20 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   lastLoginAt: timestamp('last_login_at'),

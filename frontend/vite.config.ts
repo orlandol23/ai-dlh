@@ -45,7 +45,7 @@ export default defineConfig({
         // Vendor splitting for the heavy libraries. Combined with the
         // route-level React.lazy in App.tsx, each of these only downloads
         // when a page that actually uses it renders:
-        //   - ethers (~310 KB): only useAuth (wallet login) imports it
+        //   - viem: only the wallet login path imports it
         //   - framer-motion (~110 KB): ModulePage / CertPage / OnboardingTour
         //   - react-markdown + remark/micromark tree (~120 KB): ModulePage
         // i18n locales are NOT bundled — i18next-http-backend fetches
@@ -53,7 +53,7 @@ export default defineConfig({
         // split there. The object form pulls each listed package and its
         // exclusive dependency subtree into the named chunk.
         manualChunks: {
-          'vendor-ethers': ['ethers'],
+          'vendor-viem': ['viem'],
           'vendor-motion': ['framer-motion'],
           'vendor-markdown': ['react-markdown'],
           // Sentry SDK in its own chunk: it loads eagerly (main.tsx inits
@@ -69,8 +69,8 @@ export default defineConfig({
     },
     // Surface bundle-bloat regressions in build/CI logs. After the Onda 2b
     // code-splitting (route-level React.lazy + manualChunks above), the
-    // largest chunks are vendor-ethers (~263 KB pre-gzip, lazy) and the
-    // entry (~259 KB pre-gzip). The 500 KB ceiling gives headroom before
+    // largest chunks are the entry (~259 KB pre-gzip) and vendor-viem
+    // (~201 KB pre-gzip, lazy). The 500 KB ceiling gives headroom before
     // Vite/Rollup emits the chunk-size warning, so a stray new dependency
     // shows up as a noisy log instead of silently drifting bigger.
     // NOTE: this is a warning threshold only — it does NOT fail the build.

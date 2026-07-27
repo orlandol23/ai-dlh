@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { ethers, type Eip1193Provider } from 'ethers';
+import { type EIP1193Provider } from 'viem';
 import { useTranslation } from 'react-i18next';
 import { toast } from '@/components/molecules/Toaster';
-import { getEipErrorCode, getErrorMessage } from '@/lib/errors';
+import { getErrorMessage } from '@/lib/errors';
+import { connectAndSign, isRequestPending, isUserRejection } from '@/lib/wallet';
 import { trpc } from '@/lib/trpc';
 import { useAuthStore } from '@/store/authStore';
 
@@ -12,12 +13,15 @@ declare global {
     // injected wallets implement (request/on/removeListener). Using this
     // narrow type instead of `any` catches typos like `window.ethereum.req(...)`
     // at compile time without pulling in MetaMask-specific types we don't need.
-    ethereum?: Eip1193Provider;
+    ethereum?: EIP1193Provider;
   }
 }
 
 /**
- * Hook for Web3 authentication
+ * Hook for Web3 authentication.
+ *
+ * The wallet mechanics live in `@/lib/wallet` (framework-free and unit
+ * tested); this hook only wires them to state, toasts and the tRPC call.
  */
 export const useAuth = () => {
   const [isConnecting, setIsConnecting] = useState(false);
@@ -36,54 +40,27 @@ export const useAuth = () => {
     setIsConnecting(true);
 
     try {
-      // Request account access
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const address = await signer.getAddress();
+      const { address, message, signature } = await connectAndSign(window.ethereum, {
+        domain: window.location.host,
+      });
 
-      // Build the exact grammar the backend parses. A fresh random nonce
-      // makes each login message unique; the backend records it to block
-      // replay. Domain binding prevents a signature captured on another
-      // site from being accepted here.
-      const nonceBytes = new Uint8Array(24);
-      crypto.getRandomValues(nonceBytes);
-      const nonce = btoa(String.fromCharCode(...nonceBytes))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '');
-
-      const message =
-        `AI-DLH Authentication\n` +
-        `Domain: ${window.location.host}\n` +
-        `Address: ${address}\n` +
-        `Timestamp: ${Date.now()}\n` +
-        `Nonce: ${nonce}`;
-
-      // Request signature
-      const signature = await signer.signMessage(message);
-
-      // Authenticate with backend
       const result = await loginMutation.mutateAsync({
         walletAddress: address,
         signature,
         message,
       });
 
-      // Save to store
       setToken(result.token);
       setUser(result.user);
 
       return result;
 
     } catch (error) {
-       
       console.error('Connection error:', error);
 
-      // EIP-1193 error codes: 4001 = user rejected, -32002 = request pending.
-      const code = getEipErrorCode(error);
-      if (code === 4001) {
+      if (isUserRejection(error)) {
         toast(t('errors.rejected.title'), { description: t('errors.rejected.description') });
-      } else if (code === -32002) {
+      } else if (isRequestPending(error)) {
         toast.warning(t('errors.pendingRequest.title'), {
           description: t('errors.pendingRequest.description'),
         });

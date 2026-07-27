@@ -22,8 +22,8 @@ Welcome to the AI-Powered Decentralized Learning Hub documentation.
 
 ```bash
 # 1. Clone and install
-git clone https://github.com/orlandol23/all.git
-cd all
+git clone https://github.com/orlandol23/ai-dlh.git
+cd ai-dlh
 npm run setup
 
 # 2. Configure environment

@@ -16,7 +16,7 @@ If the user invokes this skill without any other guidance, ask them what they wa
 - `ui_kits/web/v2.html` — **canonical v2 UI kit.** Single-page React with tokens, typography, every component (incl. Toast, Dialog, Tabs, Avatar, Skeleton, Tooltip), special states (AI streaming, blockchain stamp), dashboard redesign, and a working dark-mode toggle. Start here for new screens.
 - `ui_kits/web/index.html` — **legacy v1 kit (blue/shadcn).** Kept for historical reference only. Do not copy from this for new work.
 - `PLANO_IMPLEMENTACAO_V2.md` — step-by-step migration plan from v1→v2 for the real codebase. Hand to Claude Code.
-- `_source/` — read-only mirror of the real codebase (`orlandol23/all` → `frontend/src/`).
+- `_source/` — read-only mirror of the real codebase (`orlandol23/ai-dlh` → `frontend/src/`).
 - `assets/` — hex logo mark + wordmark (SVG with purple→cyan gradient).
 - `preview/` — small spec cards (colors, type, components) — all refreshed to v2 palette.
 

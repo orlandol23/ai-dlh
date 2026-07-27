@@ -6,7 +6,7 @@ IA generativa multi-provider + Web3).
 
 > **📌 Documento vigente:** o [PLANO_MESTRE.md](./PLANO_MESTRE.md) absorveu as
 > Fases 2–3 deste documento (Fase 2 → **B4**; Fase 3 → **B7**). A **Fase 1
-> (VARK) está concluída** ([PR #17](https://github.com/orlandol23/all/pull/17)).
+> (VARK) está concluída** ([PR #17](https://github.com/orlandol23/ai-dlh/pull/17)).
 > A **Fase 4** (arquivamento do aprendaMais) segue pendente — sem urgência de
 > segurança: o banco do MongoDB Atlas foi **excluído em 2026-07-24**, matando a
 > credencial exposta. Ver "Estado de execução" no Plano-Mestre.

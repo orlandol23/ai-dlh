@@ -1,6 +1,6 @@
 # Plano de Implementação — AI-DLH v2 "Circuit & Ink"
 
-Documento pra colar no Claude Code. Implementa a v2 do design system no repo `orlandol23/all`, branch atual ou nova (`feat/design-system-v2`). Esforço estimado: **6–10 horas** bem concentradas, dependendo da profundidade em dark mode e componentes novos.
+Documento pra colar no Claude Code. Implementa a v2 do design system no repo `orlandol23/ai-dlh`, branch atual ou nova (`feat/design-system-v2`). Esforço estimado: **6–10 horas** bem concentradas, dependendo da profundidade em dark mode e componentes novos.
 
 ---
 

@@ -2,7 +2,7 @@
 
 A full-stack Web3 learning platform: generative AI builds a study module on demand, the quiz is graded entirely server-side, and a passing score is written to Ethereum by an asynchronous, crash-safe on-chain queue.
 
-![CI](https://github.com/orlandol23/all/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/orlandol23/ai-dlh/actions/workflows/ci.yml/badge.svg)
 ![Solidity](https://img.shields.io/badge/Solidity-0.8.20-363636)
 ![Hardhat](https://img.shields.io/badge/Hardhat-2.19-FFF100)
 ![ethers](https://img.shields.io/badge/ethers.js-v6-2535a0)
@@ -155,8 +155,8 @@ Postgres is the system of record for queue state, which is why a restart never l
 Requires Node 20+, PostgreSQL, a Sepolia RPC URL, a funded test wallet, and at least a Gemini API key. The backend validates its environment on boot and exits if anything required is missing, so there is no half-configured state.
 
 ```bash
-git clone https://github.com/orlandol23/all.git
-cd all
+git clone https://github.com/orlandol23/ai-dlh.git
+cd ai-dlh
 npm install
 
 cp .env.example .env

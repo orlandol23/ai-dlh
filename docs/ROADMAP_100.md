@@ -43,7 +43,7 @@ workspaces com exit 0; nenhum stub enganoso no workflow.
 
 ---
 
-## ✅ Onda 2 — Confiabilidade do fluxo principal (PRs [#20](https://github.com/orlandol23/all/pull/20) e [#21](https://github.com/orlandol23/all/pull/21))
+## ✅ Onda 2 — Confiabilidade do fluxo principal (PRs [#20](https://github.com/orlandol23/ai-dlh/pull/20) e [#21](https://github.com/orlandol23/ai-dlh/pull/21))
 
 Fechar os pontos onde o produto perde dados ou mente para o usuário.
 

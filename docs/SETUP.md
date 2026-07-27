@@ -27,7 +27,7 @@ Complete guide to set up the AI-Powered Decentralized Learning Hub.
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/orlandol23/all.git
+git clone https://github.com/orlandol23/ai-dlh.git
 cd ai-dlh
 
 # 2. Install all dependencies

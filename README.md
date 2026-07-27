@@ -10,7 +10,7 @@ A full-stack Web3 learning platform: generative AI builds a study module on dema
 ![React](https://img.shields.io/badge/React-18-61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6)
 ![tRPC](https://img.shields.io/badge/tRPC-10-398CCB)
-![Tests](https://img.shields.io/badge/tests-175%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-196%20passing-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
 > **Contract on Sepolia:** [`0x3C399AdD53c70DC828db096d6b953757494427CE`](https://sepolia.etherscan.io/address/0x3C399AdD53c70DC828db096d6b953757494427CE#code) - deployed, with **verified source**, so you can read the Solidity on Etherscan without cloning anything.
@@ -174,11 +174,11 @@ There is no Docker setup and no mock mode: a real database, a real RPC endpoint 
 
 ## Tests
 
-175 tests pass across the three workspaces. Run each one directly:
+196 tests pass across the three workspaces. Run each one directly:
 
 ```bash
 cd server    && npx vitest run     # 124 tests, 12 files
-cd frontend  && npx vitest run     #  28 tests,  4 files
+cd frontend  && npx vitest run     #  49 tests,  5 files
 cd contracts && npx hardhat test   #  23 tests
 ```
 

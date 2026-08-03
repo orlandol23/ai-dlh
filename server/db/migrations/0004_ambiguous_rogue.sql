@@ -7,9 +7,11 @@
 -- payout slot. Plain failed-quiz rows ('none') stay unconstrained, so a user
 -- may still retake/fail the same module any number of times.
 --
--- NOTE: drizzle-kit 0.20.x does not emit the `.where(...)` partial predicate
--- from the schema index builder (server/db/schema.ts), so the WHERE clause
--- below is maintained by hand. Keep them in sync.
+-- NOTE (historical): drizzle-kit 0.20.x did not emit the `.where(...)` partial
+-- predicate from the schema index builder (server/db/schema.ts), so the WHERE
+-- clause below was written by hand. drizzle-kit 0.31 emits it correctly; see
+-- 0005_lucky_the_hunter.sql, which realigns the stored snapshot. Leave this
+-- file as-is — it is already applied in every environment.
 
 -- Step 1 — self-heal existing data BEFORE building the unique index. The
 -- pre-P2 submitQuiz (shipped with the queue, PR #20) enqueued a payout on

@@ -1,10 +1,8 @@
 {
-  "id": "eabe3e61-d8b9-497c-a996-fbca1053bace",
-  "prevId": "4e417476-b8b9-4940-aa7e-b2345eb1fea4",
-  "version": "5",
-  "dialect": "pg",
+  "version": "7",
+  "dialect": "postgresql",
   "tables": {
-    "auth_nonces": {
+    "public.auth_nonces": {
       "name": "auth_nonces",
       "schema": "",
       "columns": {
@@ -36,26 +34,50 @@
       },
       "indexes": {
         "auth_nonces_nonce_wallet_idx": {
-          "name": "auth_nonces_nonce_wallet_idx",
           "columns": [
-            "nonce",
-            "wallet_address"
+            {
+              "expression": "nonce",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "wallet_address",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": true
+          "with": {},
+          "name": "auth_nonces_nonce_wallet_idx",
+          "isUnique": true,
+          "method": "btree",
+          "concurrently": false
         },
         "auth_nonces_used_at_idx": {
-          "name": "auth_nonces_used_at_idx",
           "columns": [
-            "used_at"
+            {
+              "expression": "used_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "auth_nonces_used_at_idx",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         }
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "modules": {
+    "public.modules": {
       "name": "modules",
       "schema": "",
       "columns": {
@@ -131,46 +153,73 @@
       },
       "indexes": {
         "module_user_id_idx": {
-          "name": "module_user_id_idx",
           "columns": [
-            "user_id"
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "module_user_id_idx",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "module_topic_idx": {
-          "name": "module_topic_idx",
           "columns": [
-            "topic"
+            {
+              "expression": "topic",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "module_topic_idx",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "module_created_at_idx": {
-          "name": "module_created_at_idx",
           "columns": [
-            "created_at"
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "module_created_at_idx",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "modules_user_id_users_id_fk": {
           "name": "modules_user_id_users_id_fk",
           "tableFrom": "modules",
-          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "progress_records": {
+    "public.progress_records": {
       "name": "progress_records",
       "schema": "",
       "columns": {
@@ -226,59 +275,86 @@
       },
       "indexes": {
         "progress_user_id_idx": {
-          "name": "progress_user_id_idx",
           "columns": [
-            "user_id"
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "progress_user_id_idx",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "progress_module_id_idx": {
-          "name": "progress_module_id_idx",
           "columns": [
-            "module_id"
+            {
+              "expression": "module_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "progress_module_id_idx",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         },
         "progress_tx_hash_idx": {
-          "name": "progress_tx_hash_idx",
           "columns": [
-            "transaction_hash"
+            {
+              "expression": "transaction_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "progress_tx_hash_idx",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         }
       },
       "foreignKeys": {
         "progress_records_user_id_users_id_fk": {
           "name": "progress_records_user_id_users_id_fk",
           "tableFrom": "progress_records",
-          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
+          "tableTo": "users",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "progress_records_module_id_modules_id_fk": {
           "name": "progress_records_module_id_modules_id_fk",
           "tableFrom": "progress_records",
-          "tableTo": "modules",
           "columnsFrom": [
             "module_id"
           ],
+          "tableTo": "modules",
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "users": {
+    "public.users": {
       "name": "users",
       "schema": "",
       "columns": {
@@ -353,11 +429,19 @@
       },
       "indexes": {
         "wallet_address_idx": {
-          "name": "wallet_address_idx",
           "columns": [
-            "wallet_address"
+            {
+              "expression": "wallet_address",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "isUnique": false
+          "with": {},
+          "name": "wallet_address_idx",
+          "isUnique": false,
+          "method": "btree",
+          "concurrently": false
         }
       },
       "foreignKeys": {},
@@ -365,19 +449,28 @@
       "uniqueConstraints": {
         "users_wallet_address_unique": {
           "name": "users_wallet_address_unique",
-          "nullsNotDistinct": false,
           "columns": [
             "wallet_address"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
-      }
+      },
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     }
   },
   "enums": {},
   "schemas": {},
   "_meta": {
-    "columns": {},
     "schemas": {},
-    "tables": {}
-  }
+    "tables": {},
+    "columns": {}
+  },
+  "id": "eabe3e61-d8b9-497c-a996-fbca1053bace",
+  "prevId": "4e417476-b8b9-4940-aa7e-b2345eb1fea4",
+  "sequences": {},
+  "policies": {},
+  "views": {},
+  "roles": {}
 }

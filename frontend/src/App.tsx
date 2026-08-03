@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { lazy, Suspense, useState } from 'react';
 import { TooltipProvider } from '@radix-ui/react-tooltip';
 import { trpc, createTRPCClient } from './lib/trpc';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
 import { ErrorBoundary } from './components/molecules/ErrorBoundary';
 import { Toaster } from './components/molecules/Toaster';
 import { SkipLink } from './components/atoms/SkipLink';

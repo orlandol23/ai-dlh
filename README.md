@@ -10,7 +10,7 @@ A full-stack Web3 learning platform: generative AI builds a study module on dema
 ![React](https://img.shields.io/badge/React-18-61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6)
 ![tRPC](https://img.shields.io/badge/tRPC-10-398CCB)
-![Tests](https://img.shields.io/badge/tests-196%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-216%20passing-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
 > ### 🔗 The fastest way to inspect this project
@@ -80,7 +80,7 @@ When a user passes a quiz (score >= 70), the API returns immediately and the wri
 - **Idempotency enforced by the database.** A partial unique index guarantees at most one on-chain payout per (user, module). The application also checks first, and a lost race surfaces as a `23505` unique violation that is caught and downgraded instead of double-paying.
 - **Stale lock recovery.** Rows stuck in `processing` past a timeout are reclaimed, so a hard kill does not strand work.
 - **Wallet balance monitor.** The custodial wallet balance is polled and exposed on the health endpoint, because a rail that runs out of gas should be visible before it fails.
-- **Idle backoff on the poller.** Every empty poll doubles the wait, up to a configurable ceiling; the first record found snaps it straight back to the fast interval. This is not micro-optimisation — it is what stops a background worker from bankrupting a serverless database. A fixed 15-second poll never lets a scale-to-zero Postgres suspend, so the deployment burned its entire monthly compute allowance with zero traffic and took itself offline. Polling cost is a real cost when the database bills for being awake.
+- **Event-driven worker, polling only as a safety net.** The endpoints that enqueue work wake the worker directly, so a fresh record is processed in milliseconds; while the queue drains it re-polls at the fast interval. Once empty, the worker sleeps until the earliest scheduled retry (or stale lock), capped at a safety-net ceiling measured in hours. This is not micro-optimisation — it is what stops a background worker from bankrupting a serverless database, and it took two lessons to learn. A fixed 15-second poll never lets a scale-to-zero Postgres suspend, which burned the entire monthly compute allowance with zero traffic and took the deployment offline. The first fix — exponential idle backoff up to a 30-minute ceiling — cut queries 120× yet still blew the allowance, because the provider bills a full suspend-window minimum (~5 minutes on Neon's free plan) for every wakeup: 48 wakeups a day is ~4 hours of billed compute regardless of how little the polls do. What a scale-to-zero database bills for is the number of times it is woken, so the design goal is not "poll less often" but "do not poll at all unless something is scheduled".
 
 State machine: `pending -> processing -> confirmed | failed | failed_permanent`.
 
@@ -219,10 +219,10 @@ There is no Docker setup and no mock mode: a real database, a real RPC endpoint 
 
 ## Tests
 
-196 tests pass across the three workspaces. Run each one directly:
+216 tests pass across the three workspaces. Run each one directly:
 
 ```bash
-cd server    && npx vitest run     # 124 tests, 12 files
+cd server    && npx vitest run     # 144 tests, 12 files
 cd frontend  && npx vitest run     #  49 tests,  5 files
 cd contracts && npx hardhat test   #  23 tests
 ```
@@ -258,7 +258,7 @@ Stated explicitly, because a portfolio that hides its edges is not worth reading
 - **The frontend and the API are deployed separately.** The frontend runs on Vercel, the backend on Railway, and the contract lives on Sepolia. The frontend reaches the API through `VITE_API_URL`, which is baked in at build time, so a frontend redeploy is required whenever the API URL changes.
 - **The contract writes custodially.** As a consequence, the per-user read endpoints in `server/routers/web3.router.ts` query the learner's address while the data sits under the backend wallet's address, so they return empty. The UI does not use them: it reads the persisted queue status and transaction hash from Postgres. Those endpoints are stale and are removed or reworked as part of the ERC-5192 redesign.
 - **Rate limiting is in-memory.** It is per-instance and resets on redeploy. That is a deliberate trade-off for a single-instance deployment and needs Redis before scaling horizontally.
-- **The database is a free-tier serverless Postgres with a monthly compute allowance.** When it is exhausted the database refuses connections until the allowance resets, and the API is down for the remainder of the month. The poller's idle backoff exists to keep idle consumption low enough that this does not happen, but the ceiling is a free-tier constraint, not an architectural one.
+- **The database is a free-tier serverless Postgres with a monthly compute allowance.** When it is exhausted the database refuses connections until the allowance resets, and the API is down for the remainder of the month. The queue worker is event-driven precisely so an idle deployment wakes the database only a handful of times a day (the safety-net poll); the allowance is a free-tier constraint, not an architectural one. Two operational corollaries: point uptime monitors at `/healthz` (no I/O), never at `/health`, whose database probe would keep the compute awake around the clock; and treat any unexplained allowance burn as "something is waking the database" — the provider's monitoring dashboard shows compute-active periods, which reveal the wakeup cadence and therefore the culprit.
 - **Translations are partly machine-generated.** English and Brazilian Portuguese are human-written; Spanish, French, Japanese and Arabic are machine-translated and flagged in the source as pending human review.
 - **No end-to-end tests.** The test suite is unit-level, and router tests mock the database. E2E coverage is planned, not present, and is tracked in the roadmap below.
 - **No Solidity static analysis in CI.** Slither and a gas regression gate are planned, not present.

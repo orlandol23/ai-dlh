@@ -79,7 +79,13 @@ app.get('/healthz', (req, res) => {
   });
 });
 
-// Detailed health check endpoint
+// Detailed health check endpoint — for HUMANS debugging an incident, not
+// for machines. The database probe below (`SELECT 1`) wakes a suspended
+// scale-to-zero Postgres, and every wakeup bills a full suspend-window
+// minimum (~5 min of compute on Neon's free plan). An uptime monitor
+// pinging this path every few minutes keeps the database awake 24/7 and
+// silently burns the entire monthly compute allowance with zero traffic.
+// Point automated probes at /healthz (no I/O) instead.
 app.get('/health', async (req, res) => {
   const dbOk = await checkDatabaseConnection();
   const blockchainOk = await web3Service.testConnection();

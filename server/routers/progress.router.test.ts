@@ -12,6 +12,14 @@ const mocks = vi.hoisted(() => ({
   updateReturning: vi.fn(),
   recordCompletion: vi.fn(),
   progressFindMany: vi.fn(),
+  queueWake: vi.fn(),
+}));
+
+// The router nudges the queue worker (push, don't poll) whenever it enqueues
+// an on-chain write. Mocked out: the real module pulls in web3.service, which
+// builds an ethers provider at import time.
+vi.mock('../services/blockchain-queue.service.js', () => ({
+  blockchainQueueService: { wake: mocks.queueWake },
 }));
 
 // env.ts validates process.env and exits on failure — stub it out so the
@@ -160,6 +168,21 @@ describe('progress.submitQuiz async on-chain queue', () => {
     // that's the queue worker's job. No UPDATE happens here either.
     expect(mocks.recordCompletion).not.toHaveBeenCalled();
     expect(mocks.updateSet).not.toHaveBeenCalled();
+    // …but it must NUDGE the worker: the idle loop sleeps for hours (so the
+    // scale-to-zero database can suspend) and never discovers new work by
+    // polling. Without this wake the record would wait for the safety net.
+    expect(mocks.queueWake).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not wake the queue worker when nothing was enqueued (failing score)', async () => {
+    mocks.insertReturning.mockResolvedValue([{ id: 44, blockchainStatus: 'none' }]);
+    const caller = callerForUser(1);
+
+    // 0 of 3 correct → status 'none', no on-chain work created.
+    const result = await caller.submitQuiz({ moduleId: 1, answers: [3, 3, 3] });
+
+    expect(result.passed).toBe(false);
+    expect(mocks.queueWake).not.toHaveBeenCalled();
   });
 
   it('never leaks blockchainError or a transaction hash in the submit response', async () => {
@@ -201,6 +224,9 @@ describe('progress.retryBlockchain', () => {
         eq(progressRecords.blockchainStatus, 'failed_permanent')
       )
     );
+    // Same push-not-poll contract as submitQuiz: the re-enqueued record is
+    // handed to the worker immediately instead of waiting for the safety net.
+    expect(mocks.queueWake).toHaveBeenCalledTimes(1);
   });
 
   it("returns NOT_FOUND for another user's record (conditional update misses)", async () => {
@@ -221,6 +247,8 @@ describe('progress.retryBlockchain', () => {
         eq(progressRecords.blockchainStatus, 'failed_permanent')
       )
     );
+    // Nothing was re-enqueued, so the worker (and the database) stay asleep.
+    expect(mocks.queueWake).not.toHaveBeenCalled();
   });
 
   it('returns NOT_FOUND when the record is not failed_permanent (e.g. still pending)', async () => {
@@ -377,6 +405,8 @@ describe('progress.submitQuiz on-chain payout farming guard (security P2)', () =
       })
     );
     expect(mocks.recordCompletion).not.toHaveBeenCalled();
+    // No enqueue → no reason to wake the worker (and thus the database).
+    expect(mocks.queueWake).not.toHaveBeenCalled();
   });
 
   it('still enqueues a payout when the only prior record is a non-payable failed attempt', async () => {
@@ -422,6 +452,8 @@ describe('progress.submitQuiz on-chain payout farming guard (security P2)', () =
       expect.objectContaining({ blockchainStatus: 'none' })
     );
     expect(mocks.recordCompletion).not.toHaveBeenCalled();
+    // The race loser recorded 'none' — nothing was enqueued, so no wake.
+    expect(mocks.queueWake).not.toHaveBeenCalled();
   });
 });
 

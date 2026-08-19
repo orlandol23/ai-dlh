@@ -48,10 +48,16 @@ interface QueueCandidate {
  *  - `submitQuiz` only INSERTs the record with `blockchain_status='pending'`
  *    and returns immediately — the HTTP response no longer waits for the
  *    Sepolia confirmation (which can take minutes when gas spikes).
- *  - Every BLOCKCHAIN_QUEUE_INTERVAL_MS this worker polls for records that
- *    are `pending`, `failed` past their `blockchain_next_attempt_at`, or
- *    stuck in `processing` longer than BLOCKCHAIN_STALE_LOCK_MS (crash
- *    recovery), and processes them sequentially.
+ *  - The endpoints that enqueue work also call `wake()`, so a fresh record
+ *    is processed within milliseconds. Each poll claims records that are
+ *    `pending`, `failed` past their `blockchain_next_attempt_at`, or stuck
+ *    in `processing` longer than BLOCKCHAIN_STALE_LOCK_MS (crash recovery),
+ *    and processes them sequentially. While the queue is busy the loop
+ *    re-polls every BLOCKCHAIN_QUEUE_INTERVAL_MS; once empty it sleeps
+ *    until the earliest scheduled retry / stale lock, or the
+ *    BLOCKCHAIN_QUEUE_MAX_INTERVAL_MS safety net when nothing is parked —
+ *    an idle deployment must not keep waking a scale-to-zero database
+ *    (see idleWaitMs for the billing arithmetic that forces this).
  *
  * Claim semantics (idempotency):
  *  - A record is claimed via a single conditional UPDATE
@@ -77,7 +83,10 @@ export class BlockchainQueueService {
   private timer: NodeJS.Timeout | null = null;
   private ticking = false;
   private running = false;
-  /** Current wait between polls. Grows while idle, snaps back on work. */
+  /** Set when wake() lands while a tick is in flight; the tick's finally
+   * block consumes it and re-polls immediately instead of sleeping. */
+  private wakeRequested = false;
+  /** Current wait between polls. Grows while failing, snaps back on work. */
   private intervalMs = config.BLOCKCHAIN_QUEUE_INTERVAL_MS;
 
   /** Current poll interval in ms. Exposed for tests and diagnostics. */
@@ -92,7 +101,7 @@ export class BlockchainQueueService {
     this.intervalMs = config.BLOCKCHAIN_QUEUE_INTERVAL_MS;
     logger.info(
       `Blockchain queue worker started (interval ${config.BLOCKCHAIN_QUEUE_INTERVAL_MS}ms, ` +
-        `idle backoff up to ${config.BLOCKCHAIN_QUEUE_MAX_INTERVAL_MS}ms, ` +
+        `idle safety net every ${config.BLOCKCHAIN_QUEUE_MAX_INTERVAL_MS}ms, ` +
         `max ${config.BLOCKCHAIN_QUEUE_MAX_ATTEMPTS} attempts)`
     );
     // Drain anything left over from a previous run right away. This also
@@ -104,6 +113,7 @@ export class BlockchainQueueService {
   stop(): void {
     if (!this.running) return;
     this.running = false;
+    this.wakeRequested = false;
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;
@@ -113,28 +123,105 @@ export class BlockchainQueueService {
   }
 
   /**
-   * Decide the next wait from the outcome of a poll.
+   * Poll now instead of waiting out the current sleep. Called by the
+   * endpoints that enqueue work (submitQuiz, retryBlockchain), which is
+   * what lets the idle loop sleep for hours without adding latency: new
+   * work is pushed to the worker, never discovered by polling.
    *
-   * Found work  -> back to the base interval; a busy queue should drain at
-   *                full speed rather than crawl.
-   * Empty poll  -> double the wait, capped at the configured ceiling.
-   *
-   * The doubling is what lets a serverless Postgres actually suspend: at the
-   * 15s default the worker reaches the 30min ceiling after seven empty polls
-   * (~32 min), and from then on an idle deployment touches the database twice
-   * an hour instead of 240 times.
+   * Safe to call at any moment: while the worker sleeps the timer is
+   * cancelled and a tick runs immediately; while a tick is in flight the
+   * request is remembered and honoured right after it (so a record
+   * inserted mid-tick is never left to the safety net); when the worker
+   * is stopped it is a no-op (start() drains on boot anyway).
    */
-  private nextInterval(processed: number): number {
-    if (processed > 0) return config.BLOCKCHAIN_QUEUE_INTERVAL_MS;
-    return Math.min(this.intervalMs * 2, config.BLOCKCHAIN_QUEUE_MAX_INTERVAL_MS);
+  wake(): void {
+    if (!this.running) return;
+    this.intervalMs = config.BLOCKCHAIN_QUEUE_INTERVAL_MS;
+    if (this.ticking) {
+      this.wakeRequested = true;
+      return;
+    }
+    if (this.timer) {
+      clearTimeout(this.timer);
+      this.timer = null;
+    }
+    void this.tick();
+  }
+
+  /**
+   * Decide how long to sleep after an empty (successful) poll.
+   *
+   * The old behaviour — double the wait per empty poll up to a 30min
+   * ceiling — still woke a scale-to-zero Postgres 48 times a day, and the
+   * provider bills a full suspend-window minimum (~5min on Neon's free
+   * plan) per wakeup: ~4h of billed compute per idle day, which is how the
+   * monthly allowance kept evaporating with zero traffic even after the
+   * poll rate was reduced. What matters is the NUMBER of wakeups, not the
+   * number of queries.
+   *
+   * Since work now arrives via wake() (and a crash between insert and wake
+   * restarts the process, whose boot drain picks the record up), an empty
+   * queue needs no gradual ramp: sleep straight to the safety-net ceiling.
+   * The only time-based reason to wake earlier is a record already parked
+   * for the future — a `failed` row waiting out its retry backoff, or a
+   * `processing` row that becomes reclaimable when its lock goes stale —
+   * so sleep exactly until the earliest of those, never past the ceiling,
+   * and never below the base interval.
+   */
+  private async idleWaitMs(): Promise<number> {
+    const nextWorkAt = await this.nextScheduledWorkAt();
+    if (nextWorkAt === null) return config.BLOCKCHAIN_QUEUE_MAX_INTERVAL_MS;
+    return Math.min(
+      config.BLOCKCHAIN_QUEUE_MAX_INTERVAL_MS,
+      Math.max(config.BLOCKCHAIN_QUEUE_INTERVAL_MS, nextWorkAt.getTime() - Date.now())
+    );
+  }
+
+  /**
+   * Earliest future moment a currently-parked record becomes claimable,
+   * or null when nothing is parked. Runs right after an empty poll, while
+   * the database is awake anyway — it never causes a wakeup of its own.
+   */
+  private async nextScheduledWorkAt(): Promise<Date | null> {
+    const [nextRetry, oldestProcessing] = await Promise.all([
+      // `failed` rows always carry blockchain_next_attempt_at (set by
+      // handleSendFailure when scheduling the retry).
+      db.query.progressRecords.findFirst({
+        where: eq(progressRecords.blockchainStatus, 'failed'),
+        orderBy: [asc(progressRecords.blockchainNextAttemptAt)],
+        columns: { blockchainNextAttemptAt: true },
+      }),
+      // In-flight rows become reclaimable (crash recovery) once their
+      // lock is older than BLOCKCHAIN_STALE_LOCK_MS.
+      db.query.progressRecords.findFirst({
+        where: eq(progressRecords.blockchainStatus, 'processing'),
+        orderBy: [asc(progressRecords.blockchainLockedAt)],
+        columns: { blockchainLockedAt: true },
+      }),
+    ]);
+
+    const candidates: number[] = [];
+    if (nextRetry?.blockchainNextAttemptAt) {
+      candidates.push(nextRetry.blockchainNextAttemptAt.getTime());
+    }
+    if (oldestProcessing?.blockchainLockedAt) {
+      candidates.push(
+        oldestProcessing.blockchainLockedAt.getTime() + config.BLOCKCHAIN_STALE_LOCK_MS
+      );
+    }
+    return candidates.length > 0 ? new Date(Math.min(...candidates)) : null;
   }
 
   /** Schedule the next poll, unless the worker has been stopped. */
   private scheduleNext(): void {
     if (!this.running) return;
+    // A wake() that landed mid-tick must not wait out an idle sleep —
+    // there is a fresh record the finished tick's SELECT predates.
+    const delayMs = this.wakeRequested ? 0 : this.intervalMs;
+    this.wakeRequested = false;
     this.timer = setTimeout(() => {
       void this.tick();
-    }, this.intervalMs);
+    }, delayMs);
     // Don't keep the process alive just for the poller.
     this.timer.unref?.();
   }
@@ -146,10 +233,14 @@ export class BlockchainQueueService {
   private async tick(): Promise<void> {
     if (this.ticking) return;
     this.ticking = true;
+    const previous = this.intervalMs;
     try {
       const processed = await this.processOnce();
-      const previous = this.intervalMs;
-      this.intervalMs = this.nextInterval(processed);
+      // Found work -> keep the fast cadence; the queue should drain at
+      // full speed. Empty -> sleep until the next scheduled retry/stale
+      // lock, or the safety-net ceiling when nothing is parked.
+      this.intervalMs =
+        processed > 0 ? config.BLOCKCHAIN_QUEUE_INTERVAL_MS : await this.idleWaitMs();
       if (this.intervalMs !== previous) {
         logger.debug(
           `Blockchain queue poll interval ${previous}ms -> ${this.intervalMs}ms ` +
@@ -157,12 +248,12 @@ export class BlockchainQueueService {
         );
       }
     } catch (error) {
-      // Never let a poll failure (e.g. DB hiccup) kill the loop. Treat it as
-      // an empty poll so a database that is down or over quota gets backed
-      // off from instead of hammered every base interval.
+      // Never let a poll failure (e.g. DB hiccup) kill the loop. Back off
+      // exponentially so a database that is down or over quota gets left
+      // alone instead of hammered every base interval.
       logger.error('Blockchain queue tick failed', { error });
       captureException(error, { worker: 'blockchain-queue', stage: 'tick' });
-      this.intervalMs = this.nextInterval(0);
+      this.intervalMs = Math.min(previous * 2, config.BLOCKCHAIN_QUEUE_MAX_INTERVAL_MS);
     } finally {
       this.ticking = false;
       this.scheduleNext();

@@ -198,19 +198,22 @@ const envSchema = z.object({
     .default('15000')
     .transform((v) => parseInt(v, 10))
     .pipe(z.number().int().min(1_000)),
-  // Ceiling for the idle backoff. After an empty poll the worker doubles its
-  // wait, up to this value, and snaps back to the base interval the moment it
-  // finds work again.
+  // Safety-net poll interval while the queue is idle. New work never waits
+  // for it — the enqueueing endpoints call wake() on the worker — so this
+  // only bounds how long a record inserted outside the process (manual SQL,
+  // a second instance) could sit unnoticed.
   //
-  // This exists for serverless Postgres. Neon (and equivalents) bill compute
-  // by time-awake and suspend after a few minutes of inactivity; a poller that
-  // fires more often than that idle window keeps the database awake forever
-  // and burns the monthly allowance with zero traffic. The default sits well
-  // above any usual suspend threshold so an idle deployment actually lets the
-  // database sleep.
+  // Sized for serverless Postgres billing: Neon (and equivalents) bill
+  // compute by time-awake and every wakeup costs a full suspend-window
+  // minimum (~5 min on Neon's free plan), so the monthly cost of an idle
+  // deployment is proportional to the NUMBER of polls, not their weight.
+  // The previous 30-min default still woke the database 48×/day ≈ 4h of
+  // billed compute per idle day — enough to exhaust a 100 CU-hour monthly
+  // allowance by itself. At 6h the idle floor is 4 wakeups/day (~20 min of
+  // billed compute), leaving the allowance to actual traffic.
   BLOCKCHAIN_QUEUE_MAX_INTERVAL_MS: z
     .string()
-    .default('1800000') // 30 min
+    .default('21600000') // 6 h
     .transform((v) => parseInt(v, 10))
     .pipe(z.number().int().min(1_000)),
   // Max send attempts before a record is marked failed_permanent.

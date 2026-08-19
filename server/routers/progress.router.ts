@@ -5,6 +5,7 @@ import { db } from '../db/index.js';
 import { modules, progressRecords, type QuizQuestion, type ProgressRecord } from '../db/schema.js';
 import { eq, and, ne, desc, sql } from 'drizzle-orm';
 import { TRPCError } from '@trpc/server';
+import { blockchainQueueService } from '../services/blockchain-queue.service.js';
 import { logger } from '../utils/logger.js';
 
 /**
@@ -174,6 +175,10 @@ export const progressRouter = router({
         logger.info(
           `Progress record ${record.id} enqueued for on-chain recording (module ${input.moduleId})`
         );
+        // Push, don't poll: the idle worker sleeps for hours (so the
+        // scale-to-zero database can too) and relies on this nudge to
+        // process new work immediately.
+        blockchainQueueService.wake();
       } else if (alreadyRecorded) {
         logger.info(
           `Module ${input.moduleId} already recorded on-chain for user ${ctx.user.id}; record ${record.id} stored without a duplicate payout`
@@ -262,6 +267,8 @@ export const progressRouter = router({
       logger.info(
         `Progress record ${input.recordId} re-enqueued by user ${ctx.user.id}`
       );
+      // Same push-not-poll contract as submitQuiz.
+      blockchainQueueService.wake();
       return { recordId: updated[0].id, blockchainStatus: 'pending' as const };
     }),
 

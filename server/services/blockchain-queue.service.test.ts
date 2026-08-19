@@ -2,6 +2,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   findMany: vi.fn(),
+  // nextScheduledWorkAt() asks for the earliest parked retry and the oldest
+  // in-flight lock via findFirst. Tests distinguish the two calls by the
+  // requested columns (see parkedWork below).
+  findFirst: vi.fn(),
   // One stack frame per `db.update(...)` call: `.set()` captures values,
   // `.where()` resolves to an object exposing `.returning()` whose result
   // is popped from `returningQueue` (claim UPDATEs use RETURNING; final
@@ -29,7 +33,7 @@ vi.mock('../utils/env.js', () => ({
 vi.mock('../db/index.js', () => ({
   db: {
     query: {
-      progressRecords: { findMany: mocks.findMany },
+      progressRecords: { findMany: mocks.findMany, findFirst: mocks.findFirst },
     },
     update: vi.fn(() => ({
       set: vi.fn((values: Record<string, unknown>) => {
@@ -300,22 +304,54 @@ describe('BlockchainQueueService.processOnce', () => {
   });
 });
 
-// The worker used to poll on a fixed setInterval. Against a serverless
-// Postgres that bills for time-awake and suspends after a few minutes idle,
-// a fixed 15s poll keeps the database permanently awake and burns the whole
-// monthly compute allowance with zero traffic — which is exactly how this
-// deployment took its database offline. The loop now backs off while idle.
-describe('BlockchainQueueService idle backoff', () => {
+// A scale-to-zero Postgres bills a full suspend-window minimum (~5 min on
+// Neon's free plan) for EVERY wakeup, so an idle worker's monthly cost is
+// set by how many times it polls, not by how cheap each poll is — the old
+// double-per-empty-poll backoff with a 30min ceiling still woke the database
+// 48×/day and exhausted the compute allowance with zero traffic. New work is
+// now pushed via wake() by the enqueueing endpoints, so an empty queue sleeps
+// straight to the safety-net ceiling; the only reason to wake earlier is a
+// record already parked for a KNOWN future time (retry backoff / stale lock),
+// which the loop sleeps exactly up to.
+describe('BlockchainQueueService idle scheduling', () => {
   let service: BlockchainQueueService;
 
   const BASE = 15_000;
   const CEILING = 120_000;
+  const STALE_LOCK = 600_000;
+  const T0 = new Date('2026-08-19T12:00:00Z');
+
+  /** Millisecond offset from the pinned test clock. */
+  const at = (offsetMs: number) => new Date(T0.getTime() + offsetMs);
+
+  /**
+   * Configure what nextScheduledWorkAt() finds parked. The two findFirst
+   * calls are told apart by the columns they request.
+   */
+  const parkedWork = ({
+    nextRetryAt = null,
+    oldestLockAt = null,
+  }: { nextRetryAt?: Date | null; oldestLockAt?: Date | null }) => {
+    mocks.findFirst.mockImplementation((args?: { columns?: Record<string, boolean> }) => {
+      if (args?.columns?.blockchainNextAttemptAt) {
+        return Promise.resolve(
+          nextRetryAt ? { blockchainNextAttemptAt: nextRetryAt } : undefined
+        );
+      }
+      return Promise.resolve(
+        oldestLockAt ? { blockchainLockedAt: oldestLockAt } : undefined
+      );
+    });
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
+    vi.setSystemTime(T0);
     mocks.setCalls.length = 0;
     mocks.returningQueue.length = 0;
+    // Default: nothing parked for the future.
+    mocks.findFirst.mockResolvedValue(undefined);
     service = new BlockchainQueueService();
   });
 
@@ -332,27 +368,68 @@ describe('BlockchainQueueService idle backoff', () => {
     expect(service.currentIntervalMs).toBe(BASE);
   });
 
-  it('doubles the interval after an empty poll', async () => {
+  it('sleeps straight to the safety-net ceiling after one empty poll', async () => {
+    // No gradual ramp: every intermediate poll is a paid database wakeup,
+    // and new work does not need to be discovered — it arrives via wake().
     mocks.findMany.mockResolvedValue([]);
 
     service.start();
     await settle();
-    expect(service.currentIntervalMs).toBe(BASE * 2);
 
-    await vi.advanceTimersByTimeAsync(BASE * 2);
-    expect(service.currentIntervalMs).toBe(BASE * 4);
+    expect(service.currentIntervalMs).toBe(CEILING);
   });
 
-  it('stops doubling at the configured ceiling', async () => {
+  it('sleeps exactly until a parked retry instead of the full ceiling', async () => {
     mocks.findMany.mockResolvedValue([]);
+    parkedWork({ nextRetryAt: at(45_000) });
 
     service.start();
     await settle();
 
-    // 15s -> 30s -> 60s -> 120s (ceiling) and no further.
-    for (let i = 0; i < 10; i += 1) {
-      await vi.advanceTimersByTimeAsync(service.currentIntervalMs);
-    }
+    expect(service.currentIntervalMs).toBe(45_000);
+  });
+
+  it('treats a stale processing lock as scheduled work (crash recovery)', async () => {
+    mocks.findMany.mockResolvedValue([]);
+    // Locked 9 minutes ago with a 10-minute stale window → reclaimable in 1.
+    parkedWork({ oldestLockAt: at(-(STALE_LOCK - 60_000)) });
+
+    service.start();
+    await settle();
+
+    expect(service.currentIntervalMs).toBe(60_000);
+  });
+
+  it('sleeps until the EARLIEST of retry and stale lock when both are parked', async () => {
+    mocks.findMany.mockResolvedValue([]);
+    parkedWork({
+      nextRetryAt: at(90_000),
+      // Reclaimable at +30s — sooner than the retry.
+      oldestLockAt: at(-(STALE_LOCK - 30_000)),
+    });
+
+    service.start();
+    await settle();
+
+    expect(service.currentIntervalMs).toBe(30_000);
+  });
+
+  it('clamps an imminent retry to the base interval', async () => {
+    mocks.findMany.mockResolvedValue([]);
+    parkedWork({ nextRetryAt: at(1_000) });
+
+    service.start();
+    await settle();
+
+    expect(service.currentIntervalMs).toBe(BASE);
+  });
+
+  it('never sleeps past the ceiling, even when the next retry is farther out', async () => {
+    mocks.findMany.mockResolvedValue([]);
+    parkedWork({ nextRetryAt: at(CEILING * 5) });
+
+    service.start();
+    await settle();
 
     expect(service.currentIntervalMs).toBe(CEILING);
   });
@@ -362,9 +439,6 @@ describe('BlockchainQueueService idle backoff', () => {
 
     service.start();
     await settle();
-    for (let i = 0; i < 5; i += 1) {
-      await vi.advanceTimersByTimeAsync(service.currentIntervalMs);
-    }
     expect(service.currentIntervalMs).toBe(CEILING);
 
     const candidate = makeCandidate();
@@ -381,10 +455,9 @@ describe('BlockchainQueueService idle backoff', () => {
     expect(service.currentIntervalMs).toBe(BASE);
   });
 
-  it('backs off when a poll throws, instead of hammering a failing database', async () => {
+  it('backs off exponentially when a poll throws, instead of hammering a failing database', async () => {
     // The failure mode that matters: the database is down or over quota.
-    // Retrying every 15s makes it worse; the loop must treat it like an
-    // empty poll and space out.
+    // Retrying every 15s makes it worse; the loop must space out.
     mocks.findMany.mockRejectedValue(new Error('connection refused'));
 
     service.start();
@@ -393,6 +466,18 @@ describe('BlockchainQueueService idle backoff', () => {
 
     await vi.advanceTimersByTimeAsync(BASE * 2);
     expect(service.currentIntervalMs).toBe(BASE * 4);
+  });
+
+  it('caps the failure backoff at the ceiling', async () => {
+    mocks.findMany.mockRejectedValue(new Error('still down'));
+
+    service.start();
+    await settle();
+    for (let i = 0; i < 10; i += 1) {
+      await vi.advanceTimersByTimeAsync(service.currentIntervalMs);
+    }
+
+    expect(service.currentIntervalMs).toBe(CEILING);
   });
 
   it('keeps polling after a failure rather than dying', async () => {
@@ -442,14 +527,105 @@ describe('BlockchainQueueService idle backoff', () => {
 
     service.start();
     await settle();
-    for (let i = 0; i < 5; i += 1) {
-      await vi.advanceTimersByTimeAsync(service.currentIntervalMs);
-    }
     expect(service.currentIntervalMs).toBe(CEILING);
 
     service.stop();
     service.start();
 
     expect(service.currentIntervalMs).toBe(BASE);
+  });
+});
+
+// wake() is the other half of the sleep-for-hours contract: the endpoints
+// that enqueue on-chain work nudge the worker, so a fresh record is picked
+// up in milliseconds while an idle deployment leaves the database suspended.
+describe('BlockchainQueueService.wake', () => {
+  let service: BlockchainQueueService;
+
+  const BASE = 15_000;
+  const CEILING = 120_000;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    mocks.setCalls.length = 0;
+    mocks.returningQueue.length = 0;
+    mocks.findFirst.mockResolvedValue(undefined);
+    service = new BlockchainQueueService();
+  });
+
+  afterEach(() => {
+    service.stop();
+    vi.useRealTimers();
+  });
+
+  const settle = () => vi.advanceTimersByTimeAsync(0);
+
+  it('polls immediately instead of waiting out the idle sleep', async () => {
+    mocks.findMany.mockResolvedValue([]);
+
+    service.start();
+    await settle(); // idle: parked at the ceiling
+    const before = mocks.findMany.mock.calls.length;
+
+    service.wake();
+    await settle();
+
+    // Re-polled without any timer advance.
+    expect(mocks.findMany.mock.calls.length).toBe(before + 1);
+  });
+
+  it('processes a record enqueued mid-sleep right away, at the fast cadence', async () => {
+    mocks.findMany.mockResolvedValue([]);
+    service.start();
+    await settle();
+    expect(service.currentIntervalMs).toBe(CEILING);
+
+    const candidate = makeCandidate();
+    mocks.findMany.mockResolvedValue([candidate]);
+    mocks.returningQueue.push(claimedRow(candidate, 1));
+    mocks.recordCompletion.mockResolvedValue({
+      hash: '0xabc',
+      blockNumber: 1,
+      gasUsed: '21000',
+    });
+
+    service.wake();
+    await settle();
+
+    expect(mocks.recordCompletion).toHaveBeenCalledTimes(1);
+    expect(service.currentIntervalMs).toBe(BASE);
+  });
+
+  it('is remembered when it lands during an in-flight tick (no lost wake)', async () => {
+    // A record inserted while the worker's SELECT is already past it would
+    // otherwise sleep until the safety net. The wake must be honoured with
+    // an immediate re-poll after the in-flight tick finishes.
+    let releaseFirstPoll!: (rows: unknown[]) => void;
+    mocks.findMany.mockResolvedValue([]);
+    mocks.findMany.mockReturnValueOnce(
+      new Promise<unknown[]>((resolve) => {
+        releaseFirstPoll = resolve;
+      })
+    );
+
+    service.start(); // boot tick now awaiting findMany
+    service.wake(); // lands mid-tick
+
+    releaseFirstPoll([]);
+    await settle();
+    await settle();
+
+    // Exactly one follow-up poll, scheduled at zero delay.
+    expect(mocks.findMany.mock.calls.length).toBe(2);
+  });
+
+  it('is a no-op when the worker is stopped', async () => {
+    mocks.findMany.mockResolvedValue([]);
+
+    service.wake();
+    await settle();
+
+    expect(mocks.findMany).not.toHaveBeenCalled();
   });
 });

@@ -6,7 +6,7 @@
 
 > Regra (herdada do ROADMAP): **nada de checkbox por intenção** — o status de um item só muda no PR que o conclui (com link) ou por decisão datada em "Decisões durante a execução".
 
-_Atualizado em: 2026-07-24_
+_Atualizado em: 2026-08-27_
 
 | Item | Status | Referência |
 |---|---|---|
@@ -14,7 +14,13 @@ _Atualizado em: 2026-07-24_
 | PR-0.5 — correções de gestão do plano | ✅ | [#26](https://github.com/orlandol23/ai-dlh/pull/26) |
 | C1 — Sentry front+server | ✅ | [#23](https://github.com/orlandol23/ai-dlh/pull/23) |
 | Órfão resgatado: stats do dashboard | ✅ | [#24](https://github.com/orlandol23/ai-dlh/pull/24) |
-| Órfão resgatado: legibilidade do módulo | 🔄 PR aberto | [#25](https://github.com/orlandol23/ai-dlh/pull/25) |
+| Órfão resgatado: legibilidade do módulo | ✅ | [#25](https://github.com/orlandol23/ai-dlh/pull/25) |
+| Fora do plano: README honesto (showcase) | ✅ | [#27](https://github.com/orlandol23/ai-dlh/pull/27) |
+| Fora do plano: CU-7 antecipado — frontend ethers→viem | ✅ | [#29](https://github.com/orlandol23/ai-dlh/pull/29) |
+| Fora do plano: auditoria showcase (URLs, contagens, demo) | ✅ | [#30](https://github.com/orlandol23/ai-dlh/pull/30) |
+| Fora do plano: fila — idle backoff no poller on-chain | ✅ | [#31](https://github.com/orlandol23/ai-dlh/pull/31) |
+| Fora do plano: fila — worker event-driven (wake on enqueue) | ✅ | [#33](https://github.com/orlandol23/ai-dlh/pull/33) |
+| Fora do plano: segurança — drizzle-orm 0.45.2 + react-router 7 | 🔄 em revisão | branch não mesclada |
 | C1b — Slither + gas-gate no CI | ⬜ | — |
 | Fase 1 — A1–A7 | ⬜ | — |
 | Fase 2 — B1–B7 | ⬜ | — |
@@ -40,6 +46,7 @@ _Atualizado em: 2026-07-24_
 | 2026-07-24 | Seções renumeradas **E0–E5** e bloqueadores de revisão renomeados **RB1/RB4/RB6** (colisão de IDs eliminada). |
 | 2026-07-24 | **Incidente MongoDB Atlas encerrado**: o dono excluiu o banco (credencial exposta sem alvo). Resta só o arquivamento do repo aprendaMais, sem urgência de segurança. |
 | 2026-07-26 | **Camada de ADRs criada** (`docs/adr/`, 6 decisões já tomadas registradas com fonte do curso) + seção "Itens do curso" (CU-1…CU-8, aditivos — sequência de PRs inalterada) + `docs/SOLIDITY_REVIEW_CHECKLIST.md` como gate de todo PR de contrato. **Decisão pendente aberta: CU-5** (Arweave como primário no C5). |
+| 2026-08-27 | **CU-7 executado antecipadamente** ([#29](https://github.com/orlandol23/ai-dlh/pull/29), 2026-07-27): o login de wallet do frontend migrou de ethers v6 para **viem** antes da Fase 1 — a avaliação "decidir depois da Fase 1" foi superada pelos fatos. wagmi segue de fora (sem necessidade até o A6). E5 e a linha CU-7 atualizados. |
 
 ## Changelog desta revisão (o que mudou vs. versão anterior)
 
@@ -88,7 +95,7 @@ Transição de carreira do dono para Web3. O **all** é o produto principal: Hub
 - Login por assinatura (Passo 0). `users.preferred_tier` ligável de graça via `auth.router.updatePreferences` — ponto de enforcement.
 - Router multi-provider (`server/services/providers/router.ts`): premium→Claude Sonnet, default→Gemini Flash, `region==='cn'`→Qwen; fallback cross-vendor; prompt comum (`prompt-builder.ts`) já injeta VARK.
 - Rate limiting in-memory por env (`rate-limit.ts` / `trpc.ts`): generate 10/h, quiz 30/h, retry 10/h. **Reset a cada redeploy** — aceitável para janela de 1h, NÃO para 30 dias.
-- Fila on-chain (`blockchain-queue.service.ts`) com claim atômico e 1 payout/user+module; **conhece UMA chain** (`env.ts`: um RPC/PRIVATE_KEY/CONTRACT_ADDRESS; um `Web3Service`).
+- Fila on-chain (`blockchain-queue.service.ts`) com claim atômico e 1 payout/user+module; **conhece UMA chain** (`env.ts`: um RPC/PRIVATE_KEY/CONTRACT_ADDRESS; um `Web3Service`). Desde #31/#33: backoff em idle no poller e worker event-driven (acorda no enqueue; sono ocioso em horas).
 - `LearningProgress.sol`: grava tudo em `msg.sender` (wallet **custodial**, não do usuário), `string` + array unbounded. **Não reaproveitar no C4.**
 - CI (`ci.yml`): `test-contracts` roda Hardhat, **mas NÃO tem Slither nem gate de gas** — ambos são trabalho novo. `hardhat-gas-reporter` (1.0.9) está presente mas é opt-in (`REPORT_GAS`) e só imprime tabela.
 - Sem nenhum código/tabela de billing.
@@ -216,7 +223,7 @@ Gates: `updatePreferences` premium sem plano = `FORBIDDEN 'PLAN_REQUIRED'`. Flag
 
 Flag `PREMIUM_PROVIDER=claude|fugu` (**Claude default**, estável e com caching garantido; Fugu atrás de flag). Premium só roteia Claude se `ANTHROPIC_API_KEY` setada (refletir no runbook). Roteamento: `cn→qwen | premium→(flag) | senão→gemini`; fallbacks preservam "free nunca piora"; badge do provider no módulo; alerta se degradação premium >5%/dia.
 
-## E5 — UX de upgrade (frontend — ethers v6 existente, sem wagmi)
+## E5 — UX de upgrade (frontend — **viem** desde o #29; sem wagmi)
 
 - `/plans` (lazy): cards Free/Premium/PAYG, preços/domain **lidos do contrato**, seletor semanal(planId 1)/mensal(planId 2)/créditos.
 - `lib/subscription.ts`: 3009 `receiveWithAuthorization` (1 tx) → fallback permit → fallback approve+subscribe. Estados: rede/saldo → assinar (**exibir claramente o valor assinado — anti-phishing**) → tx (link Basescan) → `billing.refresh(hash)` → premium.
@@ -380,7 +387,7 @@ Break-even da infra fixa ≈ **5 assinantes** (margem de contribuição ~US$ 4�
 | CU-4 | C2, pré-A7 | Monitoramento **on-chain** do contrato (eventos + acionamento de `pause()`): avaliar OpenZeppelin Defender/Forta ou watcher próprio. O runbook de pausa já existe no A4; este item escolhe o tooling e o torna **pré-requisito do `BILLING_ENFORCED=true`** (soma-se aos gates do A7) | `[W5P2]` |
 | CU-5 | C5 — **decisão pendente do dono** | Metadata do certificado: **Arweave como primário** (pay-once permanente — certificado não pode "despinar") com IPFS como espelho. O C5 já cita "IPFS/Arweave"; falta fixar o primário. Registrado como pendente, sem sobrescrever | `[W4]` |
 | CU-6 | C4b | Importar o modelo de **reorg/finalidade** do relayer do stablerails (`docs/design/relayer.md` v2 no repo irmão): mint premium na Base só após profundidade de finalidade adequada; re-check canônico antes de marcar confirmado | sinergia irmã |
-| CU-7 | E5 (avaliação, não compromisso) | Avaliar migração ethers v6 → **wagmi/viem** no frontend — skill provada no exercício W9 (DonationContract + reown); alinha stack com stablerails e mercado-alvo. Custo não-trivial: decidir **depois** da Fase 1 | `[W9]` |
+| CU-7 | E5 — **✅ executado antecipadamente** | Migração ethers v6 → **viem** entregue no [#29](https://github.com/orlandol23/ai-dlh/pull/29) (login de wallet; ethers removido do frontend). wagmi não adotado — desnecessário até o A6. Decisão datada em "Decisões durante a execução" (2026-08-27) | `[W9]` |
 | CU-8 | D2 (spike de 1 dia) | Spike Anchor: PDA schema do certificado com seeds `[b"cert", user_pubkey, module_id]` — endereço determinístico substitui mapping; 1 registro por (user, módulo) de graça; PDA como tree authority do cNFT (detalhe: ADR-0006) | `[RS2–4]` |
 
 **Validados como já cobertos (sem ação):** fuzz/invariantes nomeados no checklist E1 (CU-1 só os formaliza em CI); Arweave já citado no C5 (CU-5 só fixa o primário); SIWE já é o C3; pause/rollback já no runbook do A4; revisão humana das traduções es/fr/ja/ar já é critério do A6c.

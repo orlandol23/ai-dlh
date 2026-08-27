@@ -1,11 +1,13 @@
 # 🚀 Guia de Deploy - AI-DLH
 
 > **⚠️ DESATUALIZADO (backend):** este guia descreve deploy 100% Vercel
-> (serverless), mas o **backend roda na Railway** (`railway.toml` +
-> `nixpacks.toml`: build do workspace `server`, migrate-on-boot, healthcheck
-> `/healthz`) — apenas o **frontend** continua na Vercel. Use as seções Vercel
-> abaixo só para o frontend; a reescrita completa deste guia está registrada
-> como pendência no [PLANO_MESTRE.md](./PLANO_MESTRE.md).
+> (serverless), mas o **backend roda na Railway** — apenas o **frontend**
+> continua na Vercel. Os arquivos de config que existiam no repo
+> (`railway.toml` + `nixpacks.toml`) foram removidos no
+> [#31](https://github.com/orlandol23/ai-dlh/pull/31); as configurações de
+> build/deploy do backend vivem hoje no dashboard da Railway. Use as seções
+> Vercel abaixo só para o frontend; a reescrita completa deste guia está
+> registrada como pendência no [PLANO_MESTRE.md](./PLANO_MESTRE.md).
 
 Guia completo para fazer deploy do projeto em produção.
 

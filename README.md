@@ -5,7 +5,8 @@ A full-stack Web3 learning platform: generative AI builds a study module on dema
 ![CI](https://github.com/orlandol23/ai-dlh/actions/workflows/ci.yml/badge.svg)
 ![Solidity](https://img.shields.io/badge/Solidity-0.8.20-363636)
 ![Hardhat](https://img.shields.io/badge/Hardhat-2.19-FFF100)
-![ethers](https://img.shields.io/badge/ethers.js-v6-2535a0)
+![viem](https://img.shields.io/badge/viem-2-1B1B1F)
+![ethers](https://img.shields.io/badge/ethers.js-v6%20(server)-2535a0)
 [![Sepolia](https://img.shields.io/badge/Sepolia-contract%20verified-2ea44f)](https://sepolia.etherscan.io/address/0x3C399AdD53c70DC828db096d6b953757494427CE#code)
 ![React](https://img.shields.io/badge/React-18-61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6)
@@ -165,7 +166,7 @@ React 18 + Vite            Node 20 + Express            Ethereum Sepolia
 +-------------------+      +---------------------+      +------------------+
 |  UI, Zustand      |      |  tRPC routers       |      |  LearningProgress|
 |  tRPC client      |<---->|  Zod validation     |      |  (Solidity 0.8.20)|
-|  ethers v6 signer |      |  rate limiting      |      +--------^---------+
+|  viem wallet      |      |  rate limiting      |      +--------^---------+
 +-------------------+      |  AI provider router |               |
                            |  on-chain queue ----|---------------+
                            +----------+----------+   ethers v6, custodial
@@ -186,12 +187,12 @@ Postgres is the system of record for queue state, which is why a restart never l
 
 | Layer | Stack |
 |---|---|
-| Frontend | React 18, TypeScript 5.3, Vite 5, Tailwind, Zustand, TanStack Query v4, Radix UI, i18next, Sentry |
+| Frontend | React 18, TypeScript 5.3, Vite 5, Tailwind, Zustand, TanStack Query v4, Radix UI, i18next, viem, Sentry |
 | Backend | Node 20, Express, tRPC v10, Drizzle ORM, PostgreSQL, Zod, Winston, JWT, Vitest |
 | Contracts | Solidity 0.8.20, Hardhat, OpenZeppelin v5, ethers v6, TypeChain |
-| Web3 client | ethers v6 (no wagmi, see limitations) |
+| Web3 client | viem 2 in the frontend (wallet login, since #29; no wagmi, see limitations); ethers v6 server-side (signature verification + custodial queue signer) |
 | AI | Google Gemini, Anthropic Claude, Alibaba Qwen |
-| CI | GitHub Actions: lint, typecheck, tests and build for all three workspaces |
+| CI | GitHub Actions: lint, typecheck, tests and build for frontend and backend; compile and tests for contracts |
 
 ---
 

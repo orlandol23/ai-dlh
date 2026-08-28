@@ -49,12 +49,14 @@ npm run lint     # frontend + backend
 npm run build    # frontend + backend
 ```
 
-CI (`.github/workflows/ci.yml`) runs lint, typecheck, tests and build for all
-three workspaces on every push and pull request.
+CI (`.github/workflows/ci.yml`) runs lint, typecheck, tests and build for
+frontend and backend, and compile + tests for contracts (there is no contracts
+lint step), on every push and pull request.
 
 ## Notes
 
 - The backend validates its environment on boot and exits if anything required
-  is missing, so tests and local runs need the variables in `.env.example`.
+  is missing. Local runs (`npm run dev`) need the variables in `.env.example`;
+  the test suites do not — they mock the env module.
 - `contracts/` needs to download the `solc` binary on first compile; restricted
   networks will fail there.

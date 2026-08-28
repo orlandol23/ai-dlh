@@ -63,7 +63,7 @@ export default defineConfig({
           // React core in its own chunk: it loads eagerly (in parallel with
           // the entry), but it changes far less often than app code, so
           // returning visitors keep it cached across deploys.
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-react': ['react', 'react-dom', 'react-router'],
         },
       },
     },

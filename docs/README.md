@@ -69,4 +69,4 @@ ai-dlh/
 
 ---
 
-**Stack:** React 18 • TypeScript • Node.js • tRPC • Solidity • ethers.js • Gemini AI
+**Stack:** React 18 • TypeScript • Node.js • tRPC • Solidity • viem (frontend) • ethers.js (server/contracts) • Gemini AI

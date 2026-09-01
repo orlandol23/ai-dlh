@@ -11,7 +11,7 @@ Esta pasta é o design system destilado do produto — tokens, fundamentos, UI k
 
 Tudo aqui foi derivado de um único repositório — sem Figma, sem decks.
 
-- **Codebase (GitHub, privado):** `orlandol23/ai-dlh`, branch `claude/implement-production-changes-01JXqiwpavgBemxhwUUfKnko`
+- **Codebase (GitHub):** `orlandol23/ai-dlh` — o frontend na `main` à época deste levantamento
 - Espelho do frontend para referência: `_source/` neste projeto
 - Arquivos-chave lidos: `frontend/src/styles/globals.css`, `frontend/tailwind.config.js`, `frontend/src/pages/{HomePage,DashboardPage,ModulePage}.tsx`, `frontend/src/components/atoms/*`, `frontend/src/lib/utils.ts`
 

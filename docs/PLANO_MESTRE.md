@@ -6,7 +6,7 @@
 
 > Regra (herdada do ROADMAP): **nada de checkbox por intenção** — o status de um item só muda no PR que o conclui (com link) ou por decisão datada em "Decisões durante a execução".
 
-_Atualizado em: 2026-08-27_
+_Atualizado em: 2026-09-01_
 
 | Item | Status | Referência |
 |---|---|---|
@@ -20,8 +20,8 @@ _Atualizado em: 2026-08-27_
 | Fora do plano: auditoria showcase (URLs, contagens, demo) | ✅ | [#30](https://github.com/orlandol23/ai-dlh/pull/30) |
 | Fora do plano: fila — idle backoff no poller on-chain | ✅ | [#31](https://github.com/orlandol23/ai-dlh/pull/31) |
 | Fora do plano: fila — worker event-driven (wake on enqueue) | ✅ | [#33](https://github.com/orlandol23/ai-dlh/pull/33) |
-| Fora do plano: segurança — drizzle-orm 0.45.2 + react-router 7 | 🔄 em revisão | branch não mesclada |
-| C1b — Slither + gas-gate no CI | ⬜ | — |
+| Fora do plano: segurança — drizzle-orm 0.45.2 + react-router 7 | ✅ | [#34](https://github.com/orlandol23/ai-dlh/pull/34) |
+| C1b — Slither + gas-gate no CI | ✅ | [#35](https://github.com/orlandol23/ai-dlh/pull/35) |
 | Fase 1 — A1–A7 | ⬜ | — |
 | Fase 2 — B1–B7 | ⬜ | — |
 | Fase 3 — C2–C8 | ⬜ | — |
@@ -47,6 +47,7 @@ _Atualizado em: 2026-08-27_
 | 2026-07-24 | **Incidente MongoDB Atlas encerrado**: o dono excluiu o banco (credencial exposta sem alvo). Resta só o arquivamento do repo aprendaMais, sem urgência de segurança. |
 | 2026-07-26 | **Camada de ADRs criada** (`docs/adr/`, 6 decisões já tomadas registradas com fonte do curso) + seção "Itens do curso" (CU-1…CU-8, aditivos — sequência de PRs inalterada) + `docs/SOLIDITY_REVIEW_CHECKLIST.md` como gate de todo PR de contrato. **Decisão pendente aberta: CU-5** (Arweave como primário no C5). |
 | 2026-08-27 | **CU-7 executado antecipadamente** ([#29](https://github.com/orlandol23/ai-dlh/pull/29), 2026-07-27): o login de wallet do frontend migrou de ethers v6 para **viem** antes da Fase 1 — a avaliação "decidir depois da Fase 1" foi superada pelos fatos. wagmi segue de fora (sem necessidade até o A6). E5 e a linha CU-7 atualizados. |
+| 2026-09-01 | **Ferramenta do gate de gas escolhida: script próprio** ([#35](https://github.com/orlandol23/ai-dlh/pull/35)), fechando a pendência "nomear a ferramenta escolhida no PR". Descartados: `gasReporterOutput.json` como artifact (o `hardhat-gas-reporter` 1.0.9 imprime tabela, não falha build, e o formato do JSON varia entre versões) e `forge snapshot` (exigiria Foundry num projeto Hardhat, só para isso). O script mede cenários nomeados, tem tolerância explícita e falha com mensagem acionável. |
 
 ## Changelog desta revisão (o que mudou vs. versão anterior)
 
@@ -169,8 +170,8 @@ mapping(address => uint32) public creditsPurchased;       // TOTAL CUMULATIVO (n
 Regras p/ todos os contratos: custom errors, `calldata`>`memory`, `immutable`/`constant`, `unchecked` só com prova, CEI, eventos `indexed` certos.
 
 ### Segurança/tooling — TUDO NOVO, entregue em C1b + A4 (corrige "já existe")
-- **Adicionar Slither ao CI** (job novo em `ci.yml`).
-- **Gate de regressão de gas**: job de CI que commita/diffa `gasReporterOutput.json` como artifact (ou `forge snapshot` + action de gas-diff) — o "snapshot por PR via Codechecks" mencionado antes **não existe mais**; nomear a ferramenta escolhida no PR.
+- ✅ **Slither no CI** (C1b, [#35](https://github.com/orlandol23/ai-dlh/pull/35)): passo no job `test-contracts`, reusando o build do `hardhat compile` (`ignore-compile`). **Gate em medium/high**; low e informational aparecem no log sem bloquear. Config em `contracts/slither.config.json`. Estado atual do `LearningProgress.sol`: **0 achados medium/high, 0 low**, 8 informacionais (todos `naming-convention` pelo prefixo `_param`).
+- ✅ **Gate de regressão de gas** (C1b, [#35](https://github.com/orlandol23/ai-dlh/pull/35)): ferramenta escolhida = **script próprio** (`contracts/scripts/gas-report.ts`), não o `gasReporterOutput.json` nem `forge snapshot`. O `hardhat-gas-reporter` imprime tabela mas não falha o build; o script mede deploy + `recordCompletion` (primeira e subsequente), compara com `contracts/gas-baseline.json` e sai com código 1 acima de **2%** de tolerância. Baseline atual: deploy **826.203**, first **184.039**, subsequent **149.839**. Regenerar com `npm run gas:update`, justificando o delta no PR. É este o gate que o A4 usa para bater seu orçamento de gas.
 - **USDC nativo da Base fixo**: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`; **nunca USDbC** (bridged, sem permit). Validar em runtime `decimals()==6` + `symbol()`.
 - **Domain EIP-712 vem do contrato, nunca hardcoded**: o USDC da Base usa `{name:'USD Coin', version:'2', chainId:8453}` — a UI que disser só "USDC" quebra **100%** das assinaturas. Frontend lê `name()`/`version()`/`DOMAIN_SEPARATOR()`/`nonces()`. **Fork test** contra o USDC real da Base Sepolia validando que a assinatura passa (pega o bug que derruba o 1-tx silenciosamente).
 - **Owner mainnet = multisig (Safe) ou hardware wallet**, nunca EOA quente (`withdraw`+`setPrice` = chave de altíssimo valor). Entra no runbook.

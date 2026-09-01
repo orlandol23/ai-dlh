@@ -1,0 +1,14 @@
+{
+  "_comment": "Gas baseline for the C1b regression gate. Regenerate deliberately with \"npm run gas:update\" and explain the delta in the PR that changes it.",
+  "solidity": "0.8.20",
+  "optimizer": {
+    "enabled": true,
+    "runs": 200
+  },
+  "tolerancePct": 2,
+  "measurements": {
+    "deployment": 826203,
+    "recordCompletion:first": 184039,
+    "recordCompletion:subsequent": 149839
+  }
+}

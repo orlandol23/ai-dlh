@@ -7,7 +7,7 @@ on:
     branches: [main, develop]
 
 jobs:
-  # Test Smart Contracts
+  # Test and statically analyse Smart Contracts
   test-contracts:
     name: Test Smart Contracts
     runs-on: ubuntu-latest
@@ -32,6 +32,26 @@ jobs:
       - name: Run tests
         working-directory: contracts
         run: npx hardhat test
+
+      # C1b — gas regression gate. Compares deployment and recordCompletion
+      # against contracts/gas-baseline.json and fails past a 2% tolerance.
+      # A4 depends on this: the subscription contract's gas budget is only
+      # meaningful if a regression can actually break the build.
+      - name: Gas regression gate
+        working-directory: contracts
+        run: npm run gas:check
+
+      # C1b — Slither. Fails on medium and high findings; low and
+      # informational are printed but do not block. Compilation already
+      # happened above, so the analysis reads the existing build-info
+      # instead of recompiling.
+      - name: Slither
+        uses: crytic/slither-action@v0.4.1
+        with:
+          target: contracts/
+          ignore-compile: true
+          fail-on: medium
+          slither-config: contracts/slither.config.json
 
       # Informational only: the size-contracts plugin is not installed in
       # this project, so this step must not be able to mask real failures.

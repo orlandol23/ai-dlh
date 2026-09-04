@@ -115,14 +115,18 @@ Access to XMLHttpRequest blocked by CORS policy
 **Solução:**
 
 ```bash
-# Verifique CORS no backend
-# server/middleware/cors.middleware.ts
+# Em desenvolvimento, qualquer origem http://localhost:* já é liberada
+# automaticamente (server/middleware/cors.middleware.ts + NODE_ENV=development),
+# então isso normalmente não deveria acontecer em localhost.
 
-# Adicione sua origem:
-allowedOrigins: [
-  'http://localhost:5173',
-  'http://localhost:3001', // Se mudou porta
-]
+# Se ainda assim bloquear, confirme:
+# 1. O backend está rodando com NODE_ENV=development (não "production")
+# 2. FRONTEND_URL no .env do backend aponta para a origem certa
+FRONTEND_URL=http://localhost:5173
+
+# Para uma origem que não é localhost (ex: um túnel ngrok), adicione-a a
+# ALLOWED_ORIGINS (lista separada por vírgula, validada em server/utils/env.ts):
+ALLOWED_ORIGINS=http://localhost:5173,https://minha-origem.example.com
 
 # Reinicie backend:
 cd server && npm run dev
@@ -369,9 +373,11 @@ Error: No JSON found in AI response
 # Tente novamente (retry)
 
 # 2. Ajuste temperatura no código
-# server/services/ai.service.ts
+# server/services/providers/gemini.provider.ts (cada provedor tem seu próprio
+# arquivo em server/services/providers/ — gemini, claude, qwen — roteados por
+# server/services/providers/router.ts)
 generationConfig: {
-  temperature: 0.5,  // Mais determinístico
+  temperature: 0.5,  // Mais determinístico (default atual: 0.7)
 }
 
 # 3. Verifique prompt
@@ -402,9 +408,11 @@ Error: connect ECONNREFUSED
 # 2. Verifique DATABASE_URL
 # Deve estar correto no .env
 
-# Vercel Postgres
-# 1. Copie URL exato do dashboard
+# Neon (produção)
+# 1. Copie a connection string exata do dashboard do Neon
 # 2. Inclua ?sslmode=require se necessário
+# 3. Um DATABASE_URL correto mas com a cota mensal de compute esgotada dá o
+#    mesmo ECONNREFUSED — veja "Database: error" em Health check acima
 
 # Teste conexão:
 psql $DATABASE_URL
@@ -433,7 +441,7 @@ npm run db:push
 # 3. Verificar tabelas
 psql $DATABASE_URL
 \dt
-# Deve listar: users, modules, progress_records
+# Deve listar: users, modules, progress_records, auth_nonces
 ```
 
 ---
@@ -455,7 +463,8 @@ const client = postgres(connectionString, {
 });
 
 # 2. Use connection pooling
-# Vercel Postgres tem por padrão
+# Neon oferece um endpoint pooled (PgBouncer) — use-o em DATABASE_URL
+# se a conexão direta estiver esgotando o limite do plano free
 
 # 3. Feche conexões antigas
 # Reinicie servidor
@@ -465,7 +474,10 @@ const client = postgres(connectionString, {
 
 ## 🚀 Deploy e Produção
 
-### Build falha na Vercel
+O frontend roda na Vercel e o backend roda na Railway — são dois deploys
+separados. Veja [DEPLOYMENT.md](./DEPLOYMENT.md) para a topologia completa.
+
+### Build do frontend falha na Vercel
 
 **Sintoma:**
 ```bash
@@ -476,7 +488,7 @@ Error: Build failed
 
 ```bash
 # 1. Teste build localmente
-npm run build
+cd frontend && npm run build
 
 # Se falhar localmente:
 # - Corrija erros TypeScript
@@ -490,9 +502,39 @@ npm run build
 # Deployments → ... → Redeploy → Clear cache
 ```
 
+### Build do backend falha na Railway
+
+**Sintoma:** o deploy falha antes do health check, ou o health check nunca
+fica verde.
+
+**Soluções:**
+
+```bash
+# 1. Teste build localmente
+cd server && npm run build
+
+# 2. Veja os logs de build/deploy no dashboard da Railway
+# (Root Directory do serviço é "server" — server/railway.toml documenta isso)
+
+# 3. Se o build passou mas o health check falha: migrations rodam ANTES do
+# app.listen(), então um DATABASE_URL inválido ou um Neon sem cota derruba
+# o processo antes de responder a /healthz. Veja "Erro: Cannot connect to
+# database" acima.
+```
+
 ---
 
 ### Health check retorna erro
+
+O backend expõe dois endpoints distintos — não confunda os dois:
+
+- `/healthz` — sem I/O, sempre 200. É o que a Railway usa como probe de deploy.
+- `/health` — faz round-trips reais (Postgres, RPC, Gemini) e retorna 503 se
+  algo estiver quebrado. Serve para diagnóstico manual, **nunca** para um
+  monitor de uptime automatizado: cada chamada acorda um Postgres Neon
+  suspenso, e cada wakeup cobra a janela de suspensão inteira (~5 min no
+  plano free) — um monitor batendo nele a cada poucos minutos estoura a
+  franquia mensal sozinho.
 
 **Sintoma:**
 ```bash
@@ -502,7 +544,8 @@ npm run build
 **Diagnóstico:**
 
 ```bash
-curl https://seu-projeto.vercel.app/health
+# Troque pela URL real do serviço backend na Railway
+curl https://SEU-SERVICO.up.railway.app/health
 
 # Veja qual serviço falhou:
 {
@@ -518,41 +561,13 @@ curl https://seu-projeto.vercel.app/health
 
 ```bash
 # database: "error"
-# → Verifique DATABASE_URL nas env vars
+# → Verifique DATABASE_URL na Railway (Neon pode estar sem cota do mês)
 
 # blockchain: "error"
 # → Verifique ETHEREUM_RPC_URL e CONTRACT_ADDRESS
 
 # ai: "error"
 # → Verifique GEMINI_API_KEY
-```
-
----
-
-### Função timeout (10s)
-
-**Sintoma:**
-```bash
-Error: Function exceeded maximum duration
-```
-
-**Soluções:**
-
-```bash
-# 1. Otimize código
-# Geração de módulo pode demorar
-
-# 2. Aumente timeout na Vercel
-# vercel.json
-"functions": {
-  "server/index.ts": {
-    "maxDuration": 30  // 10 → 30 segundos
-  }
-}
-
-# 3. Upgrade para Vercel Pro
-# Free tier: 10s max
-# Pro: 60s max
 ```
 
 ---
@@ -566,18 +581,23 @@ Access-Control-Allow-Origin error
 
 **Solução:**
 
+CORS é resolvido por env vars validadas em `server/utils/env.ts`
+(`server/middleware/cors.middleware.ts` só as lê), não por uma lista
+hardcoded no código:
+
 ```bash
-# 1. Verifique FRONTEND_URL no .env Vercel
+# 1. Na Railway, confirme FRONTEND_URL — é sempre liberada:
 FRONTEND_URL=https://seu-projeto.vercel.app
 
-# 2. Atualize CORS no backend
-# server/middleware/cors.middleware.ts
-allowedOrigins: [
-  process.env.FRONTEND_URL,
-  'https://seu-projeto.vercel.app',
-]
+# 2. Para origens extras (ex: um domínio customizado), use ALLOWED_ORIGINS
+# (lista separada por vírgula, uma origem exata por entrada):
+ALLOWED_ORIGINS=https://outra-origem.example.com
 
-# 3. Redeploy
+# 3. Para preview deploys da Vercel, use ALLOWED_ORIGIN_SUFFIXES em vez de
+# liberar "vercel.app" inteiro (rejeitado no boot por ser amplo demais):
+ALLOWED_ORIGIN_SUFFIXES=-meuuser.vercel.app
+
+# 4. Redeploy o serviço backend na Railway para aplicar
 ```
 
 ---
@@ -606,9 +626,9 @@ cd server && npm run dev
 cat server/logs/combined.log
 cat server/logs/error.log
 
-# 3. Vercel logs (produção)
-vercel logs
-# Ou: Dashboard → Logs
+# 3. Logs em produção
+# Backend (Railway): Dashboard → Deployments → View Logs
+# Frontend (Vercel): Dashboard → Deployments → Logs, ou `vercel logs`
 
 # Smart Contracts
 # 1. Hardhat console

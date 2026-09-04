@@ -264,7 +264,7 @@ Stated explicitly, because a portfolio that hides its edges is not worth reading
 - **Translations are partly machine-generated.** English and Brazilian Portuguese are human-written; Spanish, French, Japanese and Arabic are machine-translated and flagged in the source as pending human review.
 - **No end-to-end tests.** The test suite is unit-level, and router tests mock the database. E2E coverage is planned, not present, and is tracked in the roadmap below.
 - **Solidity static analysis is gated, not audited.** CI runs Slither (fails on medium and high findings) and a gas regression gate (2% tolerance against `contracts/gas-baseline.json`). That is a lint, not a security audit; the contract has not been audited.
-- **Reference documentation is thin.** The standalone architecture and API documents described an earlier single-provider version without the queue or VARK, so they were removed rather than left to mislead. This README and the ADRs under `docs/adr/` are the current source of truth; `docs/DEPLOYMENT.md` carries a staleness banner.
+- **Reference documentation is thin.** The standalone architecture and API documents described an earlier single-provider version without the queue or VARK, so they were removed rather than left to mislead. This README and the ADRs under `docs/adr/` are the current source of truth; `docs/DEPLOYMENT.md` has been rewritten for the real Vercel + Railway + Neon topology, but it is not as deep as this README on the engineering rationale.
 
 ## Roadmap
 

@@ -1,664 +1,213 @@
-# 🚀 Guia de Deploy - AI-DLH
+# Deployment
 
-> **⚠️ DESATUALIZADO (backend):** este guia descreve deploy 100% Vercel
-> (serverless), mas o **backend roda na Railway** — apenas o **frontend**
-> continua na Vercel. Os arquivos de config que existiam no repo
-> (`railway.toml` + `nixpacks.toml`) foram removidos no
-> [#31](https://github.com/orlandol23/ai-dlh/pull/31); as configurações de
-> build/deploy do backend vivem hoje no dashboard da Railway. Use as seções
-> Vercel abaixo só para o frontend; a reescrita completa deste guia está
-> registrada como pendência no [PLANO_MESTRE.md](./PLANO_MESTRE.md).
+How AI-DLH is actually deployed: frontend and backend are two independent
+services on two platforms, talking to a serverless Postgres and a public
+testnet contract.
 
-Guia completo para fazer deploy do projeto em produção.
+## Topology
 
-## 📋 Índice
+| Component | Platform | Notes |
+| --- | --- | --- |
+| Frontend | Vercel | Static Vite build, root directory `frontend` |
+| Backend | Railway | Long-running Node process, root directory `server` |
+| Database | Neon (Postgres) | Free tier, scale-to-zero, monthly compute allowance |
+| Contract | Ethereum Sepolia | `contracts/contracts/LearningProgress.sol`, custodial signer |
+| Errors (optional) | Sentry | One project for the backend, one for the frontend |
 
-1. [Pré-requisitos](#pré-requisitos)
-2. [Preparação](#preparação)
-3. [Deploy do Smart Contract](#deploy-do-smart-contract)
-4. [Setup do Database](#setup-do-database)
-5. [Deploy na Vercel](#deploy-na-vercel)
-6. [Configurações Pós-Deploy](#configurações-pós-deploy)
-7. [Verificação](#verificação)
-8. [Troubleshooting](#troubleshooting)
+The frontend and backend are deployed independently by each platform's git
+integration — see `.github/workflows/ci.yml`: CI runs lint/typecheck/tests/
+build on every push and pull request, but there is no deploy job. Vercel and
+Railway pick up pushes to `main` on their own.
 
----
+## Prerequisites
 
-## ✅ Pré-requisitos
+- GitHub repository connected to both Vercel and Railway
+- A Neon project (or any Postgres reachable over the network)
+- An Ethereum Sepolia RPC URL (Infura, Alchemy, or similar)
+- A Google Gemini API key (the only AI provider that's required)
+- Sepolia ETH in the custodial wallet (see below)
+- Optional: Etherscan API key (contract verification),
+  `ANTHROPIC_API_KEY`/`DASHSCOPE_API_KEY` (extra AI providers), Sentry DSNs
+  (error tracking)
 
-### Contas Necessárias
+## Contract
 
-- [ ] **GitHub** - Para CI/CD
-- [ ] **Vercel** - Para hospedagem
-- [ ] **Infura/Alchemy** - RPC Ethereum
-- [ ] **Google Cloud** - Gemini API
-- [ ] **Etherscan** - Verificação de contrato
-
-### Instalado Localmente
-
-- [ ] Node.js 20+
-- [ ] Git
-- [ ] npm
-- [ ] Vercel CLI (opcional)
-
----
-
-## 🔧 Preparação
-
-### 1. Obter API Keys
-
-#### **Google Gemini API** (OBRIGATÓRIO)
+The contract is deployed once, ahead of the backend that writes to it.
 
 ```bash
-# 1. Acesse: https://makersuite.google.com/app/apikey
-# 2. Login com Google
-# 3. Create API Key
-# 4. Copie a chave
-```
-
-#### **Infura RPC** (OBRIGATÓRIO)
-
-```bash
-# 1. Acesse: https://infura.io
-# 2. Crie conta gratuita
-# 3. Create New Project
-# 4. Copie o endpoint Sepolia:
-#    https://sepolia.infura.io/v3/YOUR_PROJECT_ID
-```
-
-#### **Etherscan API** (OPCIONAL)
-
-```bash
-# Para verificação de contrato
-# 1. Acesse: https://etherscan.io/myapikey
-# 2. Crie conta
-# 3. Add API Key
-# 4. Copie a chave
-```
-
-### 2. Configurar Variáveis de Ambiente
-
-Crie `.env` na raiz:
-
-```bash
-cp .env.example .env
-```
-
-Preencha **TODAS** as variáveis:
-
-```bash
-# IA (OBRIGATÓRIO)
-GEMINI_API_KEY=AIzaSy...
-
-# Database (configurar depois com Vercel)
-DATABASE_URL=postgresql://...
-
-# Blockchain (OBRIGATÓRIO para certificados)
-ETHEREUM_RPC_URL=https://sepolia.infura.io/v3/YOUR_ID
-PRIVATE_KEY=0x...  # Gerar na próxima etapa
-CONTRACT_ADDRESS=0x...  # Deploy na próxima etapa
-
-# Auth (OBRIGATÓRIO)
-JWT_SECRET=  # openssl rand -base64 32
-
-# Vercel (configurar depois)
-ETHERSCAN_API_KEY=...  # Opcional
-```
-
----
-
-## ⛓️ Deploy do Smart Contract
-
-### 1. Gerar Wallet Backend
-
-```bash
-cd contracts
+# 1. Generate a custodial wallet for the backend (do this once)
 npm run generate:wallet
+# Prints an address + private key. Put the private key in PRIVATE_KEY
+# (root .env for local runs, or the Railway dashboard for production).
+# Never commit it.
+
+# 2. Fund the wallet with Sepolia ETH
+# Any Sepolia faucet works; the wallet address is printed by the step above.
+
+# 3. Deploy
+npm run deploy:contract
+# Runs `hardhat run scripts/deploy.ts --network sepolia` from contracts/.
+# Copy the printed address into CONTRACT_ADDRESS.
+
+# 4. Verify (optional, needs ETHERSCAN_API_KEY)
+npm run deploy:verify -- <CONTRACT_ADDRESS>
 ```
 
-**Importante:**
-- Copie o `PRIVATE_KEY` para `.env`
-- **NUNCA** commite esta chave!
-- Esta wallet é APENAS para backend
+`ETHEREUM_RPC_URL` and `PRIVATE_KEY` are read by `contracts/hardhat.config.ts`
+from the same root `.env` the backend uses, so the wallet that deploys the
+contract is the same one the backend later signs `recordCompletion` calls
+with.
 
-### 2. Obter ETH Testnet
+## Backend on Railway
 
-Você precisa de ~0.1 ETH Sepolia para deploy:
+Railway's Root Directory for this service is `server`. There is no
+`server/package-lock.json` (the lockfile lives at the repository root,
+outside that root directory), so the build cannot use `npm ci` — Railway's
+Railpack builder auto-detects `npm install && npm run build`, which resolves
+to `server/package.json`'s `build` (`tsc`) and `start` (`node dist/index.js`)
+scripts. `server/railway.toml` is the only deploy config Railway reads for
+this service; it sets the health check path/timeout and restart policy —
+everything else (root directory, build affinity, environment variables) is
+set in the Railway dashboard and isn't captured in the repo.
 
-**Faucets:**
-```bash
-# Alchemy Sepolia Faucet
-https://sepoliafaucet.com
+### Environment variables
 
-# Chainlink Faucet
-https://faucets.chain.link/sepolia
+Validated at boot by `server/utils/env.ts` (Zod) — a missing or malformed
+required variable exits the process before it binds a port. These have no
+default and must be set in the Railway dashboard:
 
-# Infura Faucet
-https://www.infura.io/faucet/sepolia
-```
+| Variable | Meaning | Example |
+| --- | --- | --- |
+| `DATABASE_URL` | Neon Postgres connection string | `postgresql://user:pass@ep-xxx.neon.tech/db?sslmode=require` |
+| `ETHEREUM_RPC_URL` | Sepolia RPC endpoint | `https://sepolia.infura.io/v3/<project-id>` |
+| `PRIVATE_KEY` | Custodial wallet private key (from `npm run generate:wallet`) | `0x` + 64 hex chars |
+| `CONTRACT_ADDRESS` | Deployed `LearningProgress` address | `0x3C399AdD53c70DC828db096d6b953757494427CE` |
+| `GEMINI_API_KEY` | Google Gemini API key, primary AI provider | `AIzaSy...` |
+| `JWT_SECRET` | Session signing secret, 32+ chars | output of `openssl rand -base64 32` |
 
-**Verificar saldo:**
-```bash
-# Use o endereço gerado pelo script
-https://sepolia.etherscan.io/address/0xSEU_ENDERECO
-```
+These have a default but should still be set explicitly in production:
 
-### 3. Deploy do Contrato
+| Variable | Default | Set to |
+| --- | --- | --- |
+| `NODE_ENV` | `development` | `production` |
+| `FRONTEND_URL` | `http://localhost:5173` | the Vercel deployment URL |
+| `PORT` | `3000` | usually left unset — Railway injects its own `PORT` |
 
-```bash
-# Na pasta contracts
-npm run deploy:sepolia
-```
+Everything else — rate limits, the blockchain queue's polling and retry
+knobs, the wallet-balance monitor, `SKIP_MIGRATIONS` — has a working default
+documented inline in `server/utils/env.ts` and mirrored in `.env.example`;
+only override them if you have a specific reason to (see Rollback notes
+below for the queue knobs).
 
-**Output esperado:**
-```
-🚀 Deploying LearningProgress contract...
-📍 Deploying with account: 0x742d35Cc...
-💰 Account balance: 0.1 ETH
-✅ LearningProgress deployed successfully!
-📍 Contract address: 0xABC123...
-```
+Optional providers/observability: `ANTHROPIC_API_KEY`, `DASHSCOPE_API_KEY`,
+`SENTRY_DSN` — unset means that provider or Sentry is a no-op, not an error.
 
-**Copie o endereço do contrato para `.env`:**
-```bash
-CONTRACT_ADDRESS=0xABC123...
-```
+### CORS: `ALLOWED_ORIGINS` and `ALLOWED_ORIGIN_SUFFIXES`
 
-### 4. Verificar Contrato (Opcional)
+`FRONTEND_URL` is always allowed. Beyond that:
 
-```bash
-# Na pasta contracts
-npx hardhat verify --network sepolia 0xSEU_CONTRACT_ADDRESS
-```
+- `ALLOWED_ORIGINS` — comma-separated **exact** origins, e.g.
+  `https://admin.example.com,https://staging.example.com`.
+- `ALLOWED_ORIGIN_SUFFIXES` — comma-separated **host suffixes** for preview
+  deploys, e.g. `-myorg.vercel.app`. Each entry must start with `-` or `.`
+  so the match lands on a label boundary; a bare platform domain like
+  `vercel.app` is rejected at boot because it would let any tenant on that
+  platform call the API.
+- In development, any `http://localhost:*` origin is allowed automatically.
 
-Isso torna o código-fonte verificável no Etherscan.
+### Health checks
 
----
+The backend exposes two endpoints; they are not interchangeable:
 
-## 🗄️ Setup do Database
+- **`/healthz`** — no I/O, always returns 200. This is what Railway's
+  `healthcheckPath` (in `server/railway.toml`) probes on every deploy, and
+  the only endpoint an uptime monitor should ever hit.
+- **`/health`** — round-trips to Postgres, the RPC endpoint and Gemini, and
+  returns 503 if any of them fail. Useful for a human debugging an incident.
+  Never point automated monitoring at it: it wakes a suspended Neon compute,
+  and every wakeup bills a full suspend-window minimum. A monitor polling it
+  every few minutes burns the monthly compute allowance on its own.
 
-### Opção 1: Vercel Postgres (Recomendado - FREE)
+### Migrations
 
-```bash
-# 1. Crie projeto na Vercel (próxima seção)
-# 2. Storage → Create Database → Postgres
-# 3. Copie DATABASE_URL das variáveis
-# 4. Cole no .env local
-```
+Drizzle migrations run on boot, before the process starts listening — a
+partially-migrated database never serves traffic, and a failed migration
+exits the process non-zero so Railway restarts the deployment rather than
+serving against a stale schema. Set `SKIP_MIGRATIONS=true` if migrations are
+applied by a separate release job instead.
 
-### Opção 2: Supabase (Alternativa FREE)
+### Neon free tier and the event-driven worker
 
-```bash
-# 1. Acesse: https://supabase.com
-# 2. New Project
-# 3. Copie Connection String (Session mode)
-# 4. Cole no .env
-```
+Neon's free plan bills compute by time-awake, and each wakeup from suspend
+costs a full suspend-window minimum (about 5 minutes). A worker that polls
+on a fixed short interval keeps the database awake around the clock and can
+exhaust a ~100 CU-hour monthly allowance with zero real traffic. The
+blockchain queue worker avoids this by being event-driven: the endpoints
+that enqueue work call `wake()` directly, so new work is picked up in
+milliseconds without polling, and the worker only falls back to polling
+(`BLOCKCHAIN_QUEUE_INTERVAL_MS` while busy, backing off toward
+`BLOCKCHAIN_QUEUE_MAX_INTERVAL_MS` while idle) as a safety net for work
+inserted outside the normal enqueue path.
 
-### Opção 3: PostgreSQL Local
+## Frontend on Vercel
 
-```bash
-# Docker
-docker run --name postgres \
-  -e POSTGRES_PASSWORD=postgres \
-  -p 5432:5432 \
-  -d postgres
+Root directory `frontend`; Vercel auto-detects the Vite framework preset
+(`npm run build`, output `dist`). `frontend/vercel.json` rewrites all routes
+to `index.html` for client-side routing.
 
-# Conexão local
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/aidlh
-```
+| Variable | Meaning |
+| --- | --- |
+| `VITE_API_URL` | Backend tRPC endpoint, e.g. `https://<railway-service>.up.railway.app/trpc` |
+| `VITE_SENTRY_DSN` | Optional — frontend error tracking |
 
-### Aplicar Migrations
+`VITE_API_URL` is a Vite build-time variable: it's baked into the static
+bundle at build time, not read at runtime. Changing the backend's URL — a
+Railway service rename, a custom domain — requires updating the variable in
+the Vercel dashboard **and** triggering a new frontend deploy; the old
+bundle keeps calling the old URL until then.
 
-```bash
-cd server
-npm run db:generate
-npm run db:push
-```
+## Observability
 
-Verifique se as tabelas foram criadas:
-- `users`
-- `modules`
-- `progress_records`
+Sentry is entirely optional in both workspaces — unset, it's a silent
+no-op and nothing else changes. To enable it: create two free-tier Sentry
+projects (Node for the backend, React for the frontend) and set `SENTRY_DSN`
+on Railway and `VITE_SENTRY_DSN` on Vercel. `SENTRY_AUTH_TOKEN`,
+`SENTRY_ORG` and `SENTRY_PROJECT` additionally enable sourcemap upload on
+the frontend build; without them the build just skips that step.
 
----
-
-## 🌐 Deploy na Vercel
-
-### Método 1: Via Dashboard (Recomendado)
-
-#### 1. Criar Projeto
-
-```bash
-# 1. Acesse: https://vercel.com
-# 2. New Project
-# 3. Import Git Repository
-# 4. Selecione seu repositório GitHub
-```
-
-#### 2. Configurar Build
-
-**Framework Preset:** Vite (detectado automaticamente)
-
-**Build Settings:**
-```bash
-# Build Command
-npm run build
-
-# Output Directory
-frontend/dist
-
-# Install Command
-npm run setup
-```
-
-**Root Directory:** `.` (deixar vazio)
-
-#### 3. Adicionar Variáveis de Ambiente
-
-Na aba **Environment Variables**, adicione:
+## Post-deploy checklist
 
 ```bash
-NODE_ENV=production
-PORT=3000
+# 1. Backend is up
+curl https://<railway-service>.up.railway.app/healthz
+# {"status":"ok","walletBalanceLow":false}
 
-# IA
-GEMINI_API_KEY=AIzaSy...
+# 2. Custodial wallet has gas
+# walletBalanceLow above should be false. If true, top up the wallet
+# (address printed by `npm run generate:wallet`) with Sepolia ETH.
 
-# Database
-DATABASE_URL=postgresql://...
-
-# Blockchain
-ETHEREUM_RPC_URL=https://sepolia.infura.io/v3/...
-PRIVATE_KEY=0x...
-CONTRACT_ADDRESS=0x...
-ETHERSCAN_API_KEY=...  # Opcional
-
-# Auth
-JWT_SECRET=seu_secret_super_seguro
-
-# Frontend
-FRONTEND_URL=https://seu-projeto.vercel.app
-VITE_API_URL=https://seu-projeto.vercel.app/trpc
+# 3. Frontend loads and reaches the backend
+# Open the Vercel URL, connect MetaMask on Sepolia, generate a module,
+# complete a quiz with a passing score, and confirm the completion shows
+# up as queued/confirmed on the dashboard (and eventually on Etherscan).
 ```
 
-**⚠️ Importante:**
-- Clique em **"Add to all environments"**
-- Marque: Production, Preview, Development
-
-#### 4. Deploy!
-
-Clique em **Deploy** e aguarde (2-5 minutos).
-
-### Método 2: Via CLI
-
-```bash
-# Instalar Vercel CLI
-npm install -g vercel
-
-# Login
-vercel login
-
-# Deploy
-vercel
-
-# Seguir prompts
-# Adicionar variáveis quando solicitado
-
-# Deploy em produção
-vercel --prod
-```
-
----
-
-## ⚙️ Configurações Pós-Deploy
-
-### 1. Atualizar Frontend URL
-
-Após deploy, atualize no Vercel:
-
-```bash
-FRONTEND_URL=https://seu-projeto.vercel.app
-VITE_API_URL=https://seu-projeto.vercel.app/trpc
-```
-
-**Redeploy** para aplicar mudanças.
-
-### 2. Configurar Domínio Customizado (Opcional)
-
-```bash
-# Vercel Dashboard
-Settings → Domains → Add Domain
-# Ex: aidlh.seudominio.com
-```
-
-Atualize DNS do seu domínio:
-```
-Type: CNAME
-Name: aidlh
-Value: cname.vercel-dns.com
-```
-
-### 3. Habilitar HTTPS (Automático)
-
-Vercel ativa SSL automaticamente.
-Verifique: https://seu-projeto.vercel.app
-
-### 4. Configurar Redirects
-
-Adicione em `vercel.json` se necessário:
-
-```json
-{
-  "redirects": [
-    {
-      "source": "/app",
-      "destination": "/dashboard"
-    }
-  ]
-}
-```
-
----
-
-## ✅ Verificação
-
-### Checklist Pós-Deploy
-
-```bash
-# 1. Health Check
-curl https://seu-projeto.vercel.app/health
-
-# Resposta esperada:
-{
-  "status": "healthy",
-  "services": {
-    "database": "ok",
-    "blockchain": "ok",
-    "ai": "ok"
-  }
-}
-
-# 2. Frontend carrega
-https://seu-projeto.vercel.app
-# ✅ Deve mostrar landing page
-
-# 3. Login funciona
-# ✅ Conectar MetaMask deve funcionar
-
-# 4. Gerar módulo funciona
-# ✅ IA deve gerar conteúdo
-
-# 5. Blockchain funciona
-# ✅ Quiz aprovado deve registrar on-chain
-```
-
-### Testes Manuais
-
-1. **Autenticação:**
-   - Conectar MetaMask (Sepolia)
-   - Assinar mensagem
-   - Redirect para dashboard
-
-2. **Geração de Módulo:**
-   - Preencher formulário
-   - Aguardar 3-8 segundos
-   - Verificar módulo criado
-
-3. **Quiz:**
-   - Abrir módulo
-   - Completar quiz
-   - Verificar score
-
-4. **Blockchain:**
-   - Quiz com ≥70%
-   - Verificar transação no Etherscan
-   - Link deve funcionar
-
-### Logs
-
-```bash
-# Vercel Dashboard
-# Deployments → Latest → Function Logs
-
-# Ou via CLI
-vercel logs
-```
-
----
-
-## 🐛 Troubleshooting
-
-### Deploy Falhou
-
-**Erro: "Build failed"**
-
-```bash
-# Verifique logs na Vercel
-# Causa comum: dependências faltando
-
-# Solução:
-# 1. Verifique package.json em todas pastas
-# 2. npm install localmente
-# 3. Commit e push
-```
-
-**Erro: "Function size exceeded"**
-
-```bash
-# Backend muito grande (limite: 50MB)
-
-# Solução:
-# 1. Remova dependências não usadas
-# 2. Use external dependencies na Vercel config
-```
-
-### Health Check Falha
-
-**Database: "error"**
-
-```bash
-# Verifique DATABASE_URL
-# Teste conexão:
-psql $DATABASE_URL
-
-# Rode migrations:
-npm run db:push
-```
-
-**AI: "error"**
-
-```bash
-# Verifique GEMINI_API_KEY
-# Teste manualmente:
-curl -X POST https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=$GEMINI_API_KEY \
-  -d '{"contents":[{"parts":[{"text":"Hello"}]}]}'
-```
-
-**Blockchain: "error"**
-
-```bash
-# Verifique:
-# 1. ETHEREUM_RPC_URL válido
-# 2. CONTRACT_ADDRESS correto
-# 3. Wallet tem ETH
-
-# Teste RPC:
-curl $ETHEREUM_RPC_URL \
-  -X POST \
-  -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'
-```
-
-### Erro ao Conectar Wallet
-
-```bash
-# Frontend não conecta MetaMask
-
-# Verificar:
-# 1. MetaMask instalado
-# 2. Rede Sepolia selecionada
-# 3. CORS permitindo origem
-
-# Logs no navegador (F12)
-```
-
-### Transação Blockchain Falha
-
-```bash
-# "Insufficient funds"
-# → Wallet backend sem ETH
-# Solução: Envie ETH testnet
-
-# "Gas too low"
-# → Aumentar gasLimit no código
-# Ou aguardar menor congestão
-
-# "Nonce too low"
-# → Transação duplicada
-# Aguarde transação anterior confirmar
-```
-
----
-
-## 📊 Monitoring
-
-### Métricas Importantes
-
-**Vercel Analytics:**
-```bash
-# Dashboard → Analytics
-- Page views
-- Unique visitors
-- Response time
-```
-
-**Function Logs:**
-```bash
-# Dashboard → Logs
-- Erros 500
-- Tempo de execução
-- Memory usage
-```
-
-**Blockchain:**
-```bash
-# Etherscan
-https://sepolia.etherscan.io/address/SEU_CONTRACT
-
-- Transaction history
-- Gas usage
-- Event logs
-```
-
----
-
-## 🔄 CI/CD
-
-GitHub Actions está configurado em `.github/workflows/ci.yml`:
-
-**Triggers:**
-- Push para `main` → Deploy produção
-- Pull Request → Preview deploy
-- Push para `develop` → Staging (se configurado)
-
-**Pipeline:**
-1. ✅ Testa smart contracts
-2. ✅ Testa backend
-3. ✅ Builda frontend
-4. ✅ Deploy automático (se passar)
-
----
-
-## 🔒 Segurança em Produção
-
-### Checklist de Segurança
-
-- [ ] HTTPS ativo (Vercel faz automaticamente)
-- [ ] Variáveis de ambiente no Vercel (não commitadas)
-- [ ] JWT_SECRET forte (min 32 chars)
-- [ ] CORS configurado corretamente
-- [ ] Rate limiting ativo (futuro)
-- [ ] Logs sem informações sensíveis
-- [ ] Database backups configurados
-- [ ] Smart contract verificado no Etherscan
-
-### Secrets Rotation
-
-**Rotacione periodicamente:**
-```bash
-# JWT_SECRET - a cada 3 meses
-openssl rand -base64 32
-
-# Gemini API Key - se comprometida
-# Regenerar no Google Cloud
-
-# Database Password - anualmente
-# Via dashboard do provider
-```
-
----
-
-## 📈 Scaling
-
-### Quando Escalar
-
-**Sinais:**
-- Response time > 3s consistentemente
-- Database queries > 1s
-- Out of memory errors
-- Rate limit atingido
-
-### Como Escalar
-
-**Vercel:**
-```bash
-# Upgrade para Pro ($20/mês)
-- Serverless functions ilimitadas
-- Mais compute time
-- Advanced analytics
-```
-
-**Database:**
-```bash
-# Vercel Postgres
-Storage → Upgrade Plan
-
-# Ou migrar para:
-- Supabase Pro
-- AWS RDS
-- DigitalOcean Managed DB
-```
-
-**Gemini API:**
-```bash
-# Se atingir 1500 req/dia:
-# 1. Upgrade para plan pago
-# 2. Ou implementar cache de módulos
-```
-
----
-
-## 📞 Suporte
-
-**Problemas no deploy?**
-
-1. Verifique logs na Vercel
-2. Teste localmente: `npm run build`
-3. Consulte docs: https://vercel.com/docs
-4. Abra issue: GitHub Issues
-
-**Problemas na blockchain?**
-
-1. Verifique Etherscan
-2. Teste com Hardhat local: `npx hardhat node`
-3. Consulte docs: https://docs.ethers.org
-
----
-
-**Deploy concluído com sucesso! 🎉**
-
-Próximos passos:
-1. Configure monitoring
-2. Teste extensivamente
-3. Documente seu domínio customizado
-4. Adicione ao portfólio!
+## Rollback notes
+
+- **Backend:** redeploy a previous build from the Railway dashboard
+  (Deployments → pick an earlier one → Redeploy). Migrations are additive
+  and idempotent (Drizzle records what's applied), so rolling back the
+  binary while keeping the database forward-migrated is the expected path;
+  rolling the schema itself back is a manual operation, not something this
+  repo automates.
+- **Frontend:** redeploy a previous build from the Vercel dashboard the same
+  way, or push a revert commit — either works since Vercel deploys from git.
+- **Stuck or misbehaving on-chain queue:** the knobs are all in
+  `server/utils/env.ts` and settable per-environment on Railway —
+  `BLOCKCHAIN_QUEUE_MAX_ATTEMPTS` (attempts before a row is marked
+  `failed_permanent`), `BLOCKCHAIN_STALE_LOCK_MS` (how long a `processing`
+  row can sit before it's reclaimed), `BLOCKCHAIN_TX_TIMEOUT_MS` (how long
+  to wait before a replace-by-fee bump), and `BLOCKCHAIN_QUEUE_INTERVAL_MS`
+  / `BLOCKCHAIN_QUEUE_MAX_INTERVAL_MS` (poll cadence, busy and idle). None
+  of them require a code change or redeploy of a new binary — only a
+  variable update and a restart.

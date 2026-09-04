@@ -11,7 +11,7 @@ A full-stack Web3 learning platform: generative AI builds a study module on dema
 ![React](https://img.shields.io/badge/React-18-61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6)
 ![tRPC](https://img.shields.io/badge/tRPC-10-398CCB)
-![Tests](https://img.shields.io/badge/tests-216%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-239%20passing-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
 > ### 🔗 The fastest way to inspect this project
@@ -78,6 +78,7 @@ When a user passes a quiz (score >= 70), the API returns immediately and the wri
 - **Attempt counted at claim time.** A process that dies mid-broadcast still consumes an attempt, which prevents infinite retry loops after a crash.
 - **Exponential backoff with an error taxonomy.** Retries follow a fixed schedule and errors are classified: a contract revert is permanent and parks the row as `failed_permanent`, while `INSUFFICIENT_FUNDS` stays retryable on purpose because the wallet can be topped up.
 - **Replace-by-fee.** A transaction that does not confirm within the timeout is re-sent on the same nonce with fees bumped 25 percent, and a transaction that gets replaced or repriced is recovered as a success rather than double-sent.
+- **Journal before the wait, recovery from receipts.** A crash between the broadcast and the database write used to be the one path to a duplicate on-chain record: the row stayed `processing`, the stale lock expired, and the worker sent a brand-new transaction for a completion that was already in flight. Sending and waiting are now separate calls, and the nonce plus every hash sent on it are journaled in between. A reclaimed row is resolved from those receipts — confirmed if one mined, permanently failed if one reverted — and when nothing mined it re-broadcasts the SAME nonce instead of allocating a new one, so at most one transaction can ever take that slot. A nonce consumed by a transaction that is not in the journal stops the record instead of resending it: that case needs a human, not a retry.
 - **Idempotency enforced by the database.** A partial unique index guarantees at most one on-chain payout per (user, module). The application also checks first, and a lost race surfaces as a `23505` unique violation that is caught and downgraded instead of double-paying.
 - **Stale lock recovery.** Rows stuck in `processing` past a timeout are reclaimed, so a hard kill does not strand work.
 - **Wallet balance monitor.** The custodial wallet balance is polled and exposed on the health endpoint, because a rail that runs out of gas should be visible before it fails.
@@ -220,10 +221,10 @@ There is no Docker setup and no mock mode: a real database, a real RPC endpoint 
 
 ## Tests
 
-216 tests pass across the three workspaces. Run each one directly:
+239 tests pass across the three workspaces. Run each one directly:
 
 ```bash
-cd server    && npx vitest run     # 144 tests, 12 files
+cd server    && npx vitest run     # 167 tests, 13 files
 cd frontend  && npx vitest run     #  49 tests,  5 files
 cd contracts && npx hardhat test   #  23 tests
 ```

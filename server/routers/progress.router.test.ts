@@ -229,6 +229,21 @@ describe('progress.retryBlockchain', () => {
     expect(mocks.queueWake).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps the exactly-once journal so the retry recovers instead of double-sending', async () => {
+    mocks.updateReturning.mockResolvedValue([{ id: 5 }]);
+    const caller = callerForUser(1);
+
+    await caller.retryBlockchain({ recordId: 5 });
+
+    // A journal only exists once a transaction was broadcast. Clearing it
+    // here would let the worker allocate a fresh nonce next to one that is
+    // still in flight — two records for one completion on an append-only
+    // contract. The worker's recovery path resolves it from receipts.
+    const values = mocks.updateSet.mock.calls[0][0] as Record<string, unknown>;
+    expect(values).not.toHaveProperty('blockchainNonce');
+    expect(values).not.toHaveProperty('blockchainSentHashes');
+  });
+
   it("returns NOT_FOUND for another user's record (conditional update misses)", async () => {
     mocks.updateReturning.mockResolvedValue([]);
     const caller = callerForUser(2);

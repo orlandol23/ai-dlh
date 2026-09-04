@@ -345,7 +345,7 @@ ping 8.8.8.8
 
 # 2. Verifique quota da API
 # Google Cloud Console → Gemini API → Quotas
-# Free tier: 1500 req/dia
+# Free tier: 250 req/dia por projeto (compartilhado entre todos os modelos Flash) — acima disso é pago
 
 # 3. Simplifique tópico
 # Ao invés de: "Arquitetura hexagonal em microserviços"

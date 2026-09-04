@@ -262,14 +262,14 @@ Stated explicitly, because a portfolio that hides its edges is not worth reading
 - **The database is a free-tier serverless Postgres with a monthly compute allowance.** When it is exhausted the database refuses connections until the allowance resets, and the API is down for the remainder of the month. The queue worker is event-driven precisely so an idle deployment wakes the database only a handful of times a day (the safety-net poll); the allowance is a free-tier constraint, not an architectural one. Two operational corollaries: point uptime monitors at `/healthz` (no I/O), never at `/health`, whose database probe would keep the compute awake around the clock; and treat any unexplained allowance burn as "something is waking the database" — the provider's monitoring dashboard shows compute-active periods, which reveal the wakeup cadence and therefore the culprit.
 - **Translations are partly machine-generated.** English and Brazilian Portuguese are human-written; Spanish, French, Japanese and Arabic are machine-translated and flagged in the source as pending human review.
 - **No end-to-end tests.** The test suite is unit-level, and router tests mock the database. E2E coverage is planned, not present, and is tracked in the roadmap below.
-- **No Solidity static analysis in CI.** Slither and a gas regression gate are planned, not present.
+- **Solidity static analysis is gated, not audited.** CI runs Slither (fails on medium and high findings) and a gas regression gate (2% tolerance against `contracts/gas-baseline.json`). That is a lint, not a security audit; the contract has not been audited.
 - **Reference documentation is thin.** The standalone architecture and API documents described an earlier single-provider version without the queue or VARK, so they were removed rather than left to mislead. This README and the ADRs under `docs/adr/` are the current source of truth; `docs/DEPLOYMENT.md` carries a staleness banner.
 
 ## Roadmap
 
 - [ ] ERC-5192 soulbound certificate minted to the learner's own wallet
 - [ ] SIWE / EIP-4361 to replace the hand-rolled signature scheme
-- [ ] Slither and a gas regression gate in CI
+- [x] Slither and a gas regression gate in CI ([#35](https://github.com/orlandol23/ai-dlh/pull/35))
 - [ ] Multi-chain queue: keep the free tier on a testnet, mint paid certificates on an L2
 - [ ] Playwright smoke tests as a release gate
 - [ ] Human review pass over the machine-translated locales

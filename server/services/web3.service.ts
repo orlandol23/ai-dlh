@@ -6,19 +6,8 @@ import { getErrorCode, getErrorMessage } from '../utils/errors.js';
 // Learning Progress ABI (minimal - only what we need)
 const LEARNING_PROGRESS_ABI = [
   'function recordCompletion(uint256 _moduleId, uint256 _score, string memory _moduleTopic) external',
-  'function getUserProgress(address _user) external view returns (tuple(uint256 moduleId, uint256 score, uint256 timestamp, string moduleTopic)[])',
-  'function getUserCompletionCount(address _user) external view returns (uint256)',
-  'function getUserAverageScore(address _user) external view returns (uint256)',
-  'function totalCompletions() external view returns (uint256)',
   'event ModuleCompleted(address indexed user, uint256 indexed moduleId, uint256 score, uint256 timestamp, string moduleTopic)',
 ];
-
-export interface CompletionData {
-  moduleId: number;
-  score: number;
-  timestamp: number;
-  moduleTopic: string;
-}
 
 export interface BlockchainReceipt {
   hash: string;
@@ -46,7 +35,6 @@ const FEE_BUMP_PERCENT = 125n;
  * 
  * Features:
  * - Records module completions on Ethereum blockchain
- * - Retrieves user progress from smart contract
  * - Verifies Web3 signatures for authentication
  * - Manages gas fees and transaction confirmations
  * 
@@ -247,68 +235,6 @@ export class Web3Service {
       const receipt = await this.provider.getTransactionReceipt(tx.hash);
       if (receipt) return receipt;
       throw error;
-    }
-  }
-
-  /**
-   * Get user progress from blockchain
-   */
-  async getUserProgress(walletAddress: string): Promise<CompletionData[]> {
-    logger.debug(`Fetching progress for ${walletAddress}`);
-
-    try {
-      const progress = await this.contract.getUserProgress(walletAddress);
-
-      // ethers returns tuple Results; index by the ABI field names.
-      return progress.map((p: { moduleId: bigint; score: bigint; timestamp: bigint; moduleTopic: string }) => ({
-        moduleId: Number(p.moduleId),
-        score: Number(p.score),
-        timestamp: Number(p.timestamp),
-        moduleTopic: p.moduleTopic,
-      }));
-
-    } catch (error) {
-      logger.error('Error fetching user progress', { error });
-      throw new Error('Failed to fetch blockchain data');
-    }
-  }
-
-  /**
-   * Get user completion count
-   */
-  async getCompletionCount(walletAddress: string): Promise<number> {
-    try {
-      const count = await this.contract.getUserCompletionCount(walletAddress);
-      return Number(count);
-    } catch (error) {
-      logger.error('Error fetching completion count', { error });
-      throw new Error('Failed to fetch completion count');
-    }
-  }
-
-  /**
-   * Get user average score
-   */
-  async getAverageScore(walletAddress: string): Promise<number> {
-    try {
-      const avg = await this.contract.getUserAverageScore(walletAddress);
-      return Number(avg);
-    } catch (error) {
-      logger.error('Error fetching average score', { error });
-      throw new Error('Failed to fetch average score');
-    }
-  }
-
-  /**
-   * Get total completions on contract
-   */
-  async getTotalCompletions(): Promise<number> {
-    try {
-      const total = await this.contract.totalCompletions();
-      return Number(total);
-    } catch (error) {
-      logger.error('Error fetching total completions', { error });
-      throw new Error('Failed to fetch total completions');
     }
   }
 

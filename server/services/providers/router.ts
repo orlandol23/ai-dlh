@@ -1,5 +1,6 @@
 import { config } from '../../utils/env.js';
 import { logger } from '../../utils/logger.js';
+import { getErrorCode, getErrorMessage } from '../../utils/errors.js';
 import type { ModuleContent } from '../ai.service.js';
 import { GeminiProvider } from './gemini.provider.js';
 import { ClaudeProvider } from './claude.provider.js';
@@ -62,7 +63,13 @@ export class ProviderRouter {
       const result = await primary.generateModule(input);
       return { result, providerUsed: primary.name };
     } catch (err) {
-      logger.warn(`Primary provider ${primary.name} failed, trying fallback`, err);
+      // Log the narrowed message, never the thrown value: an AxiosError
+      // carries the request config, and that config carries the provider's
+      // API key in an Authorization header.
+      logger.warn(`Primary provider ${primary.name} failed, trying fallback`, {
+        error: getErrorMessage(err),
+        code: getErrorCode(err),
+      });
       const fallback = this.pickFallback(ctx, primary);
       if (!fallback) throw err;
       const result = await fallback.generateModule(input);

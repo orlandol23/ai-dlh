@@ -59,12 +59,12 @@ Run each workspace directly — the root `npm test` covers only contracts and
 backend:
 
 ```bash
-cd server    && npx vitest run   # 167 tests, 13 files
+cd server    && npx vitest run   # 175 tests, 14 files
 cd frontend  && npx vitest run   #  49 tests,  5 files
 cd contracts && npx hardhat test #  23 tests
 ```
 
-Total: 239 tests. Keep the counts in `README.md` in sync when tests are added.
+Total: 247 tests. Keep the counts in `README.md` in sync when tests are added.
 
 ## Lint and build
 

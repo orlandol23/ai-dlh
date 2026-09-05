@@ -324,7 +324,7 @@ const { t } = useTranslation('home');
 
 ### A.1 — Primary button with hover glow [unchanged]
 
-**Arquivo:** `frontend/src/components/atoms/Button.tsx`
+**File:** `frontend/src/components/atoms/Button.tsx`
 
 Add to the `default` variant:
 
@@ -364,7 +364,7 @@ Replace `focus-visible:ring-2 ring-ring ring-offset-2` with `focus-ring-v2`.
 
 ### A.3 — Quiz progress bar with brand gradient [unchanged]
 
-**Arquivo:** `frontend/src/pages/ModulePage.tsx`
+**File:** `frontend/src/pages/ModulePage.tsx`
 
 ```tsx
 <div
@@ -434,7 +434,7 @@ JSON (`common.json`):
 
 ### B.1 — `prefers-reduced-motion` [unchanged]
 
-`globals.css` (final do arquivo):
+`globals.css` (end of file):
 ```css
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -790,7 +790,7 @@ function dayKey(date: Date | string): string {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: userTz,
     year: 'numeric', month: '2-digit', day: '2-digit',
-  }).format(d); // 'YYYY-MM-DD' no fuso do usuário
+  }).format(d); // 'YYYY-MM-DD' in the user timezone
 }
 
 export function calculateStreak(progress: Progress[]): number {

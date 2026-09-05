@@ -6,7 +6,7 @@ Welcome to the AI-Powered Decentralized Learning Hub documentation.
 
 | Document                                   | Description                                                |
 | ------------------------------------------ | ---------------------------------------------------------- |
-| [PLANO_MESTRE.md](./PLANO_MESTRE.md)       | **Plano vigente** — billing on-chain, adaptativo v2, fases de execução e estado atual |
+| [MASTER_PLAN.md](./MASTER_PLAN.md)         | **Current plan**: on-chain billing, adaptive v2, execution phases and current state |
 | [SETUP.md](./SETUP.md)                     | Complete setup guide (prerequisites, API keys, deployment) |
 | [DEPLOYMENT.md](./DEPLOYMENT.md)           | Production deployment guide (Vercel + Railway + Neon)      |
 | [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) | Common issues and solutions                                |

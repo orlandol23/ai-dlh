@@ -3,7 +3,7 @@
 > **📌 Status: ✅ DONE** (PRs [#14](https://github.com/orlandol23/ai-dlh/pull/14) and
 > [#15](https://github.com/orlandol23/ai-dlh/pull/15)) — kept as a
 > historical record. Only remaining open item: **dynamic OG image for the certificate**
-> (item D.5), absorbed by [PLANO_MESTRE.md](./PLANO_MESTRE.md) as **C7**.
+> (item D.5), absorbed by [MASTER_PLAN.md](../MASTER_PLAN.md) as **C7**.
 
 > Sequence of improvements after the v2 "Circuit & Ink" migration.
 > Paste this file into Claude Code inside the `orlandol23/ai-dlh` repo on a new branch.

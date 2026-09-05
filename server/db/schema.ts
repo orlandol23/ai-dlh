@@ -103,6 +103,15 @@ export const progressRecords = pgTable('progress_records', {
   blockchainLockedAt: timestamp('blockchain_locked_at'),
   // Last error message (server-side detail, never sent verbatim to clients).
   blockchainError: text('blockchain_error'),
+  // Exactly-once journal, written BETWEEN broadcasting the transaction and
+  // waiting for its receipt (see blockchain-queue.service.processCandidate).
+  // `blockchain_nonce` is the nonce the broadcast consumed; a reclaimed row
+  // re-broadcasts THAT nonce instead of allocating a new one, so a crash in
+  // the send/wait window can never produce a second on-chain record.
+  blockchainNonce: integer('blockchain_nonce'),
+  // JSON array of every hash sent for that nonce — the original plus each
+  // fee-bump replacement. Recovery checks their receipts before resending.
+  blockchainSentHashes: text('blockchain_sent_hashes'),
   completedAt: timestamp('completed_at').defaultNow().notNull(),
 }, (table) => {
   return {

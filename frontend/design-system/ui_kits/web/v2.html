@@ -86,8 +86,8 @@ function TopNav({ theme, setTheme }) {
         </div>
         <div className="flex gap-2">
           <a href="#tokens" className="btn-ghost">Tokens</a>
-          <a href="#components" className="btn-ghost">Componentes</a>
-          <a href="#states" className="btn-ghost">Estados</a>
+          <a href="#components" className="btn-ghost">Components</a>
+          <a href="#states" className="btn-ghost">States</a>
           <a href="#dashboard" className="btn-ghost">Dashboard</a>
           <button className="btn-outline" style={{height:36, padding:'0 14px'}} onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
             {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
@@ -138,10 +138,10 @@ function Hero() {
             Aprenda com <span style={{background:'linear-gradient(135deg,#7c3aed,#22d3ee)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent'}}>IA</span>.<br/>
             Certifique em <span style={{background:'linear-gradient(135deg,#7c3aed,#22d3ee)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent'}}>cadeia</span>.
           </h1>
-          <p className="body-lg mt-6 max-w-xl">Um design system próprio para a plataforma AI-DLH — roxo elétrico, grid pontilhado e tipografia Space Grotesk. Nada de shadcn genérico.</p>
+          <p className="body-lg mt-6 max-w-xl">A design system built for the AI-DLH platform — electric purple, dotted grid and Space Grotesk typography. No generic shadcn look.</p>
           <div className="flex gap-3 mt-8">
             <button className="btn-primary">Começar Agora</button>
-            <button className="btn-outline">Ver componentes</button>
+            <button className="btn-outline">See components</button>
           </div>
         </div>
         <div className="panel p-6 hash-grid" style={{background:'var(--card)'}}>
@@ -180,25 +180,25 @@ function ColorGrid() {
   );
   return (
     <div>
-      {row('Primary — roxo elétrico', [
+      {row('Primary — electric purple', [
         ['50','#f5f3ff'],['100','#ede9fe'],['200','#ddd6fe'],['300','#c4b5fd'],['400','#a78bfa'],
         ['500','#8b5cf6'],['600','#7c3aed'],['700','#6d28d9'],['800','#5b21b6'],['900','#4c1d95'],
       ])}
-      {row('Accent — ciano', [
+      {row('Accent — cyan', [
         ['50','#ecfeff'],['100','#cffafe'],['300','#67e8f9'],['accent','#22d3ee'],['500','#06b6d4'],['600','#0891b2'],
       ])}
-      {row('Neutros warm', [
+      {row('Warm neutrals', [
         ['0','#ffffff'],['25','#fbfaf9'],['50','#f7f5f3'],['100','#efece8'],['200','#e2ddd6'],
         ['400','#a29a8f'],['600','#55504a'],['700','#3a3632'],['800','#24221f'],['900','#161514'],
       ])}
-      <div className="eyebrow mb-3">Estados semânticos — todas distintas do primary</div>
+      <div className="eyebrow mb-3">Semantic states — each distinct from primary</div>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
           {n:'Success', c:'#16a34a', bg:'#f0fdf4', fg:'#14532d', copy:'Aprovado ✅'},
           {n:'Warning', c:'#d97706', bg:'#fffbeb', fg:'#78350f', copy:'Pendente ⚠️'},
           {n:'Error',   c:'#dc2626', bg:'#fef2f2', fg:'#7f1d1d', copy:'Reprovado ❌'},
-          {n:'Info (ciano)', c:'#06b6d4', bg:'#ecfeff', fg:'#164e63', copy:'Já completou'},
-          {n:'On-chain (roxo)', c:'#7c3aed', bg:'#f5f3ff', fg:'#4c1d95', copy:'⛓️ Na blockchain'},
+          {n:'Info (cyan)', c:'#06b6d4', bg:'#ecfeff', fg:'#164e63', copy:'Já completou'},
+          {n:'On-chain (purple)', c:'#7c3aed', bg:'#f5f3ff', fg:'#4c1d95', copy:'⛓️ Na blockchain'},
         ].map(s => (
           <div key={s.n} className="panel">
             <div className="flex items-center gap-2 px-4 pt-4"><span style={{width:12,height:12,borderRadius:999,background:s.c}}/><span className="font-semibold text-sm">{s.n}</span></div>
@@ -218,22 +218,22 @@ function TypeSpec() {
         <div className="eyebrow mb-3">Display — Space Grotesk</div>
         <div className="sg" style={{fontSize:72, fontWeight:700, lineHeight:1, letterSpacing:'-0.04em'}}>Aa Bb 01</div>
         <div className="sg mt-4" style={{fontSize:28, fontWeight:600}}>Aprenda com IA</div>
-        <div className="caption mt-3">Usar em: heros, títulos de seção (h1/h2), stat numbers.</div>
+        <div className="caption mt-3">Use in: heroes, section titles (h1/h2), stat numbers.</div>
       </div>
       <div className="panel p-6">
         <div className="eyebrow mb-3">UI — Inter</div>
         <div style={{fontSize:28, fontWeight:600}}>Dashboard · Meus Módulos</div>
         <div className="mt-3 body">React Hooks te permitem usar estado e ciclo de vida sem classes.</div>
-        <div className="caption mt-3">Usar em: body, labels, card titles, nav.</div>
+        <div className="caption mt-3">Use in: body copy, labels, card titles, nav.</div>
       </div>
       <div className="panel p-6">
-        <div className="eyebrow mb-3">Mono — JetBrains Mono (expressivo)</div>
+        <div className="eyebrow mb-3">Mono — JetBrains Mono (expressive)</div>
         <div className="mono" style={{fontSize:20}}>0x742d35…f4Bb</div>
         <div className="mono mt-2" style={{fontSize:14, color:'var(--muted-foreground)'}}>block 5_234_891 · sepolia</div>
-        <div className="caption mt-3">Usar em: endereços, tx hashes, labels "ON-CHAIN", stats numéricos opcionais.</div>
+        <div className="caption mt-3">Use in: addresses, tx hashes, "ON-CHAIN" labels, optional numeric stats.</div>
       </div>
       <div className="panel p-6">
-        <div className="eyebrow mb-3">Escala</div>
+        <div className="eyebrow mb-3">Scale</div>
         <div className="space-y-1">
           {[['8xl','96','Hero'],['5xl','48','H1'],['4xl','36','H2'],['2xl','24','CardTitle'],['base','16','Body'],['sm','14','Small'],['xs','12','Caption']].map(([k,px,use]) => (
             <div key={k} className="flex items-baseline gap-3 text-sm">
@@ -260,7 +260,7 @@ function ButtonsRow() {
         <button className="btn-primary" style={{background:'var(--error)'}}>Desconectar</button>
         <button className="btn-primary" disabled style={{opacity:.5}}>Disabled</button>
       </div>
-      <div className="caption mt-4">Hover no primário aplica box-shadow glow roxo + translateY(-1px) — é o detalhe que diferencia.</div>
+      <div className="caption mt-4">Hover on the primary applies a purple glow box-shadow + translateY(-1px) — that's the detail that sets it apart.</div>
     </div>
   );
 }
@@ -269,7 +269,7 @@ function NewComponents() {
   const [tab, setTab] = useState('toast');
   return (
     <div className="panel p-6">
-      <div className="eyebrow mb-4">Novos componentes (v2)</div>
+      <div className="eyebrow mb-4">New components (v2)</div>
       <div className="flex gap-1 mb-5 border-b" style={{borderColor:'var(--border)'}}>
         {['toast','dialog','tabs','avatar','skeleton','tooltip'].map(t => (
           <button key={t} onClick={()=>setTab(t)} className="px-3 py-2 text-sm font-medium relative" style={{color: tab===t?'var(--primary)':'var(--muted-foreground)'}}>
@@ -336,7 +336,7 @@ function NewComponents() {
               </div>
             ))}
           </div>
-          <div className="caption mt-3">Sublinhado animado em roxo. Tamanho padrão: h-10, padding lateral 16.</div>
+          <div className="caption mt-3">Animated underline in purple. Default size: h-10, 16px side padding.</div>
         </div>
       )}
 
@@ -424,7 +424,7 @@ function BlockchainStamp() {
           ⛓ ON-CHAIN
         </div>
       )}
-      <button className="btn-ghost mt-4" onClick={() => setStamped(false) || setTimeout(()=>setStamped(true),80)}>Replay animação</button>
+      <button className="btn-ghost mt-4" onClick={() => setStamped(false) || setTimeout(()=>setStamped(true),80)}>Replay animation</button>
     </div>
   );
 }
@@ -598,7 +598,7 @@ function App() {
       </section>
 
       <section id="components">
-        <div className="section-head"><span className="num">02</span><h2 className="sg">Componentes</h2></div>
+        <div className="section-head"><span className="num">02</span><h2 className="sg">Components</h2></div>
         <div className="grid md:grid-cols-2 gap-5">
           <ButtonsRow/>
           <CopyDict/>
@@ -607,12 +607,12 @@ function App() {
       </section>
 
       <section id="states">
-        <div className="section-head"><span className="num">03</span><h2 className="sg">Estados especiais</h2></div>
+        <div className="section-head"><span className="num">03</span><h2 className="sg">Special states</h2></div>
         <div className="grid md:grid-cols-2 gap-5">
           <AIStreaming/>
           <BlockchainStamp/>
         </div>
-        <p className="caption mt-4">Dois momentos que precisam ser memoráveis: quando a IA gera (texto "digitando" com caret roxo) e quando grava on-chain (carimbo com animação de escala + rotação leve).</p>
+        <p className="caption mt-4">Two moments that need to be memorable: when the AI generates (a "typing" text with a purple caret) and when it writes on-chain (a stamp with a scale + slight rotation animation).</p>
       </section>
 
       <section id="dashboard">
@@ -621,10 +621,10 @@ function App() {
       </section>
 
       <section id="motif">
-        <div className="section-head"><span className="num">05</span><h2 className="sg">Motivo gráfico</h2></div>
+        <div className="section-head"><span className="num">05</span><h2 className="sg">Graphic motif</h2></div>
         <div className="grid md:grid-cols-2 gap-5">
-          <div className="panel p-10 hash-grid"><div className="eyebrow">hash-grid</div><p className="mt-3 body-sm">Grade pontilhada 24×24 em roxo a 8% opacity. Usar em heros, cards "on-chain" e empty states. Único padrão decorativo do sistema.</p></div>
-          <div className="panel p-10"><div className="eyebrow">circuit trace</div><div className="circuit-trace mt-6"/><p className="mt-4 body-sm">Linha tracejada roxa 2px. Usar como divisor em certificados e receipts blockchain.</p></div>
+          <div className="panel p-10 hash-grid"><div className="eyebrow">hash-grid</div><p className="mt-3 body-sm">24×24 dotted grid in purple at 8% opacity. Use in heroes, "on-chain" cards and empty states. The system's only decorative pattern.</p></div>
+          <div className="panel p-10"><div className="eyebrow">circuit trace</div><div className="circuit-trace mt-6"/><p className="mt-4 body-sm">2px dashed purple line. Use as a divider in certificates and blockchain receipts.</p></div>
         </div>
       </section>
 

@@ -11,7 +11,7 @@ A full-stack Web3 learning platform: generative AI builds a study module on dema
 ![React](https://img.shields.io/badge/React-18-61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6)
 ![tRPC](https://img.shields.io/badge/tRPC-10-398CCB)
-![Tests](https://img.shields.io/badge/tests-216%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-239%20passing-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
 > ### 🔗 The fastest way to inspect this project
@@ -78,6 +78,7 @@ When a user passes a quiz (score >= 70), the API returns immediately and the wri
 - **Attempt counted at claim time.** A process that dies mid-broadcast still consumes an attempt, which prevents infinite retry loops after a crash.
 - **Exponential backoff with an error taxonomy.** Retries follow a fixed schedule and errors are classified: a contract revert is permanent and parks the row as `failed_permanent`, while `INSUFFICIENT_FUNDS` stays retryable on purpose because the wallet can be topped up.
 - **Replace-by-fee.** A transaction that does not confirm within the timeout is re-sent on the same nonce with fees bumped 25 percent, and a transaction that gets replaced or repriced is recovered as a success rather than double-sent.
+- **Journal before the wait, recovery from receipts.** A crash between the broadcast and the database write used to be the one path to a duplicate on-chain record: the row stayed `processing`, the stale lock expired, and the worker sent a brand-new transaction for a completion that was already in flight. Sending and waiting are now separate calls, and the nonce plus every hash sent on it are journaled in between. A reclaimed row is resolved from those receipts — confirmed if one mined, permanently failed if one reverted — and when nothing mined it re-broadcasts the SAME nonce instead of allocating a new one, so at most one transaction can ever take that slot. A nonce consumed by a transaction that is not in the journal stops the record instead of resending it: that case needs a human, not a retry.
 - **Idempotency enforced by the database.** A partial unique index guarantees at most one on-chain payout per (user, module). The application also checks first, and a lost race surfaces as a `23505` unique violation that is caught and downgraded instead of double-paying.
 - **Stale lock recovery.** Rows stuck in `processing` past a timeout are reclaimed, so a hard kill does not strand work.
 - **Wallet balance monitor.** The custodial wallet balance is polled and exposed on the health endpoint, because a rail that runs out of gas should be visible before it fails.
@@ -220,10 +221,10 @@ There is no Docker setup and no mock mode: a real database, a real RPC endpoint 
 
 ## Tests
 
-216 tests pass across the three workspaces. Run each one directly:
+239 tests pass across the three workspaces. Run each one directly:
 
 ```bash
-cd server    && npx vitest run     # 144 tests, 12 files
+cd server    && npx vitest run     # 167 tests, 13 files
 cd frontend  && npx vitest run     #  49 tests,  5 files
 cd contracts && npx hardhat test   #  23 tests
 ```
@@ -257,19 +258,19 @@ Measured by building the commit before the change and the current HEAD with the 
 Stated explicitly, because a portfolio that hides its edges is not worth reading:
 
 - **The frontend and the API are deployed separately.** The frontend runs on Vercel, the backend on Railway, and the contract lives on Sepolia. The frontend reaches the API through `VITE_API_URL`, which is baked in at build time, so a frontend redeploy is required whenever the API URL changes.
-- **The contract writes custodially.** As a consequence, the per-user read endpoints in `server/routers/web3.router.ts` query the learner's address while the data sits under the backend wallet's address, so they return empty. The UI does not use them: it reads the persisted queue status and transaction hash from Postgres. Those endpoints are stale and are removed or reworked as part of the ERC-5192 redesign.
+- **The contract writes custodially.** Completions are recorded under the backend wallet's address, not the learner's, so a per-user on-chain read would return empty. The UI reads queue status and the transaction hash from Postgres instead. Per-user on-chain reads will only make sense once the ERC-5192 redesign puts records under the learner's own wallet.
 - **Rate limiting is in-memory.** It is per-instance and resets on redeploy. That is a deliberate trade-off for a single-instance deployment and needs Redis before scaling horizontally.
 - **The database is a free-tier serverless Postgres with a monthly compute allowance.** When it is exhausted the database refuses connections until the allowance resets, and the API is down for the remainder of the month. The queue worker is event-driven precisely so an idle deployment wakes the database only a handful of times a day (the safety-net poll); the allowance is a free-tier constraint, not an architectural one. Two operational corollaries: point uptime monitors at `/healthz` (no I/O), never at `/health`, whose database probe would keep the compute awake around the clock; and treat any unexplained allowance burn as "something is waking the database" — the provider's monitoring dashboard shows compute-active periods, which reveal the wakeup cadence and therefore the culprit.
 - **Translations are partly machine-generated.** English and Brazilian Portuguese are human-written; Spanish, French, Japanese and Arabic are machine-translated and flagged in the source as pending human review.
 - **No end-to-end tests.** The test suite is unit-level, and router tests mock the database. E2E coverage is planned, not present, and is tracked in the roadmap below.
-- **No Solidity static analysis in CI.** Slither and a gas regression gate are planned, not present.
-- **Reference documentation is thin.** The standalone architecture and API documents described an earlier single-provider version without the queue or VARK, so they were removed rather than left to mislead. This README and the ADRs under `docs/adr/` are the current source of truth; `docs/DEPLOYMENT.md` carries a staleness banner.
+- **Solidity static analysis is gated, not audited.** CI runs Slither (fails on medium and high findings) and a gas regression gate (2% tolerance against `contracts/gas-baseline.json`). That is a lint, not a security audit; the contract has not been audited.
+- **Reference documentation is thin.** The standalone architecture and API documents described an earlier single-provider version without the queue or VARK, so they were removed rather than left to mislead. This README and the ADRs under `docs/adr/` are the current source of truth; `docs/DEPLOYMENT.md` has been rewritten for the real Vercel + Railway + Neon topology, but it is not as deep as this README on the engineering rationale.
 
 ## Roadmap
 
 - [ ] ERC-5192 soulbound certificate minted to the learner's own wallet
 - [ ] SIWE / EIP-4361 to replace the hand-rolled signature scheme
-- [ ] Slither and a gas regression gate in CI
+- [x] Slither and a gas regression gate in CI ([#35](https://github.com/orlandol23/ai-dlh/pull/35))
 - [ ] Multi-chain queue: keep the free tier on a testnet, mint paid certificates on an L2
 - [ ] Playwright smoke tests as a release gate
 - [ ] Human review pass over the machine-translated locales

@@ -127,6 +127,12 @@ NODE_ENV=development
 VITE_API_URL=http://localhost:3000/trpc
 ```
 
+This covers the variables you need to get a local instance running. The
+full list — including optional rate-limit, blockchain-queue, wallet-monitor
+and Sentry knobs, each with its default and a comment explaining it — lives
+in `.env.example` and `server/utils/env.ts`, which is the schema the backend
+validates against at boot.
+
 ---
 
 ## 🔗 Phase 3: Deploy Smart Contract (10 min)
@@ -154,11 +160,16 @@ CONTRACT_ADDRESS=0xYOUR_CONTRACT_ADDRESS
 
 ## 🗄️ Phase 4: Database Setup (10 min)
 
-### Option A: Vercel Postgres (Recommended for production)
+### Option A: Neon (Recommended for production)
 
-1. Go to: https://vercel.com/dashboard
-2. Create new Postgres database
-3. Copy connection string to `DATABASE_URL`
+1. Go to: https://neon.tech
+2. Create a free project (serverless Postgres, scale-to-zero)
+3. Copy the connection string to `DATABASE_URL`
+
+Production runs on Neon's free tier, which has a monthly compute
+allowance. See [DEPLOYMENT.md](./DEPLOYMENT.md) for the operational
+details — which health-check endpoint to probe, and why the queue
+worker is event-driven — that keep an idle deployment from burning it.
 
 ### Option B: Local Docker (Development)
 

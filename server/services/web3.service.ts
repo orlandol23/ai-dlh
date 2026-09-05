@@ -6,25 +6,48 @@ import { getErrorCode, getErrorMessage } from '../utils/errors.js';
 // Learning Progress ABI (minimal - only what we need)
 const LEARNING_PROGRESS_ABI = [
   'function recordCompletion(uint256 _moduleId, uint256 _score, string memory _moduleTopic) external',
-  'function getUserProgress(address _user) external view returns (tuple(uint256 moduleId, uint256 score, uint256 timestamp, string moduleTopic)[])',
-  'function getUserCompletionCount(address _user) external view returns (uint256)',
-  'function getUserAverageScore(address _user) external view returns (uint256)',
-  'function totalCompletions() external view returns (uint256)',
   'event ModuleCompleted(address indexed user, uint256 indexed moduleId, uint256 score, uint256 timestamp, string moduleTopic)',
 ];
-
-export interface CompletionData {
-  moduleId: number;
-  score: number;
-  timestamp: number;
-  moduleTopic: string;
-}
 
 export interface BlockchainReceipt {
   hash: string;
   blockNumber: number;
   gasUsed: string;
 }
+
+/**
+ * Everything needed to wait for — or replace — a broadcast transaction,
+ * without holding on to the ethers `TransactionResponse`. The queue
+ * journals `hash` and `nonce` to the database BETWEEN the broadcast and
+ * the wait, which is what makes the on-chain write survive a crash.
+ */
+export interface SentTransaction {
+  hash: string;
+  nonce: number;
+  data: string;
+  to: string;
+  /** null = let ethers estimate it when re-broadcasting. */
+  gasLimit: bigint | null;
+  maxFeePerGas: bigint | null;
+  maxPriorityFeePerGas: bigint | null;
+}
+
+/** The journal a reclaimed record carries into `recoverCompletion`. */
+export interface CompletionJournal {
+  nonce: number;
+  /** Every hash broadcast on that nonce: the original and any fee bump. */
+  hashes: string[];
+  moduleId: number;
+  score: number;
+  topic: string;
+}
+
+/**
+ * Called with each replacement hash the service broadcasts, BEFORE it
+ * starts waiting on it. The queue appends the hash to the journal, so a
+ * crash never leaves an in-flight hash the recovery path cannot check.
+ */
+export type OnReplacementHash = (hash: string) => Promise<void>;
 
 /**
  * Error thrown when retrying the same transaction can never succeed
@@ -46,7 +69,6 @@ const FEE_BUMP_PERCENT = 125n;
  * 
  * Features:
  * - Records module completions on Ethereum blockchain
- * - Retrieves user progress from smart contract
  * - Verifies Web3 signatures for authentication
  * - Manages gas fees and transaction confirmations
  * 
@@ -89,30 +111,19 @@ export class Web3Service {
   }
 
   /**
-   * Record module completion on blockchain.
+   * Broadcast a `recordCompletion` transaction and return as soon as the
+   * node accepts it — WITHOUT waiting for the receipt.
    *
-   * Stuck-transaction strategy (kept deliberately simple):
-   * 1. Send the tx letting ethers pick the next nonce, then wait up to
-   *    `timeoutMs` for 1 confirmation.
-   * 2. If it doesn't confirm in time, re-send the SAME nonce with fees
-   *    bumped by 25% (replace-by-fee) and wait again. If the original
-   *    mines in the meantime, ethers reports TRANSACTION_REPLACED /
-   *    NONCE_EXPIRED and we recover the original receipt.
-   * 3. If the replacement also times out, throw a retryable error — the
-   *    queue worker retries later, and since this service sends txs
-   *    sequentially (single in-process worker), the next attempt reuses
-   *    the still-stuck nonce with fresh market fees, acting as another
-   *    replacement.
-   *
-   * Throws NonRetryableBlockchainError for contract reverts
-   * (CALL_EXCEPTION): retrying the exact same call can never succeed.
+   * The split exists so the caller can persist the hash and nonce before
+   * the (minutes-long) wait: a crash inside `sendCompletion` cannot have
+   * produced an on-chain record, while a crash after it leaves a journal
+   * that `recoverCompletion` can resolve without ever sending twice.
    */
-  async recordCompletion(
+  async sendCompletion(
     moduleId: number,
     score: number,
-    topic: string,
-    timeoutMs: number = 90_000
-  ): Promise<BlockchainReceipt> {
+    topic: string
+  ): Promise<SentTransaction> {
     logger.info(`Recording completion on blockchain: Module ${moduleId}, Score ${score}`);
 
     try {
@@ -132,16 +143,54 @@ export class Web3Service {
       );
       logger.debug(`Transaction sent: ${tx.hash} (nonce ${tx.nonce})`);
 
-      // Wait for confirmation, with a timeout so a stuck tx doesn't hold
-      // the queue forever.
-      let receipt = await this.waitWithTimeout(tx, timeoutMs);
+      return {
+        hash: tx.hash,
+        nonce: tx.nonce,
+        data: tx.data,
+        to: tx.to ?? config.CONTRACT_ADDRESS,
+        gasLimit: tx.gasLimit ?? null,
+        maxFeePerGas: tx.maxFeePerGas ?? null,
+        maxPriorityFeePerGas: tx.maxPriorityFeePerGas ?? null,
+      };
+    } catch (error) {
+      throw this.toDomainError(error);
+    }
+  }
+
+  /**
+   * Wait for a transaction broadcast by `sendCompletion`.
+   *
+   * Stuck-transaction strategy (unchanged by the send/wait split):
+   * 1. Wait up to `timeoutMs` for 1 confirmation.
+   * 2. If it doesn't confirm in time, re-send the SAME nonce with fees
+   *    bumped by 25% (replace-by-fee) and wait again. If the original
+   *    mines in the meantime, ethers reports TRANSACTION_REPLACED /
+   *    NONCE_EXPIRED and we recover the original receipt.
+   * 3. If the replacement also times out, throw a retryable error — the
+   *    queue worker retries later, and the retry goes through
+   *    `recoverCompletion`, which reuses the still-stuck nonce.
+   *
+   * `onReplacement` is invoked with every replacement hash BEFORE we wait
+   * on it, so the caller's journal always knows every hash sent on this
+   * nonce.
+   *
+   * Throws NonRetryableBlockchainError for contract reverts
+   * (CALL_EXCEPTION): retrying the exact same call can never succeed.
+   */
+  async waitForCompletion(
+    sent: SentTransaction,
+    timeoutMs: number = 90_000,
+    onReplacement?: OnReplacementHash
+  ): Promise<BlockchainReceipt> {
+    try {
+      let receipt = await this.waitForHash(sent.hash, timeoutMs);
 
       if (!receipt) {
         logger.warn(
-          `Transaction ${tx.hash} not confirmed after ${timeoutMs}ms — replacing with fee bump`,
-          { nonce: tx.nonce }
+          `Transaction ${sent.hash} not confirmed after ${timeoutMs}ms — replacing with fee bump`,
+          { nonce: sent.nonce }
         );
-        receipt = await this.replaceWithFeeBump(tx, timeoutMs);
+        receipt = await this.replaceWithFeeBump(sent, timeoutMs, onReplacement);
       }
 
       if (!receipt) {
@@ -150,37 +199,170 @@ export class Web3Service {
         throw new Error('Transaction not confirmed in time (will be retried)');
       }
 
-      logger.info(`Transaction confirmed: ${receipt.hash} (Block ${receipt.blockNumber})`);
-
-      return {
-        hash: receipt.hash,
-        blockNumber: receipt.blockNumber,
-        gasUsed: receipt.gasUsed.toString(),
-      };
-
+      return this.toBlockchainReceipt(receipt);
     } catch (error) {
-      if (error instanceof NonRetryableBlockchainError) throw error;
+      throw this.toDomainError(error);
+    }
+  }
 
-      logger.error('Blockchain transaction error', { error });
+  /**
+   * Resolve a record whose transaction was already broadcast (the queue
+   * journaled a nonce for it) but whose outcome we never recorded —
+   * typically a row reclaimed after the worker was killed mid-wait.
+   *
+   * This is the half of the design that makes the pipeline exactly-once:
+   * a reclaimed record NEVER allocates a fresh nonce, because a fresh
+   * nonce next to a still-pending journaled one is precisely how the
+   * append-only contract ends up with two records for one completion.
+   *
+   * 1. Any journaled hash with a receipt decides the outcome: status 1 →
+   *    confirmed, status 0 → permanent failure (the same call reverts
+   *    again).
+   * 2. No receipt anywhere, but the account nonce has moved past ours →
+   *    something we did not journal consumed the nonce. Refuse to send;
+   *    an operator has to look at the wallet.
+   * 3. Otherwise the transaction is still pending (or was dropped):
+   *    re-broadcast the same calldata on the same nonce with bumped fees,
+   *    which either replaces it or takes over the slot it vacated.
+   */
+  async recoverCompletion(
+    journal: CompletionJournal,
+    timeoutMs: number = 90_000,
+    onReplacement?: OnReplacementHash
+  ): Promise<BlockchainReceipt> {
+    try {
+      logger.info(
+        `Recovering in-flight completion on nonce ${journal.nonce} ` +
+          `(${journal.hashes.length} journaled hash(es))`
+      );
 
-      const code = getErrorCode(error);
-      if (code === 'CALL_EXCEPTION') {
-        // Contract revert — same inputs will revert again forever.
+      // 1. Did any hash we sent on this nonce already mine?
+      for (const hash of journal.hashes) {
+        const receipt = await this.provider.getTransactionReceipt(hash);
+        if (!receipt) continue;
+        if (receipt.status === 1) {
+          logger.info(`Recovered mined transaction ${hash} for nonce ${journal.nonce}`);
+          return this.toBlockchainReceipt(receipt);
+        }
+        // Mined and reverted: resending the identical call is pointless.
+        throw new NonRetryableBlockchainError(`Contract reverted on-chain: ${hash}`);
+      }
+
+      // 2. Nothing of ours mined. If the account nonce is already past
+      //    this one, some other transaction consumed it — possibly a
+      //    completion whose journal write never landed. Sending again
+      //    would risk the duplicate this whole design exists to prevent.
+      const minedNonces = await this.provider.getTransactionCount(
+        this.wallet.address,
+        'latest'
+      );
+      if (minedNonces > journal.nonce) {
         throw new NonRetryableBlockchainError(
-          `Contract reverted: ${getErrorMessage(error)}`
+          `Nonce ${journal.nonce} was consumed by a transaction that is not in ` +
+            `the journal (${journal.hashes.join(', ') || 'no hashes'}) — refusing ` +
+            `to resend. Manual check of wallet ${this.wallet.address} required ` +
+            `before this record can be retried.`
         );
       }
-      if (code === 'INSUFFICIENT_FUNDS') {
-        // Retryable: the wallet can be topped up (the balance monitor
-        // is already warning the operator).
-        throw new Error('Insufficient funds for gas fees');
-      }
-      if (code === 'NETWORK_ERROR') {
-        throw new Error('Network connection error');
+
+      // 3. Still pending or dropped: take over the nonce with the same
+      //    calldata and bumped fees.
+      const pending = await this.pendingBroadcast(journal);
+      const receipt = await this.replaceWithFeeBump(pending, timeoutMs, onReplacement);
+
+      if (!receipt) {
+        throw new Error('Transaction not confirmed in time (will be retried)');
       }
 
-      throw new Error(`Blockchain error: ${getErrorMessage(error)}`);
+      return this.toBlockchainReceipt(receipt);
+    } catch (error) {
+      throw this.toDomainError(error);
     }
+  }
+
+  /**
+   * Rebuild the `SentTransaction` for a journaled nonce so it can be
+   * re-broadcast. Fees and gas come from the still-pending transaction
+   * when the node has it; otherwise the tx was dropped and current
+   * market fees are used (gas is left to ethers to estimate).
+   */
+  private async pendingBroadcast(journal: CompletionJournal): Promise<SentTransaction> {
+    const lastHash = journal.hashes[journal.hashes.length - 1] ?? '';
+    const stuck = lastHash ? await this.provider.getTransaction(lastHash) : null;
+    const feeData = stuck ? null : await this.provider.getFeeData();
+
+    return {
+      hash: lastHash,
+      nonce: journal.nonce,
+      data: this.contract.interface.encodeFunctionData('recordCompletion', [
+        journal.moduleId,
+        journal.score,
+        journal.topic,
+      ]),
+      to: config.CONTRACT_ADDRESS,
+      gasLimit: stuck?.gasLimit ?? null,
+      maxFeePerGas: stuck?.maxFeePerGas ?? feeData?.maxFeePerGas ?? null,
+      maxPriorityFeePerGas:
+        stuck?.maxPriorityFeePerGas ?? feeData?.maxPriorityFeePerGas ?? null,
+    };
+  }
+
+  /** Shape an ethers receipt for the queue, rejecting reverted ones. */
+  private toBlockchainReceipt(receipt: ethers.TransactionReceipt): BlockchainReceipt {
+    if (receipt.status === 0) {
+      // `tx.wait()` raises CALL_EXCEPTION for this, but receipts read
+      // straight from the provider (recovery, replacement races) reach
+      // here unchecked.
+      throw new NonRetryableBlockchainError(`Contract reverted on-chain: ${receipt.hash}`);
+    }
+
+    logger.info(`Transaction confirmed: ${receipt.hash} (Block ${receipt.blockNumber})`);
+
+    return {
+      hash: receipt.hash,
+      blockNumber: receipt.blockNumber,
+      gasUsed: receipt.gasUsed.toString(),
+    };
+  }
+
+  /** Map an ethers/unknown failure onto the queue's retry taxonomy. */
+  private toDomainError(error: unknown): Error {
+    if (error instanceof NonRetryableBlockchainError) return error;
+
+    logger.error('Blockchain transaction error', { error });
+
+    const code = getErrorCode(error);
+    if (code === 'CALL_EXCEPTION') {
+      // Contract revert — same inputs will revert again forever.
+      return new NonRetryableBlockchainError(
+        `Contract reverted: ${getErrorMessage(error)}`
+      );
+    }
+    if (code === 'INSUFFICIENT_FUNDS') {
+      // Retryable: the wallet can be topped up (the balance monitor
+      // is already warning the operator).
+      return new Error('Insufficient funds for gas fees');
+    }
+    if (code === 'NETWORK_ERROR') {
+      return new Error('Network connection error');
+    }
+
+    return new Error(`Blockchain error: ${getErrorMessage(error)}`);
+  }
+
+  /**
+   * Wait for one confirmation of an already-broadcast hash. Fetches the
+   * transaction so the replacement/repricing detection of `tx.wait()` is
+   * kept; a hash the node no longer knows falls back to its receipt (it
+   * may have mined) and otherwise reports "not confirmed" (null).
+   */
+  private async waitForHash(
+    hash: string,
+    timeoutMs: number
+  ): Promise<ethers.TransactionReceipt | null> {
+    const tx = await this.provider.getTransaction(hash);
+    if (!tx) return this.provider.getTransactionReceipt(hash);
+    return this.waitWithTimeout(tx, timeoutMs);
   }
 
   /**
@@ -216,99 +398,50 @@ export class Web3Service {
    * Replace-by-fee: re-send the same call data with the same nonce and
    * fees bumped by 25% (nodes require >= +10% to accept a replacement).
    * If the original already mined, returns its receipt instead.
+   *
+   * `onReplacement` is awaited BEFORE the wait, so the journal records
+   * the new hash while it is in flight: a crash here must never leave a
+   * broadcast hash that recovery cannot look up.
    */
   private async replaceWithFeeBump(
-    tx: ethers.TransactionResponse,
-    timeoutMs: number
+    sent: SentTransaction,
+    timeoutMs: number,
+    onReplacement?: OnReplacementHash
   ): Promise<ethers.TransactionReceipt | null> {
     // The original may have been mined between our timeout and now.
-    const minedOriginal = await this.provider.getTransactionReceipt(tx.hash);
-    if (minedOriginal) return minedOriginal;
+    if (sent.hash) {
+      const minedOriginal = await this.provider.getTransactionReceipt(sent.hash);
+      if (minedOriginal) return minedOriginal;
+    }
 
     try {
       const bumped = await this.wallet.sendTransaction({
-        to: tx.to,
-        data: tx.data,
-        value: tx.value ?? 0n,
-        nonce: tx.nonce,
-        gasLimit: tx.gasLimit,
+        to: sent.to,
+        data: sent.data,
+        // recordCompletion is non-payable: nothing to carry over.
+        value: 0n,
+        nonce: sent.nonce,
+        gasLimit: sent.gasLimit ?? undefined,
         maxFeePerGas:
-          tx.maxFeePerGas != null ? (tx.maxFeePerGas * FEE_BUMP_PERCENT) / 100n : undefined,
+          sent.maxFeePerGas != null
+            ? (sent.maxFeePerGas * FEE_BUMP_PERCENT) / 100n
+            : undefined,
         maxPriorityFeePerGas:
-          tx.maxPriorityFeePerGas != null
-            ? (tx.maxPriorityFeePerGas * FEE_BUMP_PERCENT) / 100n
+          sent.maxPriorityFeePerGas != null
+            ? (sent.maxPriorityFeePerGas * FEE_BUMP_PERCENT) / 100n
             : undefined,
       });
-      logger.info(`Replacement transaction sent: ${bumped.hash} (nonce ${tx.nonce})`);
+      logger.info(`Replacement transaction sent: ${bumped.hash} (nonce ${sent.nonce})`);
+      await onReplacement?.(bumped.hash);
       return await this.waitWithTimeout(bumped, timeoutMs);
     } catch (error) {
       // NONCE_EXPIRED / REPLACEMENT_UNDERPRICED usually mean the original
       // confirmed while we were preparing the replacement.
-      const receipt = await this.provider.getTransactionReceipt(tx.hash);
-      if (receipt) return receipt;
+      if (sent.hash) {
+        const receipt = await this.provider.getTransactionReceipt(sent.hash);
+        if (receipt) return receipt;
+      }
       throw error;
-    }
-  }
-
-  /**
-   * Get user progress from blockchain
-   */
-  async getUserProgress(walletAddress: string): Promise<CompletionData[]> {
-    logger.debug(`Fetching progress for ${walletAddress}`);
-
-    try {
-      const progress = await this.contract.getUserProgress(walletAddress);
-
-      // ethers returns tuple Results; index by the ABI field names.
-      return progress.map((p: { moduleId: bigint; score: bigint; timestamp: bigint; moduleTopic: string }) => ({
-        moduleId: Number(p.moduleId),
-        score: Number(p.score),
-        timestamp: Number(p.timestamp),
-        moduleTopic: p.moduleTopic,
-      }));
-
-    } catch (error) {
-      logger.error('Error fetching user progress', { error });
-      throw new Error('Failed to fetch blockchain data');
-    }
-  }
-
-  /**
-   * Get user completion count
-   */
-  async getCompletionCount(walletAddress: string): Promise<number> {
-    try {
-      const count = await this.contract.getUserCompletionCount(walletAddress);
-      return Number(count);
-    } catch (error) {
-      logger.error('Error fetching completion count', { error });
-      throw new Error('Failed to fetch completion count');
-    }
-  }
-
-  /**
-   * Get user average score
-   */
-  async getAverageScore(walletAddress: string): Promise<number> {
-    try {
-      const avg = await this.contract.getUserAverageScore(walletAddress);
-      return Number(avg);
-    } catch (error) {
-      logger.error('Error fetching average score', { error });
-      throw new Error('Failed to fetch average score');
-    }
-  }
-
-  /**
-   * Get total completions on contract
-   */
-  async getTotalCompletions(): Promise<number> {
-    try {
-      const total = await this.contract.totalCompletions();
-      return Number(total);
-    } catch (error) {
-      logger.error('Error fetching total completions', { error });
-      throw new Error('Failed to fetch total completions');
     }
   }
 

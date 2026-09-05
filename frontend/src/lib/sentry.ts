@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/react';
 import type { ErrorEvent } from '@sentry/react';
 
 /**
- * Sentry bootstrap for the frontend (C1 — Fase 0 do Plano-Mestre).
+ * Sentry bootstrap for the frontend (C1, phase 0 of the master plan).
  *
  * Entirely optional: without VITE_SENTRY_DSN this module is a silent
  * no-op — `initSentry()` returns false and `captureException()` returns

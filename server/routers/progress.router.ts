@@ -226,6 +226,21 @@ export const progressRouter = router({
    * belongs to someone else, or isn't `failed_permanent` all come back
    * as "no row updated" → NOT_FOUND (no id enumeration).
    *
+   * The queue state is reset (attempts, backoff, lock, error) but the
+   * exactly-once journal — `blockchain_nonce` / `blockchain_sent_hashes` —
+   * is deliberately KEPT, even though this is an explicit user action.
+   * The journal is only ever written after a transaction was broadcast,
+   * so a row that has one has something in flight or already mined on
+   * that nonce, and clearing it would let the retry allocate a fresh
+   * nonce and record the same completion twice on an append-only
+   * contract. Keeping it costs nothing: the worker's recovery path
+   * confirms the record when a journaled hash mined, re-broadcasts the
+   * SAME nonce when the transaction was merely dropped or stuck, and
+   * refuses only the one case that genuinely needs a human — a nonce
+   * consumed by a transaction we never journaled. Rows that never got as
+   * far as a broadcast (the common `failed_permanent`: rejected sends,
+   * empty wallet) have no journal, so their retry is a normal fresh send.
+   *
    * Rate limited per user: every retry can spend ETH from the custodial
    * wallet, so it gets its own tight budget.
    */

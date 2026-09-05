@@ -4,7 +4,7 @@ import { config } from './env.js';
 import { logger } from './logger.js';
 
 /**
- * Sentry bootstrap for the server (C1 — Fase 0 do Plano-Mestre).
+ * Sentry bootstrap for the server (C1, phase 0 of the master plan).
  *
  * Design constraints:
  *  - Entirely optional: without SENTRY_DSN this module is a silent no-op —

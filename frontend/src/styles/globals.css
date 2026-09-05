@@ -4,13 +4,13 @@
 
 /* =========================================================
    AI-DLH Design System — v2 "Circuit & Ink"
-   Tokens em HSL para compatibilidade com tailwind config.
-   Fonte da verdade: design-system/colors_and_type.css
+   Tokens in HSL for compatibility with the tailwind config.
+   Source of truth: design-system/colors_and_type.css
    ========================================================= */
 
 @layer base {
   :root {
-    /* Primary scale — roxo elétrico */
+    /* Primary scale — electric purple */
     --primary-50:  250 100% 98%;
     --primary-100: 251 91% 95%;
     --primary-200: 251 95% 92%;
@@ -22,14 +22,14 @@
     --primary-800: 263 69% 42%;
     --primary-900: 263 67% 35%;
 
-    /* Accent scale — ciano elétrico */
+    /* Accent scale — electric cyan */
     --accent-50:  183 100% 96%;
     --accent-100: 185 96% 90%;
     --accent-300: 187 92% 69%;
     --accent-500: 189 94% 43%;
     --accent-600: 192 91% 36%;
 
-    /* Neutros warm */
+    /* Warm neutrals */
     --neutral-0:   0 0% 100%;
     --neutral-25:  30 14% 98%;
     --neutral-50:  30 14% 96%;
@@ -73,7 +73,7 @@
     --input: 33 17% 86%;
     --ring: 258 90% 66%;
 
-    /* Status semânticos */
+    /* Semantic states */
     --success: 142 76% 36%;
     --success-bg: 138 76% 97%;
     --success-border: 141 79% 85%;
@@ -94,7 +94,7 @@
     --info-border: 185 96% 90%;
     --info-fg: 193 63% 24%;
 
-    /* On-chain — usa primary */
+    /* On-chain — uses primary */
     --onchain: 262 83% 58%;
     --onchain-bg: 250 100% 98%;
     --onchain-border: 251 95% 92%;
@@ -102,7 +102,7 @@
 
     --radius: 0.625rem;
 
-    /* Hash grid — token HSL para usar com hsl(var(--grid-color) / alpha) */
+    /* Hash grid — HSL token for use with hsl(var(--grid-color) / alpha) */
     --grid-color: 262 83% 58%;
     --grid-alpha: 0.08;
     --grid-size: 24px;
@@ -192,7 +192,7 @@
   @apply bg-muted-foreground/40;
 }
 
-/* Loading spinner (legacy — manter até migrar pra Skeleton) */
+/* Loading spinner (legacy — keep until migrated to Skeleton) */
 .spinner {
   border: 3px solid hsl(var(--muted));
   border-radius: 50%;
@@ -230,10 +230,10 @@
 }
 
 /* =========================================================
-   Helper classes — motivo gráfico v2 "Circuit & Ink"
+   Helper classes — v2 "Circuit & Ink" graphic motif
    ========================================================= */
 
-/* Hash grid — fundo pontilhado roxo, motivo da marca */
+/* Hash grid — dotted purple background, the brand motif */
 .hash-grid {
   background-image:
     linear-gradient(to right, hsl(var(--grid-color) / var(--grid-alpha)) 1px, transparent 1px),
@@ -241,7 +241,7 @@
   background-size: var(--grid-size) var(--grid-size);
 }
 
-/* Fallback caso navegador não suporte hsl() com slash alpha */
+/* Fallback in case the browser doesn't support hsl() with slash alpha */
 @supports not (color: hsl(0 0% 0% / 0.1)) {
   .hash-grid {
     background-image:
@@ -261,7 +261,7 @@
   letter-spacing: -0.02em;
 }
 
-/* Eyebrow — rótulo mono pequeno em maiúsculas */
+/* Eyebrow — small uppercase mono label */
 .eyebrow {
   font-family: theme('fontFamily.mono');
   font-size: 12px;
@@ -271,7 +271,7 @@
   color: hsl(var(--muted-foreground));
 }
 
-/* Stat — números grandes display */
+/* Stat — large display numbers */
 .stat-number {
   font-family: theme('fontFamily.display');
   font-size: 3rem;
@@ -281,7 +281,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Circuit trace — linha pontilhada divisor expressivo */
+/* Circuit trace — dashed line, an expressive divider */
 .circuit-trace {
   background-image: repeating-linear-gradient(
     90deg,
@@ -291,7 +291,7 @@
   height: 2px;
 }
 
-/* Hero gradient — único gradiente do produto, roxo→ciano diagonal */
+/* Hero gradient — the product's single gradient, diagonal purple→cyan */
 .hero-gradient {
   background: linear-gradient(135deg,
     hsl(var(--primary-50)) 0%,
@@ -306,7 +306,7 @@
     hsl(var(--info-fg)) 100%);
 }
 
-/* Text gradient utility — para destaques tipográficos (IA, Blockchain) */
+/* Text gradient utility — for typographic highlights (IA, Blockchain) */
 .text-gradient-brand {
   background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
   -webkit-background-clip: text;
@@ -335,7 +335,7 @@
   animation: shimmer 1.5s linear infinite;
 }
 
-/* AI streaming caret — pisca após o texto enquanto a IA "escreve" */
+/* AI streaming caret — blinks after the text while the AI is "typing" */
 @keyframes caret-blink {
   50% { opacity: 0; }
 }
@@ -348,8 +348,8 @@
 }
 
 /* =========================================================
-   Focus ring v2 — anel triplo roxo translúcido com gap
-   Use em qualquer elemento focável que herde design system v2.
+   Focus ring v2 — triple translucent purple ring with a gap
+   Use on any focusable element that inherits design system v2.
    ========================================================= */
 @layer components {
   .focus-ring-v2 {
@@ -360,8 +360,8 @@
 }
 
 /* =========================================================
-   Indeterminate progress bar — gradiente animado horizontal
-   Use sobreposto a um botão para indicar trabalho em andamento.
+   Indeterminate progress bar — animated horizontal gradient
+   Overlay it on a button to indicate work in progress.
    ========================================================= */
 @keyframes indeterminate {
   0%   { transform: translateX(-100%); }
@@ -388,8 +388,8 @@
 }
 
 /* =========================================================
-   Reduced motion — respeita prefers-reduced-motion do SO/browser
-   Desliga shimmer, caret blink, transitions e scroll-behavior.
+   Reduced motion — respects the OS/browser's prefers-reduced-motion
+   Turns off shimmer, caret blink, transitions and scroll-behavior.
    ========================================================= */
 @media (prefers-reduced-motion: reduce) {
   *,

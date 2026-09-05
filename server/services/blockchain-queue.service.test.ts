@@ -13,7 +13,9 @@ const mocks = vi.hoisted(() => ({
   // is a no-op, which is exactly what we want).
   setCalls: [] as Array<Record<string, unknown>>,
   returningQueue: [] as unknown[],
-  recordCompletion: vi.fn(),
+  sendCompletion: vi.fn(),
+  waitForCompletion: vi.fn(),
+  recoverCompletion: vi.fn(),
 }));
 
 vi.mock('../utils/env.js', () => ({
@@ -60,7 +62,11 @@ vi.mock('./web3.service.js', () => {
   }
   return {
     NonRetryableBlockchainError,
-    web3Service: { recordCompletion: mocks.recordCompletion },
+    web3Service: {
+      sendCompletion: mocks.sendCompletion,
+      waitForCompletion: mocks.waitForCompletion,
+      recoverCompletion: mocks.recoverCompletion,
+    },
   };
 });
 
@@ -78,12 +84,18 @@ function makeCandidate(overrides: Partial<Record<string, unknown>> = {}) {
     score: 85,
     blockchainStatus: 'pending',
     blockchainAttempts: 0,
+    blockchainNonce: null as number | null,
+    blockchainSentHashes: null as string | null,
     module: { topic: 'Solidity' },
     ...overrides,
   };
 }
 
-/** The claim UPDATE returns the row with the attempt counter ALREADY incremented. */
+/**
+ * The claim UPDATE returns the row with the attempt counter ALREADY
+ * incremented, plus the exactly-once journal (nonce + sent hashes) read
+ * at claim time — that is what decides send vs. recover.
+ */
 function claimedRow(candidate: ReturnType<typeof makeCandidate>, attempts: number) {
   return [
     {
@@ -91,8 +103,32 @@ function claimedRow(candidate: ReturnType<typeof makeCandidate>, attempts: numbe
       moduleId: candidate.moduleId,
       score: candidate.score,
       blockchainAttempts: attempts,
+      blockchainNonce: candidate.blockchainNonce,
+      blockchainSentHashes: candidate.blockchainSentHashes,
     },
   ];
+}
+
+/** What web3Service.sendCompletion resolves to once the tx is broadcast. */
+function sentTx(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    hash: '0xabc',
+    nonce: 7,
+    data: '0xdeadbeef',
+    to: '0xcontract',
+    gasLimit: null,
+    maxFeePerGas: null,
+    maxPriorityFeePerGas: null,
+    ...overrides,
+  };
+}
+
+const receipt = (hash = '0xabc') => ({ hash, blockNumber: 123, gasUsed: '21000' });
+
+/** Make the happy path work: broadcast succeeds, receipt confirms. */
+function mockSuccessfulSend(hash = '0xabc', nonce = 7) {
+  mocks.sendCompletion.mockResolvedValue(sentTx({ hash, nonce }));
+  mocks.waitForCompletion.mockResolvedValue(receipt(hash));
 }
 
 describe('backoffForAttempt', () => {
@@ -122,25 +158,32 @@ describe('BlockchainQueueService.processOnce', () => {
     service = new BlockchainQueueService();
   });
 
-  it('confirms a pending record on success (claim → send → confirmed + tx hash)', async () => {
+  it('confirms a pending record on success (claim → send → journal → confirmed + tx hash)', async () => {
     const candidate = makeCandidate();
     mocks.findMany.mockResolvedValue([candidate]);
     mocks.returningQueue.push(claimedRow(candidate, 1));
-    mocks.recordCompletion.mockResolvedValue({
-      hash: '0xabc',
-      blockNumber: 123,
-      gasUsed: '21000',
-    });
+    mockSuccessfulSend();
 
     await service.processOnce();
 
-    // Sent with the module's topic and the configured tx timeout.
-    expect(mocks.recordCompletion).toHaveBeenCalledWith(10, 85, 'Solidity', 90_000);
+    // Broadcast with the module's topic; the wait carries the configured
+    // tx timeout and the journal callback for fee-bump replacements.
+    expect(mocks.sendCompletion).toHaveBeenCalledWith(10, 85, 'Solidity');
+    expect(mocks.waitForCompletion).toHaveBeenCalledWith(
+      expect.objectContaining({ hash: '0xabc', nonce: 7 }),
+      90_000,
+      expect.any(Function)
+    );
 
-    // 1st UPDATE = claim, 2nd UPDATE = final status.
-    expect(mocks.setCalls).toHaveLength(2);
+    // claim → journal → final status.
+    expect(mocks.setCalls).toHaveLength(3);
     expect(mocks.setCalls[0]).toMatchObject({ blockchainStatus: 'processing' });
     expect(mocks.setCalls[1]).toMatchObject({
+      blockchainNonce: 7,
+      blockchainSentHashes: '["0xabc"]',
+      transactionHash: '0xabc',
+    });
+    expect(mocks.setCalls[2]).toMatchObject({
       blockchainStatus: 'confirmed',
       transactionHash: '0xabc',
       blockchainError: null,
@@ -156,7 +199,7 @@ describe('BlockchainQueueService.processOnce', () => {
 
     await service.processOnce();
 
-    expect(mocks.recordCompletion).not.toHaveBeenCalled();
+    expect(mocks.sendCompletion).not.toHaveBeenCalled();
     // Only the claim attempt — no status UPDATE afterwards.
     expect(mocks.setCalls).toHaveLength(1);
     expect(mocks.setCalls[0]).toMatchObject({ blockchainStatus: 'processing' });
@@ -169,7 +212,7 @@ describe('BlockchainQueueService.processOnce', () => {
       const candidate = makeCandidate();
       mocks.findMany.mockResolvedValue([candidate]);
       mocks.returningQueue.push(claimedRow(candidate, 1)); // first attempt
-      mocks.recordCompletion.mockRejectedValue(new Error('Network connection error'));
+      mocks.sendCompletion.mockRejectedValue(new Error('Network connection error'));
 
       await service.processOnce();
 
@@ -196,7 +239,7 @@ describe('BlockchainQueueService.processOnce', () => {
       const candidate = makeCandidate({ blockchainStatus: 'failed' });
       mocks.findMany.mockResolvedValue([candidate]);
       mocks.returningQueue.push(claimedRow(candidate, 2)); // second attempt
-      mocks.recordCompletion.mockRejectedValue(new Error('RPC down'));
+      mocks.sendCompletion.mockRejectedValue(new Error('RPC down'));
 
       await service.processOnce();
 
@@ -214,7 +257,7 @@ describe('BlockchainQueueService.processOnce', () => {
     mocks.findMany.mockResolvedValue([candidate]);
     // Claim increments to 3 = BLOCKCHAIN_QUEUE_MAX_ATTEMPTS in the mock config.
     mocks.returningQueue.push(claimedRow(candidate, 3));
-    mocks.recordCompletion.mockRejectedValue(new Error('still failing'));
+    mocks.sendCompletion.mockRejectedValue(new Error('still failing'));
 
     await service.processOnce();
 
@@ -230,7 +273,7 @@ describe('BlockchainQueueService.processOnce', () => {
     const candidate = makeCandidate();
     mocks.findMany.mockResolvedValue([candidate]);
     mocks.returningQueue.push(claimedRow(candidate, 1)); // first attempt
-    mocks.recordCompletion.mockRejectedValue(
+    mocks.sendCompletion.mockRejectedValue(
       new NonRetryableBlockchainError('Contract reverted: bad score')
     );
 
@@ -249,7 +292,7 @@ describe('BlockchainQueueService.processOnce', () => {
 
     await service.processOnce();
 
-    expect(mocks.recordCompletion).not.toHaveBeenCalled();
+    expect(mocks.sendCompletion).not.toHaveBeenCalled();
     expect(mocks.setCalls[1]).toMatchObject({
       blockchainStatus: 'failed_permanent',
       blockchainError: 'Owning module no longer exists',
@@ -261,17 +304,19 @@ describe('BlockchainQueueService.processOnce', () => {
     const second = makeCandidate({ id: 2, moduleId: 20, score: 90 });
     mocks.findMany.mockResolvedValue([first, second]);
     mocks.returningQueue.push(claimedRow(first, 1), claimedRow(second, 1));
-    mocks.recordCompletion
+    mocks.sendCompletion
       .mockRejectedValueOnce(new Error('flaky RPC'))
-      .mockResolvedValueOnce({ hash: '0xdef', blockNumber: 124, gasUsed: '21000' });
+      .mockResolvedValueOnce(sentTx({ hash: '0xdef', nonce: 8 }));
+    mocks.waitForCompletion.mockResolvedValue(receipt('0xdef'));
 
     await service.processOnce();
 
-    expect(mocks.recordCompletion).toHaveBeenCalledTimes(2);
-    // claim#1, failed#1, claim#2, confirmed#2
-    expect(mocks.setCalls).toHaveLength(4);
+    expect(mocks.sendCompletion).toHaveBeenCalledTimes(2);
+    // claim#1, failed#1, claim#2, journal#2, confirmed#2
+    expect(mocks.setCalls).toHaveLength(5);
     expect(mocks.setCalls[1]).toMatchObject({ blockchainStatus: 'failed' });
-    expect(mocks.setCalls[3]).toMatchObject({
+    expect(mocks.setCalls[3]).toMatchObject({ blockchainSentHashes: '["0xdef"]' });
+    expect(mocks.setCalls[4]).toMatchObject({
       blockchainStatus: 'confirmed',
       transactionHash: '0xdef',
     });
@@ -282,7 +327,7 @@ describe('BlockchainQueueService.processOnce', () => {
 
     await service.processOnce();
 
-    expect(mocks.recordCompletion).not.toHaveBeenCalled();
+    expect(mocks.sendCompletion).not.toHaveBeenCalled();
     expect(mocks.setCalls).toHaveLength(0);
   });
 
@@ -294,13 +339,268 @@ describe('BlockchainQueueService.processOnce', () => {
     const b = makeCandidate({ id: 'rec-b' });
     mocks.findMany.mockResolvedValue([a, b]);
     mocks.returningQueue.push(claimedRow(a, 1), claimedRow(b, 1));
-    mocks.recordCompletion.mockResolvedValue({
-      hash: '0xabc',
-      blockNumber: 1,
-      gasUsed: '21000',
-    });
+    mockSuccessfulSend();
 
     await expect(service.processOnce()).resolves.toBe(2);
+  });
+});
+
+// The crash window this whole design closes: the process dies between
+// `sendTransaction` and the UPDATE that records the hash. The row is then
+// reclaimed as a stale lock, and a worker that knows nothing about the
+// in-flight transaction sends a SECOND one — a duplicate record on an
+// append-only contract. So the nonce and hash are written BEFORE the wait,
+// and a reclaimed row is resolved from receipts instead of re-sent.
+describe('BlockchainQueueService exactly-once journal', () => {
+  let service: BlockchainQueueService;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.setCalls.length = 0;
+    mocks.returningQueue.length = 0;
+    service = new BlockchainQueueService();
+  });
+
+  it('journals hash + nonce BEFORE waiting for the receipt', async () => {
+    const candidate = makeCandidate();
+    mocks.findMany.mockResolvedValue([candidate]);
+    mocks.returningQueue.push(claimedRow(candidate, 1));
+    mocks.sendCompletion.mockResolvedValue(sentTx({ hash: '0xaaa', nonce: 42 }));
+
+    // Snapshot the UPDATEs that had already landed when the wait started.
+    let updatesBeforeWait: Array<Record<string, unknown>> = [];
+    mocks.waitForCompletion.mockImplementation(async () => {
+      updatesBeforeWait = mocks.setCalls.map((call) => ({ ...call }));
+      return receipt('0xaaa');
+    });
+
+    await service.processOnce();
+
+    expect(updatesBeforeWait).toHaveLength(2); // claim + journal
+    expect(updatesBeforeWait[1]).toMatchObject({
+      blockchainNonce: 42,
+      blockchainSentHashes: '["0xaaa"]',
+      transactionHash: '0xaaa',
+    });
+    // The journal must not resolve the record: it is still in flight.
+    expect(updatesBeforeWait[1]).not.toHaveProperty('blockchainStatus');
+  });
+
+  it('appends a fee-bump replacement hash to the journal while it is in flight', async () => {
+    const candidate = makeCandidate();
+    mocks.findMany.mockResolvedValue([candidate]);
+    mocks.returningQueue.push(claimedRow(candidate, 1));
+    mocks.sendCompletion.mockResolvedValue(sentTx({ hash: '0xaaa', nonce: 42 }));
+    mocks.waitForCompletion.mockImplementation(
+      async (
+        _sent: unknown,
+        _timeoutMs: number,
+        onReplacement: (hash: string) => Promise<void>
+      ) => {
+        await onReplacement('0xbbb');
+        return receipt('0xbbb');
+      }
+    );
+
+    await service.processOnce();
+
+    // claim → journal(original) → journal(+replacement) → confirmed
+    expect(mocks.setCalls).toHaveLength(4);
+    expect(mocks.setCalls[2]).toMatchObject({
+      blockchainNonce: 42,
+      blockchainSentHashes: '["0xaaa","0xbbb"]',
+      transactionHash: '0xbbb',
+    });
+    expect(mocks.setCalls[3]).toMatchObject({
+      blockchainStatus: 'confirmed',
+      transactionHash: '0xbbb',
+    });
+  });
+
+  it('keeps the journal when an attempt fails after broadcasting (so the retry can recover it)', async () => {
+    const candidate = makeCandidate();
+    mocks.findMany.mockResolvedValue([candidate]);
+    mocks.returningQueue.push(claimedRow(candidate, 1));
+    mocks.sendCompletion.mockResolvedValue(sentTx({ hash: '0xaaa', nonce: 42 }));
+    mocks.waitForCompletion.mockRejectedValue(
+      new Error('Transaction not confirmed in time (will be retried)')
+    );
+
+    await service.processOnce();
+
+    const failure = mocks.setCalls[2];
+    expect(failure).toMatchObject({ blockchainStatus: 'failed' });
+    // Clearing these would let the retry allocate a fresh nonce next to a
+    // transaction that is still in flight — the duplicate we are avoiding.
+    expect(failure).not.toHaveProperty('blockchainNonce');
+    expect(failure).not.toHaveProperty('blockchainSentHashes');
+  });
+
+  it('recovers a reclaimed row from its journal instead of sending again', async () => {
+    const candidate = makeCandidate({
+      blockchainStatus: 'processing',
+      blockchainNonce: 42,
+      blockchainSentHashes: '["0xaaa"]',
+    });
+    mocks.findMany.mockResolvedValue([candidate]);
+    mocks.returningQueue.push(claimedRow(candidate, 2));
+    mocks.recoverCompletion.mockResolvedValue(receipt('0xaaa'));
+
+    await service.processOnce();
+
+    expect(mocks.sendCompletion).not.toHaveBeenCalled();
+    expect(mocks.recoverCompletion).toHaveBeenCalledWith(
+      { nonce: 42, hashes: ['0xaaa'], moduleId: 10, score: 85, topic: 'Solidity' },
+      90_000,
+      expect.any(Function)
+    );
+    // claim → confirmed, with no new journal write: nothing new was sent.
+    expect(mocks.setCalls).toHaveLength(2);
+    expect(mocks.setCalls[1]).toMatchObject({
+      blockchainStatus: 'confirmed',
+      transactionHash: '0xaaa',
+    });
+  });
+
+  it('confirms a reclaimed row whose journaled transaction had already mined', async () => {
+    const candidate = makeCandidate({
+      blockchainStatus: 'processing',
+      blockchainNonce: 42,
+      blockchainSentHashes: '["0xaaa","0xbbb"]',
+    });
+    mocks.findMany.mockResolvedValue([candidate]);
+    mocks.returningQueue.push(claimedRow(candidate, 2));
+    // Recovery found the receipt of the second hash.
+    mocks.recoverCompletion.mockResolvedValue(receipt('0xbbb'));
+
+    await service.processOnce();
+
+    expect(mocks.recoverCompletion).toHaveBeenCalledWith(
+      expect.objectContaining({ hashes: ['0xaaa', '0xbbb'] }),
+      90_000,
+      expect.any(Function)
+    );
+    expect(mocks.setCalls[1]).toMatchObject({
+      blockchainStatus: 'confirmed',
+      transactionHash: '0xbbb',
+    });
+  });
+
+  it('marks failed_permanent when the journaled transaction reverted on-chain', async () => {
+    const candidate = makeCandidate({
+      blockchainStatus: 'processing',
+      blockchainNonce: 42,
+      blockchainSentHashes: '["0xaaa"]',
+    });
+    mocks.findMany.mockResolvedValue([candidate]);
+    mocks.returningQueue.push(claimedRow(candidate, 2));
+    mocks.recoverCompletion.mockRejectedValue(
+      new NonRetryableBlockchainError('Contract reverted on-chain: 0xaaa')
+    );
+
+    await service.processOnce();
+
+    expect(mocks.sendCompletion).not.toHaveBeenCalled();
+    expect(mocks.setCalls[1]).toMatchObject({
+      blockchainStatus: 'failed_permanent',
+      blockchainError: 'Contract reverted on-chain: 0xaaa',
+    });
+  });
+
+  it('never re-sends when the nonce was consumed by a transaction outside the journal', async () => {
+    const candidate = makeCandidate({
+      blockchainStatus: 'processing',
+      blockchainNonce: 42,
+      blockchainSentHashes: '["0xaaa"]',
+    });
+    mocks.findMany.mockResolvedValue([candidate]);
+    mocks.returningQueue.push(claimedRow(candidate, 2));
+    mocks.recoverCompletion.mockRejectedValue(
+      new NonRetryableBlockchainError(
+        'Nonce 42 was consumed by a transaction that is not in the journal ' +
+          '(0xaaa) — refusing to resend. Manual check of wallet 0xwallet required.'
+      )
+    );
+
+    await service.processOnce();
+
+    expect(mocks.sendCompletion).not.toHaveBeenCalled();
+    expect(mocks.setCalls[1]).toMatchObject({ blockchainStatus: 'failed_permanent' });
+    expect(String(mocks.setCalls[1].blockchainError)).toContain('Manual check');
+  });
+
+  it('journals the re-broadcast of a still-pending nonce without a fresh send', async () => {
+    const candidate = makeCandidate({
+      blockchainStatus: 'processing',
+      blockchainNonce: 42,
+      blockchainSentHashes: '["0xaaa"]',
+    });
+    mocks.findMany.mockResolvedValue([candidate]);
+    mocks.returningQueue.push(claimedRow(candidate, 2));
+    mocks.recoverCompletion.mockImplementation(
+      async (
+        _journal: unknown,
+        _timeoutMs: number,
+        onReplacement: (hash: string) => Promise<void>
+      ) => {
+        // Same nonce, bumped fees → a new hash the journal must learn.
+        await onReplacement('0xccc');
+        return receipt('0xccc');
+      }
+    );
+
+    await service.processOnce();
+
+    expect(mocks.sendCompletion).not.toHaveBeenCalled();
+    // claim → journal(+re-broadcast) → confirmed
+    expect(mocks.setCalls).toHaveLength(3);
+    expect(mocks.setCalls[1]).toMatchObject({
+      blockchainNonce: 42,
+      blockchainSentHashes: '["0xaaa","0xccc"]',
+      transactionHash: '0xccc',
+    });
+    expect(mocks.setCalls[2]).toMatchObject({
+      blockchainStatus: 'confirmed',
+      transactionHash: '0xccc',
+    });
+  });
+
+  it('recovers a `failed` row that timed out after broadcasting, not just a stale lock', async () => {
+    const candidate = makeCandidate({
+      blockchainStatus: 'failed',
+      blockchainNonce: 42,
+      blockchainSentHashes: '["0xaaa"]',
+    });
+    mocks.findMany.mockResolvedValue([candidate]);
+    mocks.returningQueue.push(claimedRow(candidate, 2));
+    mocks.recoverCompletion.mockResolvedValue(receipt('0xaaa'));
+
+    await service.processOnce();
+
+    expect(mocks.sendCompletion).not.toHaveBeenCalled();
+    expect(mocks.recoverCompletion).toHaveBeenCalledTimes(1);
+  });
+
+  it('treats an unreadable hash journal as "no hashes" and still recovers by nonce', async () => {
+    const candidate = makeCandidate({
+      blockchainStatus: 'processing',
+      blockchainNonce: 42,
+      blockchainSentHashes: 'not json',
+    });
+    mocks.findMany.mockResolvedValue([candidate]);
+    mocks.returningQueue.push(claimedRow(candidate, 2));
+    mocks.recoverCompletion.mockResolvedValue(receipt('0xaaa'));
+
+    await service.processOnce();
+
+    // The nonce alone is enough to stay safe: recovery falls back to the
+    // account nonce check rather than sending a second transaction.
+    expect(mocks.sendCompletion).not.toHaveBeenCalled();
+    expect(mocks.recoverCompletion).toHaveBeenCalledWith(
+      expect.objectContaining({ nonce: 42, hashes: [] }),
+      90_000,
+      expect.any(Function)
+    );
   });
 });
 
@@ -444,11 +744,7 @@ describe('BlockchainQueueService idle scheduling', () => {
     const candidate = makeCandidate();
     mocks.findMany.mockResolvedValue([candidate]);
     mocks.returningQueue.push(claimedRow(candidate, 1));
-    mocks.recordCompletion.mockResolvedValue({
-      hash: '0xabc',
-      blockNumber: 1,
-      gasUsed: '21000',
-    });
+    mockSuccessfulSend();
 
     await vi.advanceTimersByTimeAsync(CEILING);
 
@@ -584,16 +880,12 @@ describe('BlockchainQueueService.wake', () => {
     const candidate = makeCandidate();
     mocks.findMany.mockResolvedValue([candidate]);
     mocks.returningQueue.push(claimedRow(candidate, 1));
-    mocks.recordCompletion.mockResolvedValue({
-      hash: '0xabc',
-      blockNumber: 1,
-      gasUsed: '21000',
-    });
+    mockSuccessfulSend();
 
     service.wake();
     await settle();
 
-    expect(mocks.recordCompletion).toHaveBeenCalledTimes(1);
+    expect(mocks.sendCompletion).toHaveBeenCalledTimes(1);
     expect(service.currentIntervalMs).toBe(BASE);
   });
 

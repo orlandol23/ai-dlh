@@ -1,7 +1,11 @@
 import { and, asc, eq, inArray, isNull, lte, or, sql } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import { progressRecords, type BlockchainStatus } from '../db/schema.js';
-import { web3Service, NonRetryableBlockchainError } from './web3.service.js';
+import {
+  web3Service,
+  NonRetryableBlockchainError,
+  type BlockchainReceipt,
+} from './web3.service.js';
 import { config } from '../utils/env.js';
 import { logger } from '../utils/logger.js';
 import { captureException } from '../utils/sentry.js';
@@ -37,7 +41,35 @@ interface QueueCandidate {
   score: number;
   blockchainStatus: string;
   blockchainAttempts: number;
+  blockchainNonce: number | null;
+  blockchainSentHashes: string | null;
   module: { topic: string } | null;
+}
+
+/** A claimed row, as returned by the conditional claim UPDATE. */
+interface ClaimedRecord {
+  id: number;
+  moduleId: number;
+  score: number;
+  blockchainAttempts: number;
+  blockchainNonce: number | null;
+  blockchainSentHashes: string | null;
+}
+
+/**
+ * Hashes journaled for a record's nonce. Stored as JSON text; a value
+ * that somehow isn't a string array is treated as "no hashes", which is
+ * still safe — recovery falls back to the account nonce check.
+ */
+function parseSentHashes(raw: string | null): string[] {
+  if (!raw) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((hash): hash is string => typeof hash === 'string');
+  } catch {
+    return [];
+  }
 }
 
 /**
@@ -59,6 +91,16 @@ interface QueueCandidate {
  *    an idle deployment must not keep waking a scale-to-zero database
  *    (see idleWaitMs for the billing arithmetic that forces this).
  *
+ * Exactly-once on-chain writes (journal-before-wait):
+ *  - Sending a transaction and waiting for its receipt are two separate
+ *    calls into web3.service, and the nonce plus the broadcast hash are
+ *    written to the row BETWEEN them. A process killed while waiting
+ *    therefore leaves a row that says exactly what is in flight, and the
+ *    worker that reclaims it after the stale-lock window resolves that
+ *    nonce from its receipts (recoverInFlight) instead of broadcasting a
+ *    second transaction. Since the recovery path re-broadcasts on the
+ *    SAME nonce, at most one of those transactions can ever mine.
+ *
  * Claim semantics (idempotency):
  *  - A record is claimed via a single conditional UPDATE
  *    (`... WHERE id = ? AND status IN ('pending','failed') ...` RETURNING)
@@ -70,14 +112,14 @@ interface QueueCandidate {
  * Single-instance limitation (documented on purpose):
  *  - This worker is designed for the current single-server deployment
  *    (Railway, one container). The conditional-UPDATE claim is safe even
- *    with multiple instances, BUT the stale-lock reclaim is not: if an
- *    instance takes longer than BLOCKCHAIN_STALE_LOCK_MS to confirm a tx
- *    (default 10 min vs. tx timeout ~3 min, so there is headroom), another
- *    instance could reclaim the row and double-submit. Sequential sending
- *    per process is also what makes the fee-bump nonce strategy in
- *    web3.service safe. For horizontal scaling, move the claim to
- *    `FOR UPDATE SKIP LOCKED` in a transaction and elect a single worker
- *    (or use an external queue).
+ *    with multiple instances, and the journal keeps a stale-lock reclaim
+ *    from double-submitting (the reclaimer reuses the journaled nonce),
+ *    but two instances working the same nonce still fight over it — one
+ *    of the two broadcasts is simply rejected as underpriced — and
+ *    sequential sending per process is what keeps the fee-bump strategy
+ *    in web3.service predictable. For horizontal scaling, move the claim
+ *    to `FOR UPDATE SKIP LOCKED` in a transaction and elect a single
+ *    worker (or use an external queue).
  */
 export class BlockchainQueueService {
   private timer: NodeJS.Timeout | null = null;
@@ -294,6 +336,10 @@ export class BlockchainQueueService {
         score: true,
         blockchainStatus: true,
         blockchainAttempts: true,
+        // Exactly-once journal: a row that already broadcast a tx must be
+        // recovered from its nonce, never sent again (see processCandidate).
+        blockchainNonce: true,
+        blockchainSentHashes: true,
       },
       with: {
         module: { columns: { topic: true } },
@@ -341,12 +387,11 @@ export class BlockchainQueueService {
         moduleId: progressRecords.moduleId,
         score: progressRecords.score,
         blockchainAttempts: progressRecords.blockchainAttempts,
-      })) as Array<{
-      id: number;
-      moduleId: number;
-      score: number;
-      blockchainAttempts: number;
-    }>;
+        // Read the journal from the claim itself: whatever the candidate
+        // SELECT saw may be stale by the time the claim lands.
+        blockchainNonce: progressRecords.blockchainNonce,
+        blockchainSentHashes: progressRecords.blockchainSentHashes,
+      })) as ClaimedRecord[];
 
     const record = claimed[0];
     if (!record) {
@@ -363,12 +408,15 @@ export class BlockchainQueueService {
     }
 
     try {
-      const receipt = await web3Service.recordCompletion(
-        record.moduleId,
-        record.score,
-        candidate.module.topic,
-        config.BLOCKCHAIN_TX_TIMEOUT_MS
-      );
+      // A journaled nonce means a transaction for this record was already
+      // broadcast (by this worker before a crash, or by an attempt that
+      // timed out). Resolving it from its receipts is the only safe move:
+      // a fresh send next to a pending one is how the append-only contract
+      // ends up with two records for one completion.
+      const receipt =
+        typeof record.blockchainNonce === 'number'
+          ? await this.recoverInFlight(record, record.blockchainNonce, candidate.module.topic)
+          : await this.sendAndJournal(record, candidate.module.topic);
 
       await db
         .update(progressRecords)
@@ -390,7 +438,95 @@ export class BlockchainQueueService {
     }
   }
 
-  /** Decide between scheduling a retry and giving up permanently. */
+  /**
+   * Fresh send: broadcast, journal, then wait.
+   *
+   * The UPDATE between the broadcast and the wait is the whole point of
+   * this path. Everything before it can be replayed for free (no
+   * transaction exists yet); everything after it is recoverable, because
+   * the row now names the nonce and every hash sent on it. The window
+   * that used to produce duplicates — process killed while waiting for
+   * the receipt, row reclaimed, brand-new transaction sent — is closed:
+   * the reclaim finds the journal and goes through recoverInFlight.
+   *
+   * What is left is the millisecond between the node accepting the
+   * broadcast and this UPDATE landing. Closing that too would mean
+   * reserving a nonce in the database before sending, which trades a
+   * rare duplicate for a common false alarm (any nonce reserved but not
+   * used looks, to recovery, like a nonce consumed by someone else), so
+   * the window is documented rather than papered over.
+   */
+  private async sendAndJournal(
+    record: ClaimedRecord,
+    topic: string
+  ): Promise<BlockchainReceipt> {
+    const sent = await web3Service.sendCompletion(record.moduleId, record.score, topic);
+
+    const hashes = [sent.hash];
+    await this.journal(record.id, sent.nonce, hashes);
+
+    return web3Service.waitForCompletion(
+      sent,
+      config.BLOCKCHAIN_TX_TIMEOUT_MS,
+      async (replacementHash) => {
+        // Replace-by-fee reuses the nonce, so the journal keeps the whole
+        // set of hashes: recovery must be able to check every one of them.
+        hashes.push(replacementHash);
+        await this.journal(record.id, sent.nonce, hashes);
+      }
+    );
+  }
+
+  /** Reclaimed row with a journal: resolve it from receipts, never resend blindly. */
+  private async recoverInFlight(
+    record: ClaimedRecord,
+    nonce: number,
+    topic: string
+  ): Promise<BlockchainReceipt> {
+    const hashes = parseSentHashes(record.blockchainSentHashes);
+
+    logger.info(
+      `Queue record ${record.id} carries nonce ${nonce} with ` +
+        `${hashes.length} journaled hash(es) — recovering instead of resending`
+    );
+
+    const journaled = [...hashes];
+    return web3Service.recoverCompletion(
+      { nonce, hashes, moduleId: record.moduleId, score: record.score, topic },
+      config.BLOCKCHAIN_TX_TIMEOUT_MS,
+      async (replacementHash) => {
+        journaled.push(replacementHash);
+        await this.journal(record.id, nonce, journaled);
+      }
+    );
+  }
+
+  /**
+   * Persist the exactly-once journal. Status is deliberately untouched:
+   * the row stays `processing` while the transaction is in flight, and
+   * `transaction_hash` tracks the newest hash so the UI can link to the
+   * transaction that is actually being waited on.
+   */
+  private async journal(recordId: number, nonce: number, hashes: string[]): Promise<void> {
+    await db
+      .update(progressRecords)
+      .set({
+        blockchainNonce: nonce,
+        blockchainSentHashes: JSON.stringify(hashes),
+        transactionHash: hashes[hashes.length - 1] ?? null,
+      })
+      .where(eq(progressRecords.id, recordId));
+  }
+
+  /**
+   * Decide between scheduling a retry and giving up permanently.
+   *
+   * Note what this does NOT do: it never clears `blockchain_nonce` /
+   * `blockchain_sent_hashes`. A send that timed out leaves a transaction
+   * in flight, and the next attempt must recover that nonce rather than
+   * allocate a new one. `markFailedPermanent` and the `confirmed` UPDATE
+   * keep the journal too — by then it is a record of what was sent.
+   */
   private async handleSendFailure(
     record: { id: number; blockchainAttempts: number },
     error: unknown

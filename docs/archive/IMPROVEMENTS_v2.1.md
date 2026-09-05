@@ -1,69 +1,69 @@
-# AI-DLH — Plano de Improvements v2.1 (i18n-first)
+# AI-DLH — Improvements Plan v2.1 (i18n-first)
 
-> **📌 Status: ✅ CONCLUÍDO** (PRs [#14](https://github.com/orlandol23/ai-dlh/pull/14) e
-> [#15](https://github.com/orlandol23/ai-dlh/pull/15)) — mantido como registro
-> histórico. Única pendência remanescente: **OG image dinâmica do certificado**
-> (item D.5), absorvida pelo [PLANO_MESTRE.md](./PLANO_MESTRE.md) como **C7**.
+> **📌 Status: ✅ DONE** (PRs [#14](https://github.com/orlandol23/ai-dlh/pull/14) and
+> [#15](https://github.com/orlandol23/ai-dlh/pull/15)) — kept as a
+> historical record. Only remaining open item: **dynamic OG image for the certificate**
+> (item D.5), absorbed by [PLANO_MESTRE.md](./PLANO_MESTRE.md) as **C7**.
 
-> Sequência de melhorias após a migração v2 "Circuit & Ink".
-> Cole este arquivo no Claude Code dentro do repo `orlandol23/ai-dlh` numa branch nova.
-> Ordem importa: **A0 → A → B → C → D → E**.
-> Estimativa total: ~12–15h.
+> Sequence of improvements after the v2 "Circuit & Ink" migration.
+> Paste this file into Claude Code inside the `orlandol23/ai-dlh` repo on a new branch.
+> Order matters: **A0 → A → B → C → D → E**.
+> Total estimate: ~12-15h.
 
 ---
 
-## Visão geral
+## Overview
 
-| Fase | Status | Tempo | Conteúdo |
+| Phase | Status | Time | Content |
 |---|---|---|---|
-| A0 — i18n foundation | NOVA | ~3–4.5h | i18next, RTL, fontes, Intl, migração de strings |
-| A — Polish | revisada | ~1h | 5 fixes do design system v2 |
-| B — Acessibilidade | revisada | ~1.5–2h | reduced-motion, ARIA, Radix Select, skip-link, contraste |
-| C — Empty states & loading | revisada | ~1.5h | empty states, skeletons, indeterminate bar |
-| D — Produto | revisada | ~3–4h | onboarding, share, streak, focus mode, /cert/:hash |
-| E — Backend i18n + Provider abstraction | NOVA | ~3–4h | AIProvider interface, prompt parametrizado, schema migration |
+| A0 — i18n foundation | NEW | ~3-4.5h | i18next, RTL, fonts, Intl, string migration |
+| A — Polish | revised | ~1h | 5 fixes for the v2 design system |
+| B — Accessibility | revised | ~1.5-2h | reduced-motion, ARIA, Radix Select, skip-link, contrast |
+| C — Empty states & loading | revised | ~1.5h | empty states, skeletons, indeterminate bar |
+| D — Product | revised | ~3-4h | onboarding, share, streak, focus mode, /cert/:hash |
+| E — Backend i18n + Provider abstraction | NEW | ~3-4h | AIProvider interface, parameterized prompt, schema migration |
 
 **Branch:** `feat/design-system-v2-1-i18n`
-**Idiomas MVP:** `en, pt-BR, es, fr, ja, ar`
-**LLM principal:** Gemini 2.5 Flash (pago) com infraestrutura para Sonnet 4.6 (premium) e Qwen 3 (region=cn)
+**MVP languages:** `en, pt-BR, es, fr, ja, ar`
+**Primary LLM:** Gemini 2.5 Flash (paid) with infrastructure for Sonnet 4.6 (premium) and Qwen 3 (region=cn)
 
 ---
 
-## Convenções globais
+## Global conventions
 
-- **Não tocar tokens:** `globals.css` e `tailwind.config.js` já estão certos. Só adicione utilities novas se precisar (`focus-ring-v2`, `bar-indeterminate`).
-- **Bibliotecas novas permitidas:**
+- **Don't touch tokens:** `globals.css` and `tailwind.config.js` are already correct. Only add new utilities if needed (`focus-ring-v2`, `bar-indeterminate`).
+- **New libraries allowed:**
   - `react-i18next`, `i18next`, `i18next-browser-languagedetector`, `i18next-http-backend`
   - `zod-i18n-map`
   - `@radix-ui/react-select`
-  - `@anthropic-ai/sdk` (Fase E — tier premium)
-  - `axios` ou DashScope SDK (Fase E — region=cn)
-- **Commits atômicos por subitem** (ex: `feat(i18n): setup react-i18next [A0.1]`).
-- **PR por fase** com screenshots before/after.
-- **CI deve passar** entre fases — não acumular dívida de tipos/lint.
+  - `@anthropic-ai/sdk` (Phase E — premium tier)
+  - `axios` or the DashScope SDK (Phase E — region=cn)
+- **Atomic commits per sub-item** (e.g. `feat(i18n): setup react-i18next [A0.1]`).
+- **One PR per phase** with before/after screenshots.
+- **CI must pass** between phases — don't accumulate type/lint debt.
 
 ---
 
-## Idiomas-alvo MVP
+## MVP target languages
 
-| Locale | Nome | Direção | Validações específicas |
+| Locale | Name | Direction | Specific validations |
 |---|---|---|---|
-| `en` | English | LTR | fallback default |
-| `pt-BR` | Português (Brasil) | LTR | base atual do conteúdo |
-| `es` | Español | LTR | latim, plural rules |
-| `fr` | Français | LTR | latim, espaços antes de `:` `?` `!` |
-| `ja` | 日本語 | LTR | CJK font fallback, sem espaços entre palavras |
-| `ar` | العربية | RTL | direção invertida, fontes Arabic |
+| `en` | English | LTR | default fallback |
+| `pt-BR` | Português (Brasil) | LTR | current content base |
+| `es` | Español | LTR | Latin script, plural rules |
+| `fr` | Français | LTR | Latin script, spaces before `:` `?` `!` |
+| `ja` | 日本語 | LTR | CJK font fallback, no spaces between words |
+| `ar` | العربية | RTL | reversed direction, Arabic fonts |
 
-Estrutura preparada para adicionar mais idiomas sem refactor.
+Structure prepared to add more languages without a refactor.
 
 ---
 
-## Fase A0 — i18n foundation (~3–4.5h, BLOCKER de tudo)
+## Phase A0 — i18n foundation (~3-4.5h, BLOCKER for everything)
 
-> Sem A0 concluída, qualquer string nova das fases B–D nasce hardcoded e gera retrabalho. **Não pular.**
+> Without A0 done, any new string from phases B-D is born hardcoded and creates rework. **Don't skip it.**
 
-### A0.1 — Setup do react-i18next (~30min)
+### A0.1 — react-i18next setup (~30min)
 
 ```bash
 cd frontend && npm i react-i18next i18next i18next-browser-languagedetector i18next-http-backend
@@ -102,22 +102,22 @@ i18n
 export default i18n;
 ```
 
-Importar em `frontend/src/main.tsx` antes do `<App />`:
+Import in `frontend/src/main.tsx` before `<App />`:
 ```ts
 import './i18n';
 ```
 
-**Critério:** `i18n.language` no boot retorna o locale detectado.
+**Criterion:** `i18n.language` on boot returns the detected locale.
 
 ---
 
-### A0.2 — Estrutura de locales (~30min)
+### A0.2 — Locale structure (~30min)
 
-Criar `frontend/public/locales/{en,pt-BR,es,fr,ja,ar}/` com arquivos:
-- `common.json` — botões e labels universais
+Create `frontend/public/locales/{en,pt-BR,es,fr,ja,ar}/` with files:
+- `common.json` — universal buttons and labels
 - `home.json`, `dashboard.json`, `module.json`, `quiz.json`, `cert.json`, `auth.json`
 
-Exemplo `common.json` (en):
+Example `common.json` (en):
 ```json
 {
   "buttons": {
@@ -136,9 +136,9 @@ Exemplo `common.json` (en):
 }
 ```
 
-Para `pt-BR`, traduzir a partir das strings já hardcoded no app (será a fonte de verdade durante migração).
+For `pt-BR`, translate from the strings already hardcoded in the app (this will be the source of truth during the migration).
 
-**Critério:** `?lng=ja` muda `t('common:buttons.next')` para `次へ`.
+**Criterion:** `?lng=ja` changes `t('common:buttons.next')` to `次へ`.
 
 ---
 
@@ -163,15 +163,15 @@ export function RtlProvider({ children }: { children: React.ReactNode }) {
 }
 ```
 
-Plugar em `App.tsx` envolvendo o conteúdo.
+Plug into `App.tsx`, wrapping the content.
 
-**Tailwind:** logical properties já suportadas em 3.3+ (`ps-`/`pe-`/`ms-`/`me-`/`start-`/`end-`). Substituir `pl-`/`pr-`/`left-`/`right-` por equivalentes lógicos onde fizer sentido (não precisa migrar 100% — só onde a direção importa).
+**Tailwind:** logical properties already supported in 3.3+ (`ps-`/`pe-`/`ms-`/`me-`/`start-`/`end-`). Replace `pl-`/`pr-`/`left-`/`right-` with logical equivalents where it makes sense (no need to migrate 100% — only where direction matters).
 
-**Critério:** com `?lng=ar`, `<html dir="rtl">` e layout espelhado.
+**Criterion:** with `?lng=ar`, `<html dir="rtl">` and mirrored layout.
 
 ---
 
-### A0.4 — Font fallbacks globais (~20min)
+### A0.4 — Global font fallbacks (~20min)
 
 `frontend/tailwind.config.js`:
 ```js
@@ -188,7 +188,7 @@ Adicionar imports no `index.html`:
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600&family=Noto+Sans+Arabic:wght@400;600&display=swap" rel="stylesheet">
 ```
 
-**Critério:** kanji em `?lng=ja` renderiza sem boxes; árabe renderiza ligado corretamente.
+**Criterion:** kanji in `?lng=ja` renders without boxes; Arabic renders with correct ligatures.
 
 ---
 
@@ -218,9 +218,9 @@ export function useFormatRelativeTime() {
 }
 ```
 
-Substituir todo `toLocaleString`/`toLocaleDateString` espalhado por esses hooks.
+Replace every `toLocaleString`/`toLocaleDateString` scattered around with these hooks.
 
-**Critério:** datas mudam para o formato do locale (en: "Apr 26, 2026" / pt-BR: "26 de abr. de 2026" / ar: "٢٦ أبريل ٢٠٢٦").
+**Criterion:** dates change to the locale's format (en: "Apr 26, 2026" / pt-BR: "26 de abr. de 2026" / ar: "٢٦ أبريل ٢٠٢٦").
 
 ---
 
@@ -239,9 +239,9 @@ import './index';
 z.setErrorMap(zodI18nMap);
 ```
 
-Adicionar `zod` namespace em cada `locales/<lng>/zod.json` (zod-i18n-map já fornece traduções base para 30+ idiomas — copiar dos exemplos do pacote).
+Add a `zod` namespace to each `locales/<lng>/zod.json` (zod-i18n-map already provides base translations for 30+ languages — copy them from the package's examples).
 
-**Critério:** validação Zod no frontend retorna mensagem no idioma ativo.
+**Criterion:** Zod validation on the frontend returns the message in the active language.
 
 ---
 
@@ -279,54 +279,54 @@ export function LanguageSelector() {
 }
 ```
 
-(Trocar para Radix Select quando B.3 for concluído.)
+(Switch to Radix Select once B.3 is done.)
 
-Plugar no header de `App.tsx` próximo ao botão de wallet.
+Plug into the `App.tsx` header, next to the wallet button.
 
-**Critério:** trocar locale recarrega strings sem refresh; persiste em `localStorage`.
+**Criterion:** switching locale reloads strings without a refresh; persists to `localStorage`.
 
 ---
 
-### A0.8 — Migração das strings existentes (~1.5h)
+### A0.8 — Migrating existing strings (~1.5h)
 
-**Páginas/componentes a migrar:**
+**Pages/components to migrate:**
 - `HomePage.tsx`, `DashboardPage.tsx`, `ModulePage.tsx`
 - `App.tsx` (header, footer)
-- `components/molecules/*` (todos)
-- `lib/achievements.ts` (nomes/descrições)
+- `components/molecules/*` (all of them)
+- `lib/achievements.ts` (names/descriptions)
 
-**Padrão:**
+**Pattern:**
 ```tsx
-// Antes
+// Before
 <h1>Aprenda com IA</h1>
 
-// Depois
+// After
 const { t } = useTranslation('home');
 <h1>{t('hero.title')}</h1>
 ```
 
-**Estratégia em ordem:**
-1. Para cada página, criar key no `pt-BR` JSON (1:1 do hardcoded)
-2. Substituir no `.tsx` por `t('ns:key')`
-3. Validar visualmente em pt-BR (nada deve mudar)
-4. Traduzir para `en` (pode usar IA, revisar)
-5. Demais idiomas em terceiro passo
+**Strategy, in order:**
+1. For each page, create the key in the `pt-BR` JSON (1:1 with the hardcoded text)
+2. Replace it in the `.tsx` with `t('ns:key')`
+3. Visually validate in pt-BR (nothing should change)
+4. Translate to `en` (can use AI, then review)
+5. Remaining languages in a third pass
 
-**Lint guard (opcional):** `eslint-plugin-react` regra `react/jsx-no-literals` em modo warn para evitar regressão.
+**Lint guard (optional):** the `eslint-plugin-react` rule `react/jsx-no-literals` in warn mode to catch regressions.
 
-**Critério:** com `?lng=en`, **nenhuma** string em PT-BR aparece nas páginas migradas.
+**Criterion:** with `?lng=en`, **no** PT-BR string appears on the migrated pages.
 
 ---
 
-## Fase A — Polish do design system (~1h)
+## Phase A — Design system polish (~1h)
 
-> Cinco fixes que terminam de "selar" a v2. Cada um é independente. Após A0, todas as strings já vêm de `t()`.
+> Five fixes that finish "sealing" v2. Each one is independent. After A0, every string already comes from `t()`.
 
-### A.1 — Botão primário com glow hover [inalterado]
+### A.1 — Primary button with hover glow [unchanged]
 
 **Arquivo:** `frontend/src/components/atoms/Button.tsx`
 
-Adicionar no variant `default`:
+Add to the `default` variant:
 
 ```tsx
 default:
@@ -335,13 +335,13 @@ default:
   'active:translate-y-0 active:shadow-none',
 ```
 
-Manter as demais variants (`outline`, `ghost`, `destructive`, `secondary`, `link`) e tamanhos como já estão.
+Keep the remaining variants (`outline`, `ghost`, `destructive`, `secondary`, `link`) and sizes as they are.
 
-**Critério:** botão "Começar Agora" levanta 1px no hover e ganha halo roxo com blur 24px.
+**Criterion:** the "Começar Agora" button lifts 1px on hover and gains a purple halo with a 24px blur.
 
 ---
 
-### A.2 — Anel duplo de focus em inputs [inalterado]
+### A.2 — Double focus ring on inputs [unchanged]
 
 **Arquivos:** `Input.tsx`, `<select>` inline em `DashboardPage.tsx`, `globals.css`.
 
@@ -356,13 +356,13 @@ Manter as demais variants (`outline`, `ghost`, `destructive`, `secondary`, `link
 }
 ```
 
-Substituir `focus-visible:ring-2 ring-ring ring-offset-2` por `focus-ring-v2`.
+Replace `focus-visible:ring-2 ring-ring ring-offset-2` with `focus-ring-v2`.
 
-**Critério:** anel roxo translúcido com gap visível ao tabular pelos inputs.
+**Criterion:** a translucent purple ring with a visible gap when tabbing through the inputs.
 
 ---
 
-### A.3 — Barra de progresso do quiz com gradiente brand [inalterado]
+### A.3 — Quiz progress bar with brand gradient [unchanged]
 
 **Arquivo:** `frontend/src/pages/ModulePage.tsx`
 
@@ -373,17 +373,17 @@ Substituir `focus-visible:ring-2 ring-ring ring-offset-2` por `focus-ring-v2`.
 />
 ```
 
-**Critério:** barra preenche em gradiente roxo→ciano ao avançar nas questões.
+**Criterion:** the bar fills with a purple→cyan gradient as questions advance.
 
 ---
 
-### A.4 — Setas com peso mono **+ RTL-aware** [REVISADO]
+### A.4 — Mono-weight arrows **+ RTL-aware** [REVISED]
 
-**Arquivos:** `ModulePage.tsx`, `HomePage.tsx`, `DashboardPage.tsx`
+**Files:** `ModulePage.tsx`, `HomePage.tsx`, `DashboardPage.tsx`
 
-**Problema do plano original:** seta `→` hardcoded em texto vira visualmente errada em árabe (RTL espera `←`). Solução: usar `lucide-react` ChevronRight/ChevronLeft que respeitam `dir` do documento, ou aplicar `rtl:rotate-180`.
+**Problem with the original plan:** a hardcoded `→` arrow in text becomes visually wrong in Arabic (RTL expects `←`). Solution: use `lucide-react`'s ChevronRight/ChevronLeft, which respect the document's `dir`, or apply `rtl:rotate-180`.
 
-**Padrão recomendado** (lucide-react já está no projeto):
+**Recommended pattern** (lucide-react is already in the project):
 
 ```tsx
 import { ChevronRight, ChevronLeft } from 'lucide-react';
@@ -401,18 +401,18 @@ import { ChevronRight, ChevronLeft } from 'lucide-react';
 </Button>
 ```
 
-Para preservar o **peso mono** estético em CTAs textuais (ex: "Ver no Etherscan →"), usar `<span className="font-mono rtl:rotate-180 inline-block">→</span>`.
+To preserve the **mono weight** look in text CTAs (e.g. "Ver no Etherscan →"), use `<span className="font-mono rtl:rotate-180 inline-block">→</span>`.
 
-**Critério:**
-- LTR: setas apontam para direita (avançar) e esquerda (voltar)
-- RTL (`?lng=ar`): setas espelham automaticamente
-- Setas mantém peso mono nos CTAs
+**Criterion:**
+- LTR: arrows point right (forward) and left (back)
+- RTL (`?lng=ar`): arrows mirror automatically
+- Arrows keep the mono weight in CTAs
 
 ---
 
-### A.5 — Footer com ano dinâmico **+ i18n** [REVISADO]
+### A.5 — Footer with dynamic year **+ i18n** [REVISED]
 
-**Arquivo:** `HomePage.tsx`
+**File:** `HomePage.tsx`
 
 ```tsx
 const { t } = useTranslation('common');
@@ -426,13 +426,13 @@ JSON (`common.json`):
 }
 ```
 
-**Critério:** footer mostra ano corrente e texto traduzido conforme locale.
+**Criterion:** the footer shows the current year and text translated per locale.
 
 ---
 
-## Fase B — Acessibilidade (~1.5–2h)
+## Phase B — Accessibility (~1.5-2h)
 
-### B.1 — `prefers-reduced-motion` [inalterado]
+### B.1 — `prefers-reduced-motion` [unchanged]
 
 `globals.css` (final do arquivo):
 ```css
@@ -450,7 +450,7 @@ JSON (`common.json`):
 }
 ```
 
-E em `ModulePage.tsx` no stamp framer-motion:
+And in `ModulePage.tsx`, on the framer-motion stamp:
 
 ```tsx
 import { useReducedMotion } from 'framer-motion';
@@ -462,15 +462,15 @@ const reduce = useReducedMotion();
 />
 ```
 
-**Critério:** ativar "Reduce motion" no SO desliga shimmer, caret e stamp.
+**Criterion:** turning on "Reduce motion" in the OS disables the shimmer, caret and stamp.
 
 ---
 
-### B.2 — `aria` no quiz option **+ i18n** [REVISADO]
+### B.2 — `aria` on the quiz option **+ i18n** [REVISED]
 
-**Arquivo:** `ModulePage.tsx`
+**File:** `ModulePage.tsx`
 
-**Problema do plano original:** `aria-label` com `"Opção ${letter}: ${option}"` hardcoded em PT-BR. Em RTL, leitor de tela espera label coerente com o `dir` do documento.
+**Problem with the original plan:** an `aria-label` with `"Opção ${letter}: ${option}"` hardcoded in PT-BR. In RTL, a screen reader expects a label consistent with the document's `dir`.
 
 ```tsx
 const { t } = useTranslation('quiz');
@@ -509,37 +509,37 @@ const { t } = useTranslation('quiz');
 { "option": { "aria": "الخيار {{letter}}: {{content}}" } }
 ```
 
-E o `CardTitle` recebe `id="question-title"`.
+And `CardTitle` gets `id="question-title"`.
 
-**Decisão sobre letras A/B/C/D:** manter latino como padrão universal (defensável por consistência). Se quiser localizar (أ/ب/ج/د em ar, ア/イ/ウ/エ em ja), criar função `letterFor(index, locale)` em `lib/intl.ts`.
+**Decision on A/B/C/D letters:** keep the Latin letters as the universal default (defensible for consistency). To localize them (أ/ب/ج/د in ar, ア/イ/ウ/エ in ja), create a `letterFor(index, locale)` function in `lib/intl.ts`.
 
-**Critério:** navegação por teclado (←/→) entre opções funciona; leitor de tela anuncia "Option A: …" no idioma ativo.
+**Criterion:** keyboard navigation (←/→) between options works; the screen reader announces "Option A: …" in the active language.
 
 ---
 
-### B.3 — `<select>` por componente Radix [inalterado]
+### B.3 — `<select>` via a Radix component [unchanged]
 
 ```bash
 cd frontend && npm i @radix-ui/react-select
 ```
 
-Criar `components/atoms/Select.tsx` no padrão shadcn (composto: `Select`, `SelectTrigger`, `SelectValue`, `SelectContent`, `SelectItem`).
+Create `components/atoms/Select.tsx` in the shadcn pattern (composed of `Select`, `SelectTrigger`, `SelectValue`, `SelectContent`, `SelectItem`).
 
-Substituir:
-- `<select>` nativo do `DashboardPage.tsx` (filtro de módulos)
-- O `<select>` do `LanguageSelector.tsx` criado em A0.7
+Replace:
+- The native `<select>` in `DashboardPage.tsx` (module filter)
+- The `<select>` in `LanguageSelector.tsx` created in A0.7
 
-**Atenção RTL:** testar com `?lng=ar` — Radix Select já suporta RTL nativamente, mas validar que `SelectContent` abre alinhado corretamente.
+**RTL note:** test with `?lng=ar` — Radix Select already supports RTL natively, but validate that `SelectContent` opens aligned correctly.
 
-**Critério:** selects renderizam idênticos em Chrome/Safari/Firefox; layout RTL funciona.
+**Criterion:** selects render identically in Chrome/Safari/Firefox; RTL layout works.
 
 ---
 
-### B.4 — Skip-link **+ i18n + logical props** [REVISADO]
+### B.4 — Skip-link **+ i18n + logical props** [REVISED]
 
-**Problema do plano original:** texto "Pular para o conteúdo" hardcoded em PT-BR; `focus:left-4` quebra em RTL.
+**Problem with the original plan:** the text "Pular para o conteúdo" hardcoded in PT-BR; `focus:left-4` breaks in RTL.
 
-Em `App.tsx` (antes do `<header>`):
+In `App.tsx` (before the `<header>`):
 
 ```tsx
 const { t } = useTranslation();
@@ -553,34 +553,34 @@ const { t } = useTranslation();
 </a>
 ```
 
-E no `<main>` de cada página: `id="main-content" tabIndex={-1}`.
+And on the `<main>` of each page: `id="main-content" tabIndex={-1}`.
 
 `common.json` (en): `"skipToContent": "Skip to content"`
 `common.json` (pt-BR): `"skipToContent": "Pular para o conteúdo"`
 
-**Critério:** Tab no início da página revela link; em RTL, link aparece no canto superior **direito** (start = direito em RTL).
+**Criterion:** Tab at the start of the page reveals the link; in RTL, the link appears in the top **right** corner (start = right in RTL).
 
 ---
 
-### B.5 — Contraste do `text-info` [inalterado]
+### B.5 — `text-info` contrast [unchanged]
 
-`text-info` (ciano) sobre branco tem ~3.6:1 (abaixo do AA). Trocar para `text-info-fg` no `DashboardPage.tsx`:
+`text-info` (cyan) on white has ~3.6:1 (below AA). Switch to `text-info-fg` in `DashboardPage.tsx`:
 
 ```tsx
 <p className="font-display text-5xl font-bold text-info-fg ...">
 ```
 
-Aplicar mesma lógica para `text-success` em stat tiles (consistência).
+Apply the same logic to `text-success` on stat tiles (consistency).
 
-**Critério:** Lighthouse contraste ≥ AA em todas as stats.
+**Criterion:** Lighthouse contrast ≥ AA on all stats.
 
 ---
 
-## Fase C — Empty states & loading com personalidade (~1.5h)
+## Phase C — Empty states & loading with personality (~1.5h)
 
-### C.1 — Empty state da timeline + sparkline **+ i18n** [REVISADO]
+### C.1 — Timeline + sparkline empty state **+ i18n** [REVISED]
 
-**Arquivos:** `Sparkline.tsx`, `OnChainTimeline.tsx`
+**Files:** `Sparkline.tsx`, `OnChainTimeline.tsx`
 
 ```tsx
 const { t } = useTranslation('dashboard');
@@ -618,13 +618,13 @@ const { t } = useTranslation('dashboard');
 }
 ```
 
-**Critério:** empty states aparecem com hash-grid e copy traduzida; seta espelha em RTL.
+**Criterion:** empty states appear with the hash-grid and translated copy; the arrow mirrors in RTL.
 
 ---
 
-### C.2 — Skeleton estrutural ao gerar módulo **+ i18n** [REVISADO]
+### C.2 — Structural skeleton while generating a module **+ i18n** [REVISED]
 
-**Arquivo:** `DashboardPage.tsx`
+**File:** `DashboardPage.tsx`
 
 ```tsx
 const { t } = useTranslation('dashboard');
@@ -658,11 +658,11 @@ const { t } = useTranslation('dashboard');
 { "generating": { "eyebrow": "Building your module" } }
 ```
 
-**Critério:** durante `isGenerating`, preview shell aparece com label traduzido.
+**Criterion:** while `isGenerating`, a preview shell appears with a translated label.
 
 ---
 
-### C.3 — Barra indeterminada no botão "Gerar com IA" [inalterado]
+### C.3 — Indeterminate bar on the "Gerar com IA" button [unchanged]
 
 `globals.css`:
 ```css
@@ -681,22 +681,22 @@ const { t } = useTranslation('dashboard');
 }
 ```
 
-**Atenção RTL:** animação `translateX(-100%) → translateX(100%)` permanece visualmente ok em RTL (a direção do shimmer não tem semântica direcional, é só "loading").
+**RTL note:** the `translateX(-100%) → translateX(100%)` animation stays visually fine in RTL (the shimmer's direction has no directional meaning, it's just "loading").
 
-**Critério:** durante geração, botão mostra faixa animada em vez de spinner.
+**Criterion:** during generation, the button shows an animated bar instead of a spinner.
 
 ---
 
-## Fase D — Produto (~3–4h)
+## Phase D — Product (~3-4h)
 
-### D.1 — Onboarding de 3 passos **+ i18n** [REVISADO]
+### D.1 — 3-step onboarding **+ i18n** [REVISED]
 
-`components/molecules/OnboardingTour.tsx`. Gatilho: `localStorage.getItem('ai_dlh_onboarded') !== 'true'`.
+`components/molecules/OnboardingTour.tsx`. Trigger: `localStorage.getItem('ai_dlh_onboarded') !== 'true'`.
 
-Steps com keys i18n:
-- `onboarding.step1.{title,body}` — spotlight no card "Gerar módulo"
-- `onboarding.step2.{title,body}` — spotlight no sparkline
-- `onboarding.step3.{title,body}` — spotlight no card On-chain
+Steps with i18n keys:
+- `onboarding.step1.{title,body}` — spotlight on the "Gerar módulo" card
+- `onboarding.step2.{title,body}` — spotlight on the sparkline
+- `onboarding.step3.{title,body}` — spotlight on the On-chain card
 
 `dashboard.json` (en):
 ```json
@@ -721,17 +721,17 @@ Steps com keys i18n:
 }
 ```
 
-Botões usam `t('dashboard:onboarding.{skip,next,start}')`. Persistir flag ao terminar (`localStorage.setItem('ai_dlh_onboarded', 'true')`).
+Buttons use `t('dashboard:onboarding.{skip,next,start}')`. Persist the flag when done (`localStorage.setItem('ai_dlh_onboarded', 'true')`).
 
-**Atenção RTL:** clip-path do spotlight precisa testar com `dir="rtl"` — Framer Motion respeita o layout direction.
+**RTL note:** the spotlight's clip-path needs testing with `dir="rtl"` — Framer Motion respects the layout direction.
 
-**Critério:** tour aparece no primeiro acesso, persiste flag, copy traduzida.
+**Criterion:** the tour appears on first access, persists the flag, translated copy.
 
 ---
 
-### D.2 — Compartilhar certificado **+ i18n + locale URLs** [REVISADO]
+### D.2 — Share certificate **+ i18n + locale URLs** [REVISED]
 
-Após `quizResult.passed && quizResult.transactionHash`:
+After `quizResult.passed && quizResult.transactionHash`:
 
 ```tsx
 const { t, i18n } = useTranslation('cert');
@@ -770,17 +770,17 @@ const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(s
 }
 ```
 
-URL `?lang=` é lida pela rota pública `/cert/:hash` (D.5) para renderizar no idioma certo do ato de compartilhar.
+The `?lang=` URL is read by the public `/cert/:hash` route (D.5) to render in the correct language when it's shared.
 
-**Critério:** texto de share traduzido conforme locale do usuário; URL contém `?lang=`.
+**Criterion:** share text translated per the user's locale; URL contains `?lang=`.
 
 ---
 
-### D.3 — Streak de estudo **+ timezone real + i18n** [REVISADO]
+### D.3 — Study streak **+ real timezone + i18n** [REVISED]
 
-**Problema do plano original:** agrupar `progress` por dia em UTC quebra streak de usuários longe de UTC (ex: Japão pode "perder" o dia ao passar das 09:00 JST).
+**Problem with the original plan:** grouping `progress` by day in UTC breaks the streak for users far from UTC (e.g. Japan can "lose" the day after 09:00 JST).
 
-Em `lib/achievements.ts`:
+In `lib/achievements.ts`:
 
 ```ts
 const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -805,9 +805,9 @@ export function calculateStreak(progress: Progress[]): number {
 }
 ```
 
-Achievements: `streak_3`, `streak_7`, `streak_30` (nomes/descrições via i18n em `achievements.json`).
+Achievements: `streak_3`, `streak_7`, `streak_30` (names/descriptions via i18n in `achievements.json`).
 
-Header do Dashboard:
+Dashboard header:
 ```tsx
 const { t } = useTranslation('dashboard');
 {streakDays > 0 && (
@@ -830,19 +830,19 @@ const { t } = useTranslation('dashboard');
 }
 ```
 
-**Critério:** streak conta dias contíguos no fuso do usuário; tooltip traduzido com plural correto.
+**Criterion:** the streak counts contiguous days in the user's timezone; tooltip translated with correct plural.
 
 ---
 
-### D.4 — Modo "Estudo focado" **+ i18n** [REVISADO]
+### D.4 — "Estudo focado" (focus study) mode **+ i18n** [REVISED]
 
-Toggle `focusMode` (local state + `localStorage`) em `ModulePage.tsx`:
+`focusMode` toggle (local state + `localStorage`) in `ModulePage.tsx`:
 
-- Esconde header e card de "já completou"
-- Conteúdo markdown em `max-w-2xl mx-auto` em `bg-background`
-- Hash-grid de fundo a 4% de opacidade
-- Botão flutuante: `t('module:focus.exit')`
-- Pomodoro embutido opcional: timer 25min mono no canto, `text-2xl tabular-nums text-primary`. Label "min" via `t('common:time.minute')`.
+- Hides the header and the "already completed" card
+- Markdown content in `max-w-2xl mx-auto` on `bg-background`
+- Background hash-grid at 4% opacity
+- Floating button: `t('module:focus.exit')`
+- Optional embedded Pomodoro: a 25min mono timer in the corner, `text-2xl tabular-nums text-primary`. "min" label via `t('common:time.minute')`.
 
 `module.json`:
 ```json
@@ -855,21 +855,21 @@ Toggle `focusMode` (local state + `localStorage`) em `ModulePage.tsx`:
 }
 ```
 
-**Critério:** modo focado oculta cromo, persiste preferência, copy traduzida.
+**Criterion:** focus mode hides the chrome, persists the preference, translated copy.
 
 ---
 
-### D.5 — Página `/cert/:hash` pública **+ i18n + dynamic OG** [REVISADO]
+### D.5 — Public `/cert/:hash` page **+ i18n + dynamic OG** [REVISED]
 
-Rota pública sem auth wall. Lê `?lang=` do query string para definir locale (override do detector).
+Public route, no auth wall. Reads `?lang=` from the query string to set the locale (overrides the detector).
 
 Layout:
 - Hero gradient + hash-grid
-- Logo AI-DLH topo (start, não left — usar `start-4`)
-- Centro: nome do tópico (Space Grotesk 64px), score em mono, badge "⛓ ON-CHAIN" com stamp animado
-- Bottom: 2 botões — `t('cert:verifyEtherscan')` e `t('cert:createYour')` com `ChevronRight rtl:rotate-180`
+- AI-DLH logo at the top (start, not left — use `start-4`)
+- Center: topic name (Space Grotesk 64px), score in mono, "⛓ ON-CHAIN" badge with an animated stamp
+- Bottom: 2 buttons — `t('cert:verifyEtherscan')` and `t('cert:createYour')` with `ChevronRight rtl:rotate-180`
 
-Backend (tRPC) novo endpoint público:
+Backend (tRPC) new public endpoint:
 ```ts
 cert.getByHash: publicProcedure
   .input(z.object({ hash: z.string() }))
@@ -878,11 +878,11 @@ cert.getByHash: publicProcedure
   })
 ```
 
-**OG image dinâmica:**
-- Endpoint `GET /api/og/cert/:hash?lang=<locale>` no servidor
-- Renderiza PNG com `@vercel/og` ou `satori` (server-side)
-- Carrega fonte certa para CJK/árabe se `locale` exigir
-- `<meta property="og:image">` aponta para esse endpoint
+**Dynamic OG image:**
+- `GET /api/og/cert/:hash?lang=<locale>` endpoint on the server
+- Renders a PNG with `@vercel/og` or `satori` (server-side)
+- Loads the right font for CJK/Arabic if `locale` requires it
+- `<meta property="og:image">` points to this endpoint
 
 `cert.json`:
 ```json
@@ -894,20 +894,20 @@ cert.getByHash: publicProcedure
 }
 ```
 
-**Critério:**
-- `/cert/<hash>?lang=ja` renderiza tudo em japonês
-- OG preview no LinkedIn mostra imagem com fonte correta
-- Sem autenticação necessária
+**Criterion:**
+- `/cert/<hash>?lang=ja` renders everything in Japanese
+- OG preview on LinkedIn shows the image with the correct font
+- No authentication required
 
 ---
 
-## Fase E — Backend i18n + Provider Abstraction (~3–4h)
+## Phase E — Backend i18n + Provider Abstraction (~3-4h)
 
-> Fase backend. Pode ser feita em paralelo com B/C/D, mas precisa estar pronta antes de qualquer release porque o atual `ai.service.ts` tem PT-BR hardcoded no prompt (`server/services/ai.service.ts:107`).
+> Backend phase. Can be done in parallel with B/C/D, but must be ready before any release because the current `ai.service.ts` has PT-BR hardcoded in the prompt (`server/services/ai.service.ts:107`).
 
-### E.1 — Schema migration: `locale` + `provider` em `modules` (~30min)
+### E.1 — Schema migration: `locale` + `provider` on `modules` (~30min)
 
-`server/db/schema.ts` — adicionar colunas:
+`server/db/schema.ts` — add columns:
 
 ```ts
 export const modules = pgTable('modules', {
@@ -917,22 +917,22 @@ export const modules = pgTable('modules', {
 });
 ```
 
-Adicionar em `users` (para D.3 e tier premium):
+Add to `users` (for D.3 and the premium tier):
 ```ts
 preferredLocale: varchar('preferred_locale', { length: 10 }),
 preferredTier: varchar('preferred_tier', { length: 20 }).notNull().default('default'), // 'default' | 'premium'
 preferredTimezone: varchar('preferred_timezone', { length: 64 }),
 ```
 
-Rodar `npm run db:generate && npm run db:push`.
+Run `npm run db:generate && npm run db:push`.
 
-**Critério:** migrations geradas sem warnings; banco aceita as colunas novas.
+**Criterion:** migrations generated with no warnings; the database accepts the new columns.
 
 ---
 
-### E.2 — Interface `AIProvider` (~20min)
+### E.2 — `AIProvider` interface (~20min)
 
-Criar `server/services/providers/types.ts`:
+Create `server/services/providers/types.ts`:
 
 ```ts
 import { ModuleContent } from '../ai.service.js';
@@ -963,7 +963,7 @@ export interface RouterContext {
 
 ### E.3 — `GeminiProvider` (default) (~30min)
 
-`server/services/providers/gemini.provider.ts` — refatorar lógica atual de `ai.service.ts` para implementar `AIProvider`:
+`server/services/providers/gemini.provider.ts` — refactor the current `ai.service.ts` logic to implement `AIProvider`:
 
 ```ts
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -1056,7 +1056,7 @@ export class ClaudeProvider implements AIProvider {
 }
 ```
 
-Adicionar `ANTHROPIC_API_KEY` ao `.env.example` e `utils/env.ts` (opcional, gracefully degradar para Gemini se ausente).
+Add `ANTHROPIC_API_KEY` to `.env.example` and `utils/env.ts` (optional, gracefully degrade to Gemini if absent).
 
 ---
 
@@ -1110,7 +1110,7 @@ export class QwenProvider implements AIProvider {
 }
 ```
 
-Adicionar `DASHSCOPE_API_KEY` ao `.env.example`.
+Add `DASHSCOPE_API_KEY` to `.env.example`.
 
 ---
 
@@ -1164,9 +1164,9 @@ export const providerRouter = new ProviderRouter();
 
 ---
 
-### E.7 — Prompt parametrizado por locale (~30min)
+### E.7 — Prompt parameterized by locale (~30min)
 
-`server/services/prompt-builder.ts` — extrair lógica do `buildPrompt` atual:
+`server/services/prompt-builder.ts` — extract the logic from the current `buildPrompt`:
 
 ```ts
 import { GenerateModuleInput } from './providers/types.js';
@@ -1236,13 +1236,13 @@ Begin your response with { and end with }.
 }
 ```
 
-**Critério:** prompt agora aceita locale; instruções em inglês (mais robusto entre LLMs); apenas a saída é localizada.
+**Criterion:** the prompt now accepts locale; instructions in English (more robust across LLMs); only the output is localized.
 
 ---
 
-### E.8 — Refactor de `ai.service.ts` (~20min)
+### E.8 — `ai.service.ts` refactor (~20min)
 
-Reduzir `ai.service.ts` para wrapper fino do `ProviderRouter`:
+Reduce `ai.service.ts` to a thin wrapper around `ProviderRouter`:
 
 ```ts
 import { providerRouter } from './providers/router.js';
@@ -1265,11 +1265,11 @@ export class AIService {
 }
 ```
 
-Manter os schemas Zod (`ModuleContentSchema`, `QuizQuestionSchema`) exportados desse arquivo.
+Keep the Zod schemas (`ModuleContentSchema`, `QuizQuestionSchema`) exported from that file.
 
 ---
 
-### E.9 — Router tRPC: aceitar `locale` + ler `tier`/`region` do contexto (~30min)
+### E.9 — tRPC router: accept `locale` + read `tier`/`region` from context (~30min)
 
 `server/routers/ai.router.ts`:
 
@@ -1305,20 +1305,20 @@ generateModule: protectedProcedure
   }),
 ```
 
-Frontend passa `locale: i18n.language` no input.
+Frontend passes `locale: i18n.language` in the input.
 
-`detectRegion(ctx)` v1: ler header `x-region` se setado, senão `'global'`. Geo-IP fica para v1.1.
+`detectRegion(ctx)` v1: read the `x-region` header if set, else `'global'`. Geo-IP is left for v1.1.
 
-**Critério:**
-- Frontend envia locale + recebe módulo no idioma certo
-- DB armazena qual provider gerou cada módulo
-- Tier premium funciona se usuário marcou no perfil
+**Criterion:**
+- Frontend sends the locale + receives the module in the right language
+- DB stores which provider generated each module
+- Premium tier works if the user set it in their profile
 
 ---
 
-### E.10 — Tier toggle no perfil do usuário (~30min)
+### E.10 — Tier toggle in the user profile (~30min)
 
-Backend: novo endpoint tRPC:
+Backend: new tRPC endpoint:
 ```ts
 user.updatePreferences: protectedProcedure
   .input(z.object({
@@ -1332,104 +1332,104 @@ user.updatePreferences: protectedProcedure
   }),
 ```
 
-Frontend: novo componente `components/molecules/PreferencesPanel.tsx` com toggle:
+Frontend: new `components/molecules/PreferencesPanel.tsx` component with a toggle:
 - "Use premium model (Claude Sonnet 4.6)" — checkbox
-- Tooltip explicando custo/qualidade
-- Locale selector (espelha `LanguageSelector`)
+- Tooltip explaining cost/quality
+- Locale selector (mirrors `LanguageSelector`)
 
-Plugar como modal acessível via ícone de engrenagem no header.
+Plug in as a modal accessible via a gear icon in the header.
 
-**Critério:** ativar premium no toggle faz próxima geração usar Claude.
+**Criterion:** turning on premium in the toggle makes the next generation use Claude.
 
 ---
 
-### E.11 — Validação por tokens (não chars) (~20min)
+### E.11 — Token-based validation (not chars) (~20min)
 
-**Problema:** `content: z.string().min(500).max(15000)` em chars é injusto entre idiomas — chinês/japonês usam ~1/3 dos chars para mesma densidade.
+**Problem:** `content: z.string().min(500).max(15000)` in chars is unfair across languages — Chinese/Japanese use ~1/3 of the chars for the same density.
 
-Substituir por validação em **palavras** (que escala melhor entre idiomas, mas ainda imperfeita) **ou** apenas relaxar a regra:
+Replace with **word**-based validation (which scales better across languages, though still imperfect) **or** just relax the rule:
 
 ```ts
 content: z.string().min(200).max(20000),
 ```
 
-E mover a validação real de "qualidade" para o prompt (já instrui 500–1500 palavras). Aceitar variação no schema.
+And move the real "quality" validation to the prompt (it already instructs 500-1500 words). Accept the variation in the schema.
 
-**Critério:** módulos em japonês não falham validação por serem "muito curtos" em chars.
-
----
-
-## Checklist de QA por fase
-
-**Após Fase A0 (i18n foundation):**
-- [ ] `?lng=en` carrega strings em inglês sem refresh
-- [ ] `?lng=ar` aplica `dir="rtl"` no `<html>` e espelha layout
-- [ ] `?lng=ja` renderiza kanji sem boxes (□)
-- [ ] Datas via `useFormatDate` mudam de formato entre locales
-- [ ] Validação Zod retorna mensagens no idioma ativo
-- [ ] LanguageSelector persiste escolha em `localStorage`
-- [ ] Nenhuma string PT-BR aparece em `?lng=en` nas páginas migradas
-
-**Após Fase A:**
-- [ ] Botão primário levanta e brilha no hover (sem layout shift)
-- [ ] Inputs têm anel duplo roxo no focus
-- [ ] Barra do quiz é gradiente brand
-- [ ] Setas em mono nos CTAs, com `rtl:rotate-180` funcionando em ar
-- [ ] Footer mostra ano corrente e copy traduzida
-
-**Após Fase B:**
-- [ ] `prefers-reduced-motion` desliga shimmer/caret/stamp
-- [ ] Quiz options navegáveis via teclado (radiogroup)
-- [ ] Selects renderizam idênticos em Chrome/Safari/Firefox
-- [ ] Skip link funciona com Tab; em RTL aparece à direita
-- [ ] Lighthouse contraste ≥ AA em todas stats
-
-**Após Fase C:**
-- [ ] Empty states com hash-grid e copy traduzida
-- [ ] Skeleton aparece ao gerar módulo, com label traduzido
-- [ ] Barra indeterminada substitui spinner
-
-**Após Fase D:**
-- [ ] Tour aparece no primeiro acesso, persiste flag
-- [ ] URLs de share contêm `?lang=` correto
-- [ ] Streak conta dias contíguos no fuso do usuário (testar com VPN/timezone fake)
-- [ ] Modo focado oculta cromo e persiste
-- [ ] `/cert/<hash>?lang=ja` renderiza em japonês com OG image correto
-
-**Após Fase E:**
-- [ ] Backend recebe `locale` no input do `generateModule`
-- [ ] DB grava `locale` e `provider` em cada módulo
-- [ ] Toggle premium no perfil → próxima geração usa Claude
-- [ ] Header `x-region: cn` → roteamento para Qwen (se chave configurada)
-- [ ] Fallback funciona (matar Gemini → cair em Claude)
-- [ ] Módulos em ja/ar não falham validação por tamanho
+**Criterion:** modules in Japanese don't fail validation for being "too short" in chars.
 
 ---
 
-## Convenções para a implementação
+## QA checklist per phase
 
-- **Não tocar tokens:** `globals.css` e `tailwind.config.js` já estão corretos para v2.
-- **Bibliotecas novas permitidas** — listadas em "Convenções globais" no topo deste documento.
-- **Commits atômicos por subitem** (ex: `feat(i18n): setup react-i18next [A0.1]`).
-- **PR final por fase** com screenshots before/after.
-- **Branch:** `feat/design-system-v2-1-i18n`. PRs incrementais para `main`.
-- **Não amend commits publicados.** Novos fixes = novos commits.
-- **Variáveis de ambiente novas** (consolidadas):
-  - `ANTHROPIC_API_KEY` — opcional, habilita tier premium
-  - `DASHSCOPE_API_KEY` — opcional, habilita region=cn
-- **Idiomas-alvo MVP** — `en, pt-BR, es, fr, ja, ar`. Adicionar mais é só criar pasta em `public/locales/<lng>/`.
+**After Phase A0 (i18n foundation):**
+- [ ] `?lng=en` loads strings in English without a refresh
+- [ ] `?lng=ar` applies `dir="rtl"` on `<html>` and mirrors the layout
+- [ ] `?lng=ja` renders kanji without boxes (□)
+- [ ] Dates via `useFormatDate` change format between locales
+- [ ] Zod validation returns messages in the active language
+- [ ] LanguageSelector persists the choice in `localStorage`
+- [ ] No PT-BR string appears in `?lng=en` on the migrated pages
+
+**After Phase A:**
+- [ ] Primary button lifts and glows on hover (no layout shift)
+- [ ] Inputs have a double purple ring on focus
+- [ ] Quiz bar is a brand gradient
+- [ ] Arrows in mono on CTAs, with `rtl:rotate-180` working in ar
+- [ ] Footer shows the current year and translated copy
+
+**After Phase B:**
+- [ ] `prefers-reduced-motion` disables shimmer/caret/stamp
+- [ ] Quiz options navigable via keyboard (radiogroup)
+- [ ] Selects render identically in Chrome/Safari/Firefox
+- [ ] Skip link works with Tab; appears on the right in RTL
+- [ ] Lighthouse contrast ≥ AA on all stats
+
+**After Phase C:**
+- [ ] Empty states with hash-grid and translated copy
+- [ ] Skeleton appears while generating a module, with a translated label
+- [ ] Indeterminate bar replaces the spinner
+
+**After Phase D:**
+- [ ] Tour appears on first access, persists the flag
+- [ ] Share URLs contain the correct `?lang=`
+- [ ] Streak counts contiguous days in the user's timezone (test with a VPN/fake timezone)
+- [ ] Focus mode hides the chrome and persists
+- [ ] `/cert/<hash>?lang=ja` renders in Japanese with the correct OG image
+
+**After Phase E:**
+- [ ] Backend receives `locale` in the `generateModule` input
+- [ ] DB stores `locale` and `provider` on each module
+- [ ] Premium toggle in the profile → next generation uses Claude
+- [ ] `x-region: cn` header → routes to Qwen (if the key is configured)
+- [ ] Fallback works (kill Gemini → falls back to Claude)
+- [ ] Modules in ja/ar don't fail size validation
 
 ---
 
-## Ordem de execução sugerida
+## Implementation conventions
 
-1. **A0** primeiro e completo (sem ela, B/C/D nascem hardcoded)
-2. **E** em paralelo com A0 (backend é independente do design system)
-3. **A** após A0
-4. **B**, **C**, **D** podem ser paralelos entre si após A0+E
-5. QA final integrado: rodar app em todos os 6 locales antes do merge para `main`
+- **Don't touch tokens:** `globals.css` and `tailwind.config.js` are already correct for v2.
+- **New libraries allowed** — listed in "Global conventions" at the top of this document.
+- **Atomic commits per sub-item** (e.g. `feat(i18n): setup react-i18next [A0.1]`).
+- **One final PR per phase** with before/after screenshots.
+- **Branch:** `feat/design-system-v2-1-i18n`. Incremental PRs to `main`.
+- **Don't amend published commits.** New fixes = new commits.
+- **New environment variables** (consolidated):
+  - `ANTHROPIC_API_KEY` — optional, enables the premium tier
+  - `DASHSCOPE_API_KEY` — optional, enables region=cn
+- **MVP target languages** — `en, pt-BR, es, fr, ja, ar`. Adding more is just creating a folder under `public/locales/<lng>/`.
 
-**Tempo total realista:** 12–15h de implementação focada, mais ~2h de QA/ajustes.
+---
+
+## Suggested execution order
+
+1. **A0** first and complete (without it, B/C/D are born hardcoded)
+2. **E** in parallel with A0 (the backend is independent of the design system)
+3. **A** after A0
+4. **B**, **C**, **D** can run in parallel with each other after A0+E
+5. Final integrated QA: run the app in all 6 locales before merging to `main`
+
+**Realistic total time:** 12-15h of focused implementation, plus ~2h of QA/adjustments.
 
 
 

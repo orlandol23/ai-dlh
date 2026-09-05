@@ -4,12 +4,36 @@ Guidance for Claude Code when working in this repository.
 
 ## Commit and PR conventions
 
-Do not include Co-Authored-By or "Generated with Claude Code" lines in commit
-messages or PR descriptions.
-
 Commits are authored as `Orlando Fernandes
-<27815856+orlandol23@users.noreply.github.com>` (configured in
-`.claude/settings.json`).
+<27815856+orlandol23@users.noreply.github.com>`, set by `env` in
+`.claude/settings.json`. Confirm it landed with
+`git log -1 --format='%an <%ae>'`; if another identity got in, amend with
+`--reset-author` instead of leaving it in the history.
+
+Nothing in a commit message or a pull request body may name the tool or the
+session that wrote it: no `Co-Authored-By:` trailer, no `Claude-Session:`
+trailer, no "Generated with/by Claude Code" footer, and no `claude.ai/code`
+link. Describe the change, not how it was produced.
+
+PR bodies may be written in Portuguese. They are read by the repository owner,
+not by visitors browsing the code.
+
+## Language
+
+The README is the reference, and it is in English. So is everything else a
+visitor reads on GitHub: documentation, code comments, test names, commit
+messages and PR titles.
+
+Product content stays in its own language and a language pass never touches it:
+`frontend/public/locales/**`, the six locales a user reads on screen, and the
+copy examples under `frontend/design-system/`, which exist to document the
+app's Portuguese voice.
+
+`contracts/contracts/LearningProgress.sol` keeps its Portuguese NatSpec on
+purpose. The deployed contract is verified on Sepolia, and solc hashes the
+source, comments included, into the metadata it embeds in the bytecode. Editing
+one comment makes this repository stop reproducing the verified build. Translate
+it only as part of a redeploy that is happening for some other reason.
 
 ## Layout
 

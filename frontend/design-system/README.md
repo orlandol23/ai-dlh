@@ -1,156 +1,156 @@
-# AI-DLH Design System — v2 "Circuit & Ink"
+# AI-DLH Design System: v2 "Circuit & Ink"
 
-**AI-DLH** — *AI-Powered Decentralized Learning Hub* — é uma aplicação web de portfólio que combina IA Generativa (Google Gemini), certificação em blockchain Ethereum, e autenticação Web3 (MetaMask) num único produto de aprendizado personalizado. O usuário conecta a carteira, escolhe um tópico e um nível, e a plataforma gera módulo + quiz na hora; score ≥ 70% grava um certificado permanente na Ethereum Sepolia.
+**AI-DLH**, *AI-Powered Decentralized Learning Hub*, is a portfolio web application that combines generative AI (Google Gemini), Ethereum blockchain certification and Web3 authentication (MetaMask) in a single personalized learning product. The user connects their wallet, picks a topic and a level, and the platform generates a module plus a quiz on the spot; a score ≥ 70% writes a permanent certificate to Ethereum Sepolia.
 
-Esta pasta é o design system destilado do produto — tokens, fundamentos, UI kit e regras reutilizáveis que agentes podem seguir para produzir mais material AI-DLH.
+This folder is the design system distilled from the product: tokens, fundamentals, a UI kit and reusable rules that agents can follow to produce more AI-DLH material.
 
-> **Versão atual: v2 "Circuit & Ink"** (abril 2026).
-> Substitui a v1 genérica "shadcn azul". Qualquer inconsistência entre este README e o código antigo do app prevalece em favor da v2.
+> **Current version: v2 "Circuit & Ink"** (April 2026).
+> It replaces the generic v1, "blue shadcn". Any inconsistency between this README and the app's old code is resolved in favor of v2.
 
-## Fontes
+## Sources
 
-Tudo aqui foi derivado de um único repositório — sem Figma, sem decks.
+Everything here was derived from a single repository. No Figma, no decks.
 
-- **Codebase (GitHub):** `orlandol23/ai-dlh` — o frontend na `main` à época deste levantamento
-- Espelho do frontend para referência: `_source/` neste projeto
-- Arquivos-chave lidos: `frontend/src/styles/globals.css`, `frontend/tailwind.config.js`, `frontend/src/pages/{HomePage,DashboardPage,ModulePage}.tsx`, `frontend/src/components/atoms/*`, `frontend/src/lib/utils.ts`
+- **Codebase (GitHub):** `orlandol23/ai-dlh`, the frontend on `main` at the time of this survey
+- Mirror of the frontend for reference: `_source/` in this project
+- Key files read: `frontend/src/styles/globals.css`, `frontend/tailwind.config.js`, `frontend/src/pages/{HomePage,DashboardPage,ModulePage}.tsx`, `frontend/src/components/atoms/*`, `frontend/src/lib/utils.ts`
 
-Há uma única superfície de produto: a **AI-DLH web app** (React 18 + Vite + Tailwind + tokens shadcn-style + tRPC + Zustand). Landing/auth, dashboard e página de módulo/quiz ficam sob um só router — então existe um UI kit em `ui_kits/web/`.
+There is a single product surface: the **AI-DLH web app** (React 18 + Vite + Tailwind + shadcn-style tokens + tRPC + Zustand). Landing and auth, the dashboard and the module/quiz page all sit under one router, so there is one UI kit, in `ui_kits/web/`.
 
-## Índice
+## Index
 
-| Path | O que tem |
+| Path | What it holds |
 |---|---|
-| `README.md` | Este arquivo. Contexto do produto, fundamentos de conteúdo + visuais, iconografia. |
-| `SKILL.md` | Manifesto de Skill — torna a pasta usável como skill do Claude. |
-| `colors_and_type.css` | Tokens completos v2: cores, type, radii, shadows, spacing, motion. Importe primeiro. |
-| `fonts/` | Referências de fontes (Space Grotesk + Inter + JetBrains Mono via Google Fonts). |
-| `assets/` | Logo mark hex + wordmark (SVG com gradiente roxo→ciano). |
-| `preview/` | Cards HTML pequenos que alimentam a aba Design System. |
-| `ui_kits/web/v2.html` | **UI kit canônico v2** — single-page React com todos os componentes, estados, dashboard redesign, dark mode. |
-| `ui_kits/web/index.html` | UI kit v1 (azul/shadcn) — mantido como referência histórica. **Não use pra novo trabalho.** |
-| `_source/` | Mirror read-only do codebase importado, para agentes que queiram conferir. |
+| `README.md` | This file. Product context, content and visual fundamentals, iconography. |
+| `SKILL.md` | Skill manifest; it makes the folder usable as a Claude skill. |
+| `colors_and_type.css` | The complete v2 tokens: colors, type, radii, shadows, spacing, motion. Import it first. |
+| `fonts/` | Font references (Space Grotesk + Inter + JetBrains Mono through Google Fonts). |
+| `assets/` | Hex logo mark + wordmark (SVG with a purple→cyan gradient). |
+| `preview/` | Small HTML cards that feed the Design System tab. |
+| `ui_kits/web/v2.html` | **The canonical v2 UI kit**: single-page React with every component, the states, the dashboard redesign and dark mode. |
+| `ui_kits/web/index.html` | The v1 UI kit (blue/shadcn), kept as a historical reference. **Do not use it for new work.** |
+| `_source/` | Read-only mirror of the imported codebase, for agents that want to check. |
 
-## Fundamentos de conteúdo
+## Content fundamentals
 
-**Idioma.** O produto é **Português (pt-BR)** — copy de página, botões, mensagens. Metadados do HTML e o README do projeto são em inglês. Ao escrever copy nova, **escreva pt-BR para superfícies do usuário** e inglês para docs de dev.
+**Language.** The product is **Portuguese (pt-BR)**: page copy, buttons, messages. The HTML metadata and the project README are in English. When writing new copy, **write pt-BR for user-facing surfaces** and English for developer docs.
 
-**Voz.** Informal-direta, segunda pessoa. "Conecte sua Carteira", não "O usuário deve conectar". Sem "por favor" amaciando. Frases curtas.
+**Voice.** Informal and direct, second person. "Conecte sua Carteira", not "O usuário deve conectar". No softening "por favor". Short sentences.
 
-**Capitalização.**
-- Botões: **Title Case** em português — "Conectar Carteira", "Começar Agora", "Gerar Novo Módulo", "Finalizar Quiz".
-- Títulos: sentence case ou Title Case dependendo do tamanho — "Como Funciona", "Dashboard", "Meus Módulos".
+**Capitalization.**
+- Buttons: **Title Case** in Portuguese: "Conectar Carteira", "Começar Agora", "Gerar Novo Módulo", "Finalizar Quiz".
+- Headings: sentence case or Title Case depending on length: "Como Funciona", "Dashboard", "Meus Módulos".
 - Body: sentence case.
 
-**Tom — entusiasmado mas utilitário.** Copy celebratória existe ("🎉 Parabéns! Você foi aprovado!", "Módulo gerado com sucesso!") mas fica restrita a estados de resultado. O tom default é funcional e conciso.
+**Tone: enthusiastic but utilitarian.** Celebratory copy exists ("🎉 Parabéns! Você foi aprovado!", "Módulo gerado com sucesso!") but it stays confined to result states. The default tone is functional and concise.
 
-**Emoji.** Usado com parcimônia, como *marcadores de status e glifos de seção*, nunca como decoração. Uso observado:
-- Tiles de feature: 🤖 (IA), ⛓️ (blockchain), 📊 (progresso)
-- Estados: ✅ aprovado, ❌ reprovado, 🎉 celebração, ⏳ loading, ⚠️ aviso
-- Dentro do CTA: "🤖 Gerar com IA"
-- Setas unicode: ← Voltar, Próxima →
+**Emoji.** Used sparingly, as *status markers and section glyphs*, never as decoration. Observed usage:
+- Feature tiles: 🤖 (AI), ⛓️ (blockchain), 📊 (progress)
+- States: ✅ passed, ❌ failed, 🎉 celebration, ⏳ loading, ⚠️ warning
+- Inside the CTA: "🤖 Gerar com IA"
+- Unicode arrows: ← Voltar, Próxima →
 
-Não adicione emoji em labels neutros ou nav.
+Do not add emoji to neutral labels or to nav.
 
-**Pares de microcopy canônicos:**
+**Canonical microcopy pairs:**
 - Empty state: *"Nenhum módulo ainda / Gere seu primeiro módulo com IA! ←"*
-- Sucesso: *"🎉 Parabéns! Você foi aprovado! / Você atingiu a pontuação mínima de 70%"*
-- Falha: *"Não foi desta vez / Você precisa de 70% para ser aprovado. Tente novamente!"*
+- Success: *"🎉 Parabéns! Você foi aprovado! / Você atingiu a pontuação mínima de 70%"*
+- Failure: *"Não foi desta vez / Você precisa de 70% para ser aprovado. Tente novamente!"*
 - On-chain: *"⛓️ Registrado na Blockchain! / Seu certificado foi registrado permanentemente na Ethereum"*
 - Loading: *"⏳ A IA está criando seu módulo personalizado…"*
 
-## Fundamentos visuais v2 — "Circuit & Ink"
+## v2 visual fundamentals: "Circuit & Ink"
 
-**Estética em uma linha.** Roxo elétrico + ciano + tipografia Space Grotesk + grid pontilhado. Comunica "IA + blockchain" com personalidade própria, sem parecer shadcn padrão.
+**The aesthetic in one line.** Electric purple + cyan + Space Grotesk type + a dotted grid. It communicates "AI + blockchain" with a personality of its own, without looking like stock shadcn.
 
-**Cores.**
-- **Primary — roxo elétrico `#7c3aed`** (var `--primary`, escala 50–900). Usado em CTAs, links, focus rings, logo, elementos on-chain. Substitui o azul `#2463eb` da v1.
-- **Accent — ciano `#22d3ee`** (var `--accent`). Usado em micro-highlights, gráficos, dado numérico expressivo, tag "info".
-- **Stack semântico:**
-  - success `#16a34a` · warning `#d97706` (amber, não yellow) · error `#dc2626`
-  - **info é ciano** (`#06b6d4`), não azul — para nunca colidir com primary
-  - **on-chain é o próprio primary** (roxo) — é *o* sinal do produto
-  Cada estado tem seu próprio `bg` + `border` + `fg` em `colors_and_type.css`.
-- **Neutros warm** (não o slate shadcn). Escala `#fbfaf9` → `#0b0a09` com leve tom quente — afasta do "corporate SaaS".
-- **Hero gradient:** `linear-gradient(135deg, #f5f3ff 0%, #ede9fe 40%, #cffafe 100%)`. Único gradiente decorativo do produto. No dark: `#130f32 → #2e1065 → #164e63`.
-- **Gradiente de acento (roxo→ciano, 135°):** `linear-gradient(135deg, #7c3aed, #22d3ee)`. Usar **só** em: logo, texto-chave ("IA", "Blockchain"), stroke de sparkline. Não pintar fundos com ele.
+**Colors.**
+- **Primary: electric purple `#7c3aed`** (var `--primary`, scale 50–900). Used on CTAs, links, focus rings, the logo and on-chain elements. It replaces v1's blue `#2463eb`.
+- **Accent: cyan `#22d3ee`** (var `--accent`). Used on micro-highlights, charts, expressive numeric data and the "info" tag.
+- **Semantic stack:**
+  - success `#16a34a` · warning `#d97706` (amber, not yellow) · error `#dc2626`
+  - **info is cyan** (`#06b6d4`), not blue, so it never collides with primary
+  - **on-chain is primary itself** (purple); it is *the* product signal
+  Each state has its own `bg` + `border` + `fg` in `colors_and_type.css`.
+- **Warm neutrals** (not shadcn's slate). Scale `#fbfaf9` → `#0b0a09` with a slight warm cast, which pulls it away from "corporate SaaS".
+- **Hero gradient:** `linear-gradient(135deg, #f5f3ff 0%, #ede9fe 40%, #cffafe 100%)`. The product's only decorative gradient. In dark: `#130f32 → #2e1065 → #164e63`.
+- **Accent gradient (purple→cyan, 135°):** `linear-gradient(135deg, #7c3aed, #22d3ee)`. Use it **only** on: the logo, key text ("IA", "Blockchain") and the sparkline stroke. Do not paint backgrounds with it.
 
-**Tipografia — três famílias, cada uma com papel claro.**
-- **Display — Space Grotesk** (500/600/700). Heros, h1/h2, números de stat grandes. Tracking `-0.02em` a `-0.04em`. Escala até 96px.
-- **UI — Inter** (400/500/600/700). Body, labels, card titles, navegação.
-- **Mono — JetBrains Mono** (400/500/600/700) — **expressivo**, não só código. Usar em: endereços de carteira, tx hashes, labels "ON-CHAIN" em caixa alta, stats numéricos opcionais, eyebrows de seção.
+**Typography: three families, each with a clear role.**
+- **Display: Space Grotesk** (500/600/700). Heros, h1/h2, big stat numbers. Tracking `-0.02em` to `-0.04em`. Scales up to 96px.
+- **UI: Inter** (400/500/600/700). Body, labels, card titles, navigation.
+- **Mono: JetBrains Mono** (400/500/600/700), and **expressive**, not only code. Use it on: wallet addresses, tx hashes, uppercase "ON-CHAIN" labels, optional numeric stats and section eyebrows.
 - Hero display: clamp(48px, 9vw, 96px) bold, leading 1.02, tracking −0.04em.
-- H1: 48px · H2: 36px · Card title: 24px · Body: 16px/1.5 · Small: 14px muted · Caption/eyebrow: 12px mono tracking 0.18em caixa alta.
+- H1: 48px · H2: 36px · Card title: 24px · Body: 16px/1.5 · Small: 14px muted · Caption/eyebrow: 12px mono, tracking 0.18em, uppercase.
 
-**Spacing.** Tailwind-compatível. Container `max-w-[1280px] mx-auto px-6`. Ritmo vertical `py-16` a `py-24` entre seções. Cards `p-6` internos. Gap de grid: 20–24px.
+**Spacing.** Tailwind-compatible. Container `max-w-[1280px] mx-auto px-6`. Vertical rhythm `py-16` to `py-24` between sections. Cards `p-6` inside. Grid gap: 20–24px.
 
-**Radii.** Base `--radius: 10px` (subiu de 8). Botões/cards/inputs compartilham via `rounded-md` / `rounded-lg`. Badges e step markers `rounded-full`. Logo é hexagonal (SVG path).
+**Radii.** Base `--radius: 10px` (up from 8). Buttons, cards and inputs share it through `rounded-md` / `rounded-lg`. Badges and step markers use `rounded-full`. The logo is hexagonal (an SVG path).
 
-**Bordas & cards.** Pattern canônico: `border bg-card shadow-sm rounded-[10px]` com `p-6`. Hairline `hsl(var(--border))`. Sombra com **tint roxo** (não preto puro) — dá profundidade sem pesar.
+**Borders and cards.** The canonical pattern: `border bg-card shadow-sm rounded-[10px]` with `p-6`. Hairline `hsl(var(--border))`. The shadow carries a **purple tint** (not pure black), which gives depth without weight.
 
 **Shadows.**
-- `shadow-sm` em cards parados
-- `shadow-md` em hover
-- `shadow-glow` (ring roxo 4px + blur 24px) em **botão primário no hover** e em cards em foco — é o detalhe que diferencia. `shadow-glow-accent` (ciano) para elementos on-chain.
+- `shadow-sm` on cards at rest
+- `shadow-md` on hover
+- `shadow-glow` (a 4px purple ring + 24px blur) on the **primary button on hover** and on focused cards. It is the detail that sets this apart. `shadow-glow-accent` (cyan) for on-chain elements.
 
 **Backgrounds.**
-- Landing: hero gradient diagonal + `hash-grid` por cima a 8% opacity.
-- App shells: `bg-background` (neutro 25) com header `bg-background/80 backdrop-blur`.
-- **Hash grid (motivo gráfico):** grade pontilhada 24×24px roxo a 8% opacity. Único padrão decorativo. Aplicar via classe `.hash-grid`. Usar em heros, cards on-chain, empty states.
-- **Circuit trace:** linha diagonal tracejada roxa 2px — divisor expressivo em certificados. Classe `.circuit-trace`.
+- Landing: the diagonal hero gradient with `hash-grid` over it at 8% opacity.
+- App shells: `bg-background` (neutral 25) with a `bg-background/80 backdrop-blur` header.
+- **Hash grid (the graphic motif):** a 24×24px dotted purple grid at 8% opacity. The only decorative pattern. Apply it through the `.hash-grid` class. Use it on heros, on-chain cards and empty states.
+- **Circuit trace:** a 2px dashed diagonal purple line, an expressive divider on certificates. Class `.circuit-trace`.
 
 **Hover / press.**
-- Botão primário: `transform: translateY(-1px)` + `box-shadow: var(--shadow-glow)`. Duração 200ms easing `(0.22, 1, 0.36, 1)`.
-- Botão outline: borda troca pra roxo + texto roxo.
-- Linhas de lista: `hover:bg-muted`.
+- Primary button: `transform: translateY(-1px)` + `box-shadow: var(--shadow-glow)`. Duration 200ms, easing `(0.22, 1, 0.36, 1)`.
+- Outline button: the border switches to purple, and so does the text.
+- List rows: `hover:bg-muted`.
 - Disabled: `opacity-50 pointer-events-none`.
-- Focus: anel duplo — `0 0 0 2px bg, 0 0 0 4px ring(primary)`.
+- Focus: a double ring, `0 0 0 2px bg, 0 0 0 4px ring(primary)`.
 
-**Animação.** Mais viva que v1, ainda utilitária.
-- **AI streaming:** texto "digitando" caractere a caractere + caret roxo piscando (`content: '▋'`, animação `blink 1s steps(1) infinite`).
-- **Blockchain stamp:** carimbo "⛓ ON-CHAIN" com keyframe `stamp-in` — scale 2→1, rotate −12°→−8°, opacity 0→1 em 600ms.
-- **Skeleton shimmer:** gradiente com `animation: shimmer 1.5s linear infinite`.
-- **Sparkline draw:** `stroke-dashoffset` animado em 2s.
-- **Dot pulse:** bolinha pulsando em pills "live/gerando".
-- **Hover glow:** botões primários ganham halo roxo.
-- Sem bounces, sem confetti, sem Lottie.
+**Animation.** Livelier than v1, still utilitarian.
+- **AI streaming:** text "typing" character by character plus a blinking purple caret (`content: '▋'`, animation `blink 1s steps(1) infinite`).
+- **Blockchain stamp:** the "⛓ ON-CHAIN" stamp with the `stamp-in` keyframe: scale 2→1, rotate −12°→−8°, opacity 0→1 over 600ms.
+- **Skeleton shimmer:** a gradient with `animation: shimmer 1.5s linear infinite`.
+- **Sparkline draw:** `stroke-dashoffset` animated over 2s.
+- **Dot pulse:** a pulsing dot on "live/gerando" pills.
+- **Hover glow:** primary buttons gain a purple halo.
+- No bounces, no confetti, no Lottie.
 
-**Transparência & blur.** Header usa `bg-background/80 backdrop-blur` sobre o hero. Tooltips usam `bg-card` sólido com `shadow-md`.
+**Transparency and blur.** The header uses `bg-background/80 backdrop-blur` over the hero. Tooltips use solid `bg-card` with `shadow-md`.
 
 **Layout.**
 - Container: `max-w-[1280px] mx-auto px-6`.
-- Hero centralizado no desktop num grid 1.3fr / 1fr (texto à esquerda, receipt à direita).
-- Dashboard v2: grid 12-col — stat tiles (4×col-3), sparkline (col-8) + conquistas (col-4), timeline (col-8) + gerar (col-4).
+- Hero centered on desktop in a 1.3fr / 1fr grid (text on the left, the receipt on the right).
+- Dashboard v2: a 12-column grid, stat tiles (4×col-3), sparkline (col-8) + achievements (col-4), timeline (col-8) + generate (col-4).
 - Quiz: `max-w-4xl mx-auto`.
 
-**Imagery.** O codebase não ship imagens. Use **hash-grid + tinta sólida + emoji** no lugar de hero photos. Logo é SVG hexagonal com nós + conexões — é a única "ilustração" do sistema.
+**Imagery.** The codebase ships no images. Use **hash-grid + solid ink + emoji** in place of hero photos. The logo is a hexagonal SVG with nodes and connections; it is the system's only "illustration".
 
-**Dark mode.** First-class. Toggle no header, persistido em `localStorage`. Validar sempre — tokens semânticos têm variante `.dark`, cores hardcoded Tailwind (ex: `bg-green-50`) não funcionam em dark — use `bg-green-500/10` ou as CSS vars.
+**Dark mode.** First-class. The toggle is in the header, persisted in `localStorage`. Always validate it: semantic tokens have a `.dark` variant, while hardcoded Tailwind colors (`bg-green-50`, say) do not work in dark, so use `bg-green-500/10` or the CSS vars.
 
-## Iconografia
+## Iconography
 
-**Nenhuma lib de ícones ship.** Sistema atual:
-1. **Emoji como ícones** em tiles de feature e mensagens de estado — 🤖 ⛓️ 📊 ✅ ❌ 🎉 ⏳ ⚠️ 🔥 🎯 🏆
-2. **Setas unicode** inline — `←` `→`
-3. **SVG inline** pra loading spinner, logo hex, sparkline, identicon (conic-gradient)
-4. **Logo** é um hexágono SVG com nó central + 4 nós periféricos conectados por linhas — gradiente roxo→ciano
+**No icon library ships.** The current system:
+1. **Emoji as icons** on feature tiles and state messages: 🤖 ⛓️ 📊 ✅ ❌ 🎉 ⏳ ⚠️ 🔥 🎯 🏆
+2. **Unicode arrows** inline: `←` `→`
+3. **Inline SVG** for the loading spinner, the hex logo, the sparkline and the identicon (conic-gradient)
+4. **The logo** is an SVG hexagon with a central node plus 4 peripheral nodes connected by lines, in a purple→cyan gradient
 
-**Regra prática ao desenhar telas novas:**
-- Prefira emoji para comunicação de feature/status (combina com a voz do produto)
-- Se precisar de um set real (ex: nav, affordances de form), use **Lucide via CDN** — mesma stroke weight, moderno — e sinalize a substituição ao user
-- Nunca desenhe SVG de ícone à mão além dos listados acima
+**Practical rule when designing new screens:**
+- Prefer emoji for feature and status communication (it matches the product's voice)
+- If a real set is needed (nav, form affordances), use **Lucide through a CDN**, same stroke weight, modern, and flag the substitution to the user
+- Never hand-draw icon SVGs beyond the ones listed above
 
-## Substituições & caveats
+## Substitutions and caveats
 
-- **Fontes:** o codebase ainda não pina fontes custom — v2 adiciona Space Grotesk + Inter + JetBrains Mono via Google Fonts. Se o user trouxer fontes de marca, dropar `.woff2` em `fonts/` e atualizar `--font-display` / `--font-sans` / `--font-mono`.
-- **Ícones:** sem sistema próprio. Lucide via CDN é o fallback documentado.
-- **Imagery:** nenhuma no codebase. Todos os previews usam hash-grid + tinta sólida + emoji.
-- **Migração v1→v2:** comece pelos tokens em `colors_and_type.css` (transforma 80% em 1h) e termine em polish de copy.
+- **Fonts:** the codebase does not pin custom fonts yet; v2 adds Space Grotesk + Inter + JetBrains Mono through Google Fonts. If the user brings brand fonts, drop the `.woff2` files in `fonts/` and update `--font-display` / `--font-sans` / `--font-mono`.
+- **Icons:** no system of its own. Lucide through a CDN is the documented fallback.
+- **Imagery:** none in the codebase. Every preview uses hash-grid + solid ink + emoji.
+- **v1→v2 migration:** start with the tokens in `colors_and_type.css` (it transforms 80% in an hour) and finish with copy polish.
 
-## Como usar este sistema
+## How to use this system
 
-1. Link `colors_and_type.css` primeiro.
-2. Leia as regras de voz / casing acima antes de escrever copy.
-3. Para trabalho de componente, abra `ui_kits/web/v2.html` e copie o JSX — é a fonte da verdade pra hover, borda, padding, estados especiais.
-4. Respeite: um gradiente decorativo (hero), um gradiente de acento (roxo→ciano, só em acentos), um motivo gráfico (hash-grid), sem SVG à mão, sem emoji em labels neutros.
-5. Para dev handoff no codebase, comece pelos tokens em `colors_and_type.css` e siga com os componentes de `ui_kits/web/v2.html`.
+1. Link `colors_and_type.css` first.
+2. Read the voice and casing rules above before writing copy.
+3. For component work, open `ui_kits/web/v2.html` and copy the JSX. It is the source of truth for hover, border, padding and special states.
+4. Respect this: one decorative gradient (the hero), one accent gradient (purple→cyan, on accents only), one graphic motif (hash-grid), no hand-drawn SVG, no emoji on neutral labels.
+5. For a dev handoff into the codebase, start with the tokens in `colors_and_type.css` and follow with the components from `ui_kits/web/v2.html`.

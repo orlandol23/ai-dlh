@@ -1,13 +1,13 @@
-# ADR-0006 — Fase 4 Solana: cNFT Bubblegum + PDAs determinísticos
+# ADR-0006: Phase 4 Solana, Bubblegum cNFT + deterministic PDAs
 
-- **Status:** Aceita como fase futura (Plano-Mestre Fase 4/D2; registrada em 2026-07-26)
+- **Status:** Accepted as a future phase (master plan Phase 4/D2; recorded on 2026-07-26)
 
-## Decisão
+## Decision
 
-Certificados na Solana serão **cNFTs via Bubblegum** (~US$ 0,0001/mint, ~100× mais barato que a Base), com programa **Anchor/Rust** próprio. Derivação de endereços por **PDA** com seeds `[b"cert", user_pubkey, module_id]`.
+Certificates on Solana will be **cNFTs through Bubblegum** (~US$ 0.0001/mint, ~100× cheaper than Base), with our own **Anchor/Rust** program. Addresses are derived by **PDA** with seeds `[b"cert", user_pubkey, module_id]`.
 
-## Fundamentação
+## Rationale
 
-- `[RS2–4]`: PDAs dão endereço **determinístico** (substitui mapping) e garantem **1 registro por (user, módulo) de graça** — a mesma invariante que hoje exige índice parcial no Postgres e guard on-chain na EVM sai do modelo de contas da Solana por construção. PDA (off-curve, signed CPI) também serve de **tree authority** da árvore Bubblegum.
-- O esqueleto do projeto final do curso (Part 05: account model + instruction map + authority rules) é o template do spike de 1 dia registrado no Plano-Mestre (item CU-8).
-- Timing mantido: **não antes da Fase 4** — dobraria superfície de teste/ops sem volume que justifique (decisão original do plano, inalterada).
+- `[RS2–4]`: PDAs give a **deterministic** address (replacing the mapping) and guarantee **1 record per (user, module) for free**. The same invariant that today needs a partial index in Postgres and an on-chain guard on the EVM falls out of Solana's account model by construction. A PDA (off-curve, signed CPI) also serves as the **tree authority** for the Bubblegum tree.
+- The course's final-project skeleton (Part 05: account model + instruction map + authority rules) is the template for the 1-day spike recorded in the master plan (item CU-8).
+- The timing is unchanged: **not before Phase 4**, because it would double the test and ops surface with no volume to justify it (the plan's original decision, unaltered).

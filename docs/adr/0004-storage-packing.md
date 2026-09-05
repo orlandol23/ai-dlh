@@ -1,13 +1,13 @@
-# ADR-0004 — Storage packing consciente
+# ADR-0004: deliberate storage packing
 
-- **Status:** Aceita (Plano-Mestre E1 + orçamento de gas; registrada em 2026-07-26)
+- **Status:** Accepted (master plan E1 plus the gas budget; recorded on 2026-07-26)
 
-## Decisão
+## Decision
 
-- `struct Subscription { uint64 expiresAt; uint8 planId; }` — **1 slot** (1 SSTORE quente por renovação).
-- Certificado ERC-5192 (C4): storage packed (`score uint16` + `timestamp uint64` + `topicHash bytes32`), metadata via `tokenURI`, histórico via eventos indexados, **sem `ERC721Enumerable`** — alvo ~100–140k gas/mint.
-- Regra geral: otimizar **depois** de correto; metas de gas são validadas no gate de regressão do C1b, não assumidas.
+- `struct Subscription { uint64 expiresAt; uint8 planId; }`: **1 slot** (1 warm SSTORE per renewal).
+- ERC-5192 certificate (C4): packed storage (`score uint16` + `timestamp uint64` + `topicHash bytes32`), metadata through `tokenURI`, history through indexed events, **no `ERC721Enumerable`**. Target ~100–140k gas per mint.
+- General rule: optimize **after** it is correct; gas targets are validated by the C1b regression gate, not assumed.
 
-## Fundamentação
+## Rationale
 
-`[QA-JT]`: slots de 32 bytes; packing reduz SSTOREs/SLOADs — a otimização de maior alavancagem em contratos de escrita frequente; `indexed` só em eventos (histórico barato off-chain em vez de arrays on-chain).
+`[QA-JT]`: slots are 32 bytes, and packing reduces SSTOREs and SLOADs, which is the highest-leverage optimization in contracts that write often; `indexed` belongs on events (cheap off-chain history instead of on-chain arrays).

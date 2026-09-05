@@ -1,13 +1,13 @@
-# ADR-0003 — `maxTotal` anti-front-run em todas as funções de compra
+# ADR-0003: `maxTotal` anti-front-run on every purchase function
 
-- **Status:** Aceita (Plano-Mestre E1; registrada em 2026-07-26)
+- **Status:** Accepted (master plan E1; recorded on 2026-07-26)
 
-## Decisão
+## Decision
 
-Toda função de compra (`subscribe*`, `purchaseCredits*`) recebe `maxTotal` e faz `require(total <= maxTotal)`. Sem timelock no `setPrice`; a transparência vem dos **eventos completos** (`PlanUpdated`, `PricePerCreditUpdated` etc.) — barata e suficiente para o estágio.
+Every purchase function (`subscribe*`, `purchaseCredits*`) takes a `maxTotal` and does `require(total <= maxTotal)`. There is no timelock on `setPrice`; transparency comes from the **complete set of events** (`PlanUpdated`, `PricePerCreditUpdated` and the rest), which is cheap and sufficient for this stage.
 
-## Fundamentação
+## Rationale
 
-- Classe de ataque `[W2]`: a tx do usuário fica visível no mempool; um `setPrice` do owner (ou reorg de ordenação) entre a assinatura do usuário e a inclusão da tx poderia cobrar mais do que o usuário viu na UI. `maxTotal` transfere o teto para a assinatura do usuário — o pior caso vira revert, nunca cobrança maior.
-- `[W5P1]` demonstrou o mecanismo ao vivo (demo Bob/Alice de front-run).
-- Complementa a regra da UI (E5): **exibir claramente o valor assinado** (anti-phishing, threat T4-equivalente).
+- Attack class `[W2]`: the user's tx is visible in the mempool, and an owner `setPrice` (or an ordering reorg) between the user's signature and the tx being included could charge more than the user saw in the UI. `maxTotal` moves the ceiling into the user's own signature, so the worst case becomes a revert, never a larger charge.
+- `[W5P1]` demonstrated the mechanism live (the Bob/Alice front-running demo).
+- It complements the UI rule (E5): **show the signed amount clearly** (anti-phishing, the T4-equivalent threat).

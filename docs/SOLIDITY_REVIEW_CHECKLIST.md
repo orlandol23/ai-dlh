@@ -1,17 +1,17 @@
-# Checklist de Revisão Solidity (gate derivado do curso)
+# Solidity review checklist (a gate derived from the course)
 
-> Origem: Bootcamp Borderless `[W5P1]` `[W5P2]` `[QA-JT]` (mapa de tags: `docs/adr/README.md`). Vale para **todo PR de contrato** (A4, C4a, C5, D2…): o revisor percorre a lista; qualquer desvio ganha comentário de triagem inline, nunca passa em silêncio. Complementa o "Checklist de verificação manual do dono" do E1 — não o substitui.
+> Source: Bootcamp Borderless `[W5P1]` `[W5P2]` `[QA-JT]` (tag map: `docs/adr/README.md`). It applies to **every contract PR** (A4, C4a, C5, D2 and so on): the reviewer walks the list, and any deviation gets an inline triage comment, never a silent pass. It complements the "Owner's manual verification checklist" in E1, it does not replace it.
 
-1. **CEI** — checks → effects → interactions, em toda função que muda estado, sem exceção.
-2. **`nonReentrant`** em qualquer função que envie ETH/token (cinto e suspensório mesmo com CEI; no `SubscriptionManager` a decisão E1 de dispensar ReentrancyGuard é válida porque USDC não tem hooks — a dispensa deve estar escrita no PR).
-3. **Pull over push** — nunca transferir em loop para endereços arbitrários; destinatários sacam.
-4. **`abi.encode` (não `encodePacked`)** ao hashear 2+ campos dinâmicos (classe de colisão).
-5. **Assinaturas** — deadline + nonce + domain binding (EIP-712, domain lido do contrato); replay testado.
-6. **Zero `call`/multicall arbitrário**; todo input externo validado na borda.
-7. **`SafeERC20` sempre; `decimals()` lido, nunca assumido** (USDC = 6 — o bug do "fator de um trilhão").
-8. **`Ownable2Step`**; owner = multisig (Safe) onde houver valor real.
-9. **Oracles** — staleness + heartbeat + `decimals` do feed checados por feed (Chainlink = 8).
-10. **Storage packing** consciente (slots de 32 bytes) — otimizar **depois** de correto (ADR-0004).
-11. **Upgradability só com justificativa escrita; default = imutável** (ADR-0002).
-12. **Randomness** nunca de block vars; VRF ou commit-reveal se um dia precisar.
-13. **Slither (+ gate de gas) no CI antes do merge** (C1b); high/med limpos ou triados inline.
+1. **CEI**: checks → effects → interactions, in every state-changing function, without exception.
+2. **`nonReentrant`** on any function that sends ETH or a token (belt and braces, even with CEI; in `SubscriptionManager` the E1 decision to drop ReentrancyGuard is valid because USDC has no hooks, and that waiver must be written down in the PR).
+3. **Pull over push**: never transfer in a loop to arbitrary addresses; recipients withdraw.
+4. **`abi.encode` (not `encodePacked`)** when hashing 2 or more dynamic fields (a collision class).
+5. **Signatures**: deadline + nonce + domain binding (EIP-712, with the domain read from the contract); replay tested.
+6. **Zero arbitrary `call` or multicall**; every external input validated at the boundary.
+7. **`SafeERC20` always; `decimals()` read, never assumed** (USDC = 6, the "factor of a trillion" bug).
+8. **`Ownable2Step`**; the owner is a multisig (Safe) wherever there is real value.
+9. **Oracles**: staleness + heartbeat + the feed's `decimals` checked per feed (Chainlink = 8).
+10. **Deliberate storage packing** (32-byte slots); optimize **after** it is correct (ADR-0004).
+11. **Upgradability only with a written justification; the default is immutable** (ADR-0002).
+12. **Randomness** never from block vars; VRF or commit-reveal if it is ever needed.
+13. **Slither (plus the gas gate) in CI before the merge** (C1b); high and medium clean, or triaged inline.

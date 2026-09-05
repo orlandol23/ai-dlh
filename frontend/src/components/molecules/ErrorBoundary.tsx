@@ -60,18 +60,18 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
           <Card className="max-w-lg w-full">
             <CardHeader>
-              <p className="eyebrow">⚠️ Erro inesperado</p>
-              <CardTitle className="font-display tracking-tight">Algo deu errado</CardTitle>
+              <p className="eyebrow">⚠️ Unexpected error</p>
+              <CardTitle className="font-display tracking-tight">Something went wrong</CardTitle>
               <CardDescription>
-                Encontramos um problema ao renderizar essa parte da aplicação.
-                Você pode tentar voltar ou recarregar a página.
+                We ran into a problem rendering this part of the application.
+                You can try again or reload the page.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {showDetails && (
                 <details className="rounded-md border border-border bg-muted/40 p-3 text-xs">
                   <summary className="cursor-pointer font-mono text-muted-foreground">
-                    Detalhes técnicos (somente dev)
+                    Technical details (dev only)
                   </summary>
                   <pre className="mt-2 whitespace-pre-wrap break-all text-muted-foreground">
                     {this.state.error.name}: {this.state.error.message}
@@ -80,10 +80,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               )}
               <div className="flex gap-2">
                 <Button onClick={this.handleReset} variant="outline" className="flex-1">
-                  Tentar novamente
+                  Try again
                 </Button>
                 <Button onClick={this.handleReload} className="flex-1">
-                  Recarregar página
+                  Reload page
                 </Button>
               </div>
             </CardContent>

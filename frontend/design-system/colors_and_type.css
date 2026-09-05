@@ -1,23 +1,23 @@
 /* =========================================================
    AI-DLH Design System — v2  "Circuit & Ink"
-   Source of truth. Importe este arquivo primeiro.
+   Source of truth. Import this file first.
 
-   Mudanças da v1 (shadcn padrão) → v2:
-   • Primary trocou de #2463eb (shadcn azul) por um
-     roxo-elétrico #7c3aed com acento ciano #22d3ee.
-     Comunica "IA + blockchain" sem ser clichê.
-   • Info deixou de ser quase-igual ao primary — agora é ciano.
-   • Tipografia: Space Grotesk (display) + Inter (UI)
-     + JetBrains Mono (expressivo em stats e on-chain).
-   • Dark mode é first-class.
+   Changes from v1 (default shadcn) → v2:
+   • Primary switched from #2463eb (shadcn blue) to an
+     electric purple #7c3aed with a cyan accent #22d3ee.
+     Communicates "AI + blockchain" without being a cliche.
+   • Info stopped being near-identical to primary — now cyan.
+   • Typography: Space Grotesk (display) + Inter (UI)
+     + JetBrains Mono (expressive in stats and on-chain).
+   • Dark mode is first-class.
    ========================================================= */
 
 @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap");
 
 :root {
-  /* ---------- PALETA — Light ---------- */
+  /* ---------- PALETTE — Light ---------- */
 
-  /* Primary — roxo elétrico. Substitui o shadcn blue. */
+  /* Primary — electric purple. Replaces shadcn blue. */
   --primary-50:  #f5f3ff;
   --primary-100: #ede9fe;
   --primary-200: #ddd6fe;
@@ -32,21 +32,21 @@
   --primary: var(--primary-600);
   --primary-foreground: #ffffff;
 
-  /* Accent — ciano elétrico. Usar em stats on-chain, gráficos, micro-highlights. */
+  /* Accent — electric cyan. Use in on-chain stats, charts, micro-highlights. */
   --accent-50:  #ecfeff;
   --accent-100: #cffafe;
   --accent-300: #67e8f9;
   --accent-500: #06b6d4;
   --accent-600: #0891b2;
-  --accent:     #22d3ee;  /* Accent canonical — mais saturado pra dark */
+  --accent:     #22d3ee;  /* Accent canonical — more saturated for dark */
   --accent-foreground: #0b1120;
 
-  /* Deep indigo — fundos "data-heavy" (dashboards, gráficos) e headers dark */
+  /* Deep indigo — "data-heavy" backgrounds (dashboards, charts) and dark headers */
   --indigo-900: #1e1b4b;
   --indigo-950: #130f32;
 
-  /* ---------- Neutros warm slate (não cinza-azulado shadcn) ----------
-     Uma pitada de quente pra afastar do "genérico corporate". */
+  /* ---------- Warm slate neutrals (not the shadcn blue-gray) ----------
+     A touch of warmth to move away from "generic corporate". */
   --neutral-0:   #ffffff;
   --neutral-25:  #fbfaf9;
   --neutral-50:  #f7f5f3;
@@ -75,13 +75,13 @@
   --input: var(--neutral-200);
   --ring: var(--primary-500);
 
-  /* ---------- Semantic states — todas com tom próprio, nenhuma colide com primary ---------- */
+  /* ---------- Semantic states — each with its own tone, none collides with primary ---------- */
   --success:        #16a34a;
   --success-bg:     #f0fdf4;
   --success-border: #bbf7d0;
   --success-fg:     #14532d;
 
-  --warning:        #d97706;  /* amber-600, não yellow — combina com neutro warm */
+  --warning:        #d97706;  /* amber-600, not yellow — matches the warm neutral */
   --warning-bg:     #fffbeb;
   --warning-border: #fde68a;
   --warning-fg:     #78350f;
@@ -91,35 +91,35 @@
   --error-border:   #fecaca;
   --error-fg:       #7f1d1d;
 
-  /* Info é CIANO agora — não azul. Separa visualmente de primary. */
+  /* Info is CYAN now — not blue. Visually separates it from primary. */
   --info:           var(--accent-500);
   --info-bg:        var(--accent-50);
   --info-border:    var(--accent-100);
   --info-fg:        #164e63;
 
-  /* On-chain / blockchain — usa o primary (roxo). É O sinal do produto. */
+  /* On-chain / blockchain — uses primary (purple). This IS the product's signal. */
   --onchain:        var(--primary-600);
   --onchain-bg:     var(--primary-50);
   --onchain-border: var(--primary-200);
   --onchain-fg:     var(--primary-900);
 
   /* ---------- Hero / signature gradient ----------
-     Substitui o "blue-50 → indigo-100". Agora é o motivo da marca:
-     um degradê roxo→ciano diagonal. Único gradiente do produto. */
+     Replaces "blue-50 → indigo-100". Now it's the brand motif:
+     a diagonal purple→cyan gradient. The product's only gradient. */
   --hero-gradient: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 40%, #cffafe 100%);
   --hero-gradient-dark: linear-gradient(135deg, #130f32 0%, #2e1065 55%, #164e63 100%);
 
   /* ---------- Radii ---------- */
   --radius-xs: 4px;
   --radius-sm: 6px;
-  --radius:    10px;   /* base — subiu de 8 pra 10, mais presente */
+  --radius:    10px;   /* base — went from 8 to 10, more present */
   --radius-md: 10px;
   --radius-lg: 14px;
   --radius-xl: 20px;
   --radius-2xl:28px;
   --radius-full: 9999px;
 
-  /* ---------- Shadows — com leve tint roxo, não preto puro ---------- */
+  /* ---------- Shadows — with a slight purple tint, not pure black ---------- */
   --shadow-xs: 0 1px 2px 0 rgba(76, 29, 149, 0.05);
   --shadow-sm: 0 1px 3px 0 rgba(76, 29, 149, 0.08), 0 1px 2px -1px rgba(76, 29, 149, 0.06);
   --shadow:    0 4px 6px -1px rgba(76, 29, 149, 0.10), 0 2px 4px -2px rgba(76, 29, 149, 0.06);
@@ -147,7 +147,7 @@
   --font-sans:    "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono:    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  /* Escala mais contrastada que v1 — display vai até 96px. */
+  /* More contrasted scale than v1 — display goes up to 96px. */
   --text-xs:    12px;
   --text-sm:    14px;
   --text-base:  16px;
@@ -185,9 +185,9 @@
   --duration: 200ms;
   --duration-slow: 400ms;
 
-  /* ---------- Grid pattern (hash grid — motivo gráfico do produto) ----------
-     Usar como background em heros, empty states e cards de "on-chain".
-     É o elemento mais próprio da marca — sinaliza "ledger / dados" sem desenhar um blockchain. */
+  /* ---------- Grid pattern (hash grid — the product's graphic motif) ----------
+     Use as background in heroes, empty states and "on-chain" cards.
+     The most distinctive brand element — signals "ledger / data" without drawing a blockchain. */
   --grid-color-light: rgba(124, 58, 237, 0.08);
   --grid-color-dark:  rgba(167, 139, 250, 0.10);
   --grid-size: 24px;
@@ -208,7 +208,7 @@
   --input: #2a2724;
   --ring: var(--primary-400);
 
-  /* Primary fica um pouco mais claro no dark pra manter contraste */
+  /* Primary gets a bit lighter in dark mode to keep contrast */
   --primary: var(--primary-500);
   --primary-foreground: #0b0a09;
 
@@ -278,7 +278,7 @@ p, .body  { font-size: var(--text-base); line-height: var(--leading-normal); }
 .body-sm  { font-size: var(--text-sm);  line-height: var(--leading-normal); color: var(--muted-foreground); }
 .caption  { font-size: var(--text-xs);  line-height: var(--leading-normal); color: var(--muted-foreground); }
 
-/* Eyebrow — rótulo mono pequeno em maiúsculas, usar pra "SECTION / TOPIC / ON-CHAIN" */
+/* Eyebrow — small uppercase mono label, use for "SECTION / TOPIC / ON-CHAIN" */
 .eyebrow {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
@@ -288,7 +288,7 @@ p, .body  { font-size: var(--text-base); line-height: var(--leading-normal); }
   color: var(--muted-foreground);
 }
 
-/* Stat — números grandes em Space Grotesk */
+/* Stat — large numbers in Space Grotesk */
 .stat-number {
   font-family: var(--font-display);
   font-size: var(--text-5xl);
@@ -308,7 +308,7 @@ code, .mono, .kbd {
   font-feature-settings: "zero" 1, "ss01" 1;
 }
 
-/* Hash grid — motivo gráfico do produto */
+/* Hash grid — the product's graphic motif */
 .hash-grid {
   background-image:
     linear-gradient(to right, var(--grid-color-light) 1px, transparent 1px),
@@ -321,7 +321,7 @@ code, .mono, .kbd {
     linear-gradient(to bottom, var(--grid-color-dark) 1px, transparent 1px);
 }
 
-/* Circuit trace — uma linha diagonal pontilhada, usar como divisor expressivo */
+/* Circuit trace — a dashed diagonal line, use as an expressive divider */
 .circuit-trace {
   background-image: repeating-linear-gradient(
     90deg,
@@ -331,13 +331,13 @@ code, .mono, .kbd {
   height: 2px;
 }
 
-/* Focus ring consistente */
+/* Consistent focus ring */
 .ring-focus:focus-visible, :focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--ring);
 }
 
-/* Scrollbar discreta */
+/* Discreet scrollbar */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--neutral-300); border-radius: 999px; }

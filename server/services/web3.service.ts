@@ -240,7 +240,7 @@ export class Web3Service {
   }
 
   /**
-   * Wait for a transaction broadcast by `sendCompletion`.
+   * Wait for a transaction handed to the node by `broadcastCompletion`.
    *
    * Stuck-transaction strategy (unchanged by the send/wait split):
    * 1. Wait up to `timeoutMs` for 1 confirmation.

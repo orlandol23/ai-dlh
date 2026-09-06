@@ -137,11 +137,11 @@ const LOCK_TOKEN = '3f1b0c9e-4a2d-4c8b-9e7a-1d2c3b4a5f60';
  * The writes, split by what they are, instead of by where they landed.
  *
  * Indexing setCalls by position made every test depend on the exact number
- * of UPDATEs the happy path performs, so reserving the nonce before the
- * broadcast broke nine of them at once without any of them being about the
- * reservation. These say what they mean: the claim moves a row into
- * processing, a journal write carries a nonce, and a status write is a
- * transition out of the claim.
+ * of UPDATEs the happy path performs, so changing when the journal is
+ * written broke nine of them at once without any of them being about the
+ * journal. These say what they mean: the claim moves a row into processing,
+ * a journal write carries a nonce, and a status write is a transition out
+ * of the claim.
  */
 const claimWrites = () => mocks.setCalls.filter((v) => v.blockchainStatus === 'processing');
 const journalWrites = () => mocks.setCalls.filter((v) => 'blockchainNonce' in v);

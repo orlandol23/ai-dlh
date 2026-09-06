@@ -482,7 +482,7 @@ describe('Web3Service.recoverCompletion', () => {
       expect((error as Error).message).toMatch(/Manual check/i);
       // Parking the record for a human is the correct end of this path.
       // Sending again would allocate a fresh nonce and write the very
-      // duplicate the reservation exists to prevent.
+      // duplicate the journal exists to prevent.
       expect(mocks.wallet.sendTransaction).not.toHaveBeenCalled();
     });
   });

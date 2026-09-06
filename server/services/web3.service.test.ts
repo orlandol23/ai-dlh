@@ -13,15 +13,20 @@ const mocks = vi.hoisted(() => ({
     getTransactionCount: vi.fn(),
     getFeeData: vi.fn(),
     getBlockNumber: vi.fn(),
+    broadcastTransaction: vi.fn(),
   },
   wallet: {
     address: '0xW4LLET',
     sendTransaction: vi.fn(),
+    populateTransaction: vi.fn(),
+    signTransaction: vi.fn(),
   },
   contract: {
-    recordCompletion: vi.fn(),
+    recordCompletion: Object.assign(vi.fn(), { populateTransaction: vi.fn() }),
     interface: { encodeFunctionData: vi.fn(() => '0xencoded') },
   },
+  /** ethers.Transaction.from(raw).hash — the hash the signature fixed. */
+  transactionFrom: vi.fn(),
 }));
 
 vi.mock('../utils/env.js', () => ({
@@ -41,6 +46,7 @@ vi.mock('ethers', () => ({
     JsonRpcProvider: vi.fn(() => mocks.provider),
     Wallet: vi.fn(() => mocks.wallet),
     Contract: vi.fn(() => mocks.contract),
+    Transaction: { from: mocks.transactionFrom },
     formatEther: (wei: bigint) => String(wei),
     verifyMessage: vi.fn(),
   },
@@ -76,17 +82,40 @@ const journalFor = (hashes: string[], nonce = 42) => ({
   topic: 'Solidity',
 });
 
-describe('Web3Service.sendCompletion', () => {
+/** A wallet that signs anything into one fixed raw transaction. */
+const signsInto = (raw: string, hash: string) => {
+  mocks.wallet.populateTransaction.mockResolvedValue({
+    to: '0xC0NTRACT',
+    data: '0xencoded',
+    nonce: 42,
+    gasLimit: 90_000n,
+    maxFeePerGas: 100n,
+    maxPriorityFeePerGas: 20n,
+  });
+  mocks.wallet.signTransaction.mockResolvedValue(raw);
+  mocks.transactionFrom.mockReturnValue({ hash });
+};
+
+describe('Web3Service.prepareCompletion', () => {
   let service: Web3Service;
 
   beforeEach(() => {
     vi.clearAllMocks();
     service = new Web3Service();
+    mocks.contract.recordCompletion.populateTransaction.mockResolvedValue({
+      to: '0xC0NTRACT',
+      data: '0xencoded',
+    });
   });
 
-  it('returns everything needed to journal and later replace the transaction', async () => {
+  it('signs the transaction without letting any node see it', async () => {
     mocks.provider.getBalance.mockResolvedValue(10n ** 18n);
-    mocks.contract.recordCompletion.mockResolvedValue({
+    signsInto('0xraw', '0xaaa');
+
+    const prepared = await service.prepareCompletion(10, 85, 'Solidity', 42);
+
+    expect(prepared).toEqual({
+      raw: '0xraw',
       hash: '0xaaa',
       nonce: 42,
       data: '0xencoded',
@@ -95,10 +124,76 @@ describe('Web3Service.sendCompletion', () => {
       maxFeePerGas: 100n,
       maxPriorityFeePerGas: 20n,
     });
+    // The property the whole design rests on: a usable hash exists and
+    // nothing has been sent. The caller can journal it and only then risk
+    // the network.
+    expect(mocks.provider.broadcastTransaction).not.toHaveBeenCalled();
+    expect(mocks.wallet.sendTransaction).not.toHaveBeenCalled();
+  });
 
-    const sent = await service.sendCompletion(10, 85, 'Solidity', 42);
+  it('signs the nonce it was given rather than one ethers picks', async () => {
+    mocks.provider.getBalance.mockResolvedValue(10n ** 18n);
+    signsInto('0xraw', '0xaaa');
 
-    expect(mocks.contract.recordCompletion).toHaveBeenCalledWith(10, 85, 'Solidity', { nonce: 42 });
+    await service.prepareCompletion(10, 85, 'Solidity', 42);
+
+    // Fixing the nonce before signing is what makes the signature, the
+    // journal and the broadcast describe one transaction.
+    expect(mocks.wallet.populateTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({ nonce: 42, to: '0xC0NTRACT', data: '0xencoded' })
+    );
+    expect(mocks.provider.getTransactionCount).not.toHaveBeenCalled();
+  });
+
+  it('refuses to sign from an empty wallet', async () => {
+    mocks.provider.getBalance.mockResolvedValue(0n);
+
+    await expect(service.prepareCompletion(10, 85, 'Solidity', 42)).rejects.toThrow(
+      /no funds/i
+    );
+    expect(mocks.wallet.signTransaction).not.toHaveBeenCalled();
+  });
+
+  it('maps a contract revert to the non-retryable error', async () => {
+    mocks.provider.getBalance.mockResolvedValue(10n ** 18n);
+    mocks.contract.recordCompletion.populateTransaction.mockRejectedValue({
+      code: 'CALL_EXCEPTION',
+      message: 'execution reverted',
+    });
+
+    await expect(service.prepareCompletion(10, 85, 'Solidity', 42)).rejects.toBeInstanceOf(
+      NonRetryableBlockchainError
+    );
+  });
+});
+
+describe('Web3Service.broadcastCompletion', () => {
+  let service: Web3Service;
+
+  const prepared = {
+    raw: '0xraw',
+    hash: '0xaaa',
+    nonce: 42,
+    data: '0xencoded',
+    to: '0xC0NTRACT',
+    gasLimit: 90_000n,
+    maxFeePerGas: 100n,
+    maxPriorityFeePerGas: 20n,
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    service = new Web3Service();
+  });
+
+  it('sends the raw transaction and describes it without the signature', async () => {
+    mocks.provider.broadcastTransaction.mockResolvedValue({ hash: '0xaaa' });
+
+    const sent = await service.broadcastCompletion(prepared);
+
+    expect(mocks.provider.broadcastTransaction).toHaveBeenCalledWith('0xraw');
+    // Everything the wait and the replacement need, and no `raw`: the
+    // signed payload has done its job and does not belong in the journal.
     expect(sent).toEqual({
       hash: '0xaaa',
       nonce: 42,
@@ -110,25 +205,22 @@ describe('Web3Service.sendCompletion', () => {
     });
   });
 
-  it('refuses to broadcast from an empty wallet', async () => {
-    mocks.provider.getBalance.mockResolvedValue(0n);
-
-    await expect(service.sendCompletion(10, 85, 'Solidity', 42)).rejects.toThrow(
-      /no funds/i
-    );
-    expect(mocks.contract.recordCompletion).not.toHaveBeenCalled();
-  });
-
-  it('maps a contract revert to the non-retryable error', async () => {
-    mocks.provider.getBalance.mockResolvedValue(10n ** 18n);
-    mocks.contract.recordCompletion.mockRejectedValue({
-      code: 'CALL_EXCEPTION',
-      message: 'execution reverted',
+  it('keeps a lost acknowledgement retryable, since the hash is already journaled', async () => {
+    mocks.provider.broadcastTransaction.mockRejectedValue({
+      code: 'NETWORK_ERROR',
+      message: 'socket hang up',
     });
 
-    await expect(service.sendCompletion(10, 85, 'Solidity', 42)).rejects.toBeInstanceOf(
-      NonRetryableBlockchainError
-    );
+    const error = await service
+      .broadcastCompletion(prepared)
+      .then(() => null)
+      .catch((e: unknown) => e);
+
+    // This is the failure the ordering exists for. The node may well have
+    // the transaction; the caller already wrote 0xaaa down, so recovery
+    // looks it up instead of sending a second one.
+    expect(error).not.toBeInstanceOf(NonRetryableBlockchainError);
+    expect((error as Error).message).toBe('Network connection error');
   });
 });
 
@@ -337,16 +429,15 @@ describe('Web3Service.recoverCompletion', () => {
   });
 
   /**
-   * The state a nonce reservation leaves behind: the queue wrote the nonce
-   * down and then the broadcast either never happened or its acknowledgement
-   * was lost, so the journal names a nonce and no hash at all. Reachable only
-   * since the reservation moved ahead of the send, and the whole point of
-   * moving it, so it gets its own tests.
+   * A journal naming a nonce and no hash at all. The queue does not produce
+   * one any more — it journals the hash it signed — but a row written by an
+   * older build, or a `blockchain_sent_hashes` that failed to parse, reaches
+   * recovery looking exactly like this, and both readings have to stay safe.
    */
-  describe('a journal with a reserved nonce and no hashes', () => {
-    it('broadcasts on the reserved nonce when nothing consumed it', async () => {
-      // Account nonce equal to ours, not past it: the reservation was
-      // written and no transaction ever took the slot.
+  describe('a journal with a nonce and no hashes', () => {
+    it('broadcasts on that nonce when nothing consumed it', async () => {
+      // Account nonce equal to ours, not past it: nothing ever took the
+      // slot, so it is still ours to use.
       mocks.provider.getTransactionCount.mockResolvedValue(42);
       mocks.provider.getFeeData.mockResolvedValue({
         maxFeePerGas: 200n,
@@ -374,11 +465,11 @@ describe('Web3Service.recoverCompletion', () => {
       expect(mocks.provider.getTransactionReceipt).not.toHaveBeenCalled();
     });
 
-    it('refuses to send when the reserved nonce was already consumed', async () => {
-      // The lost acknowledgement that actually landed: the node accepted
-      // the broadcast, the response never arrived, so the row kept the
-      // reservation and no hash. The nonce is gone and the completion is
-      // most likely on-chain under a hash nobody wrote down.
+    it('refuses to send when that nonce was already consumed', async () => {
+      // Nothing journaled, and the slot is gone: some transaction this row
+      // never signed spent it. With the hash journaled before broadcasting,
+      // that now means the custodial wallet was used from elsewhere, which
+      // is a person's problem and not a retry's.
       mocks.provider.getTransactionCount.mockResolvedValue(43);
 
       const error = await service

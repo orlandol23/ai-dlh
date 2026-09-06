@@ -18,9 +18,9 @@ export interface BlockchainReceipt {
 /**
  * Everything needed to wait for — or replace — a broadcast transaction,
  * without holding on to the ethers `TransactionResponse`. The queue writes
- * the nonce to the database BEFORE the broadcast and the hash between the
- * broadcast and the wait, which is what makes the on-chain write survive
- * both a crash and a lost acknowledgement.
+ * the nonce and the hash to the database BEFORE the transaction reaches the
+ * node, which is what makes the on-chain write survive both a crash and a
+ * lost acknowledgement.
  */
 export interface SentTransaction {
   hash: string;
@@ -31,6 +31,19 @@ export interface SentTransaction {
   gasLimit: bigint | null;
   maxFeePerGas: bigint | null;
   maxPriorityFeePerGas: bigint | null;
+}
+
+/**
+ * A transaction that is signed and therefore has a final hash, but that no
+ * node has seen yet.
+ *
+ * The whole point of the type: signing is local, so the hash exists before
+ * the network does. That is what lets the caller journal the hash it is
+ * about to broadcast rather than the hash it hopes to hear back about.
+ */
+export interface PreparedTransaction extends SentTransaction {
+  /** The signed transaction, ready for `eth_sendRawTransaction`. */
+  raw: string;
 }
 
 /** The journal a reclaimed record carries into `recoverCompletion`. */
@@ -117,39 +130,43 @@ export class Web3Service {
    * Read with `pending`, so a transaction already in the mempool is counted
    * and two sends in a row do not collide on one nonce.
    *
-   * Exists so the caller can write the nonce down BEFORE broadcasting.
-   * Without that, a broadcast whose acknowledgement is lost — a socket
-   * reset, an RPC timeout, a 502 from the gateway — leaves a transaction on
-   * the chain and nothing in the database pointing at it, and the retry
-   * allocates a fresh nonce and records the completion a second time. That
-   * needs no crash, only a bad network moment, which is why the journal
-   * cannot start at the hash.
+   * Exists so the caller can fix the nonce before signing, which is what
+   * lets the signature, the journal and the broadcast all describe one
+   * transaction.
    */
   async nextNonce(): Promise<number> {
     return this.provider.getTransactionCount(this.wallet.address, 'pending');
   }
 
   /**
-   * Broadcast a `recordCompletion` transaction and return as soon as the
-   * node accepts it — WITHOUT waiting for the receipt.
+   * Sign a `recordCompletion` transaction WITHOUT sending it anywhere.
    *
-   * The split exists so the caller can persist the hash before the
-   * (minutes-long) wait, and the explicit `nonce` exists so the caller can
-   * persist the nonce before the broadcast. Between them, every failure
-   * leaves the row pointing at a nonce that `recoverCompletion` can resolve
-   * from the chain, rather than at nothing.
+   * Sending is three steps, not one, and this is the first: sign locally,
+   * journal, broadcast, wait. Splitting signing from broadcasting is what
+   * removes the last way this pipeline could record a completion twice.
    *
-   * @param nonce the nonce this transaction must consume. Taken from
-   *              {@link nextNonce} and already journaled by the caller;
-   *              passing it rather than letting ethers fill it is what makes
-   *              the journal and the broadcast describe the same transaction
+   * The reason is that a signed transaction already has its final hash —
+   * the hash IS the signature over the fully specified transaction, so it
+   * cannot change afterwards and no network round trip is needed to learn
+   * it. Letting `contract.recordCompletion(...)` sign and broadcast in one
+   * call means the hash only comes back with the acknowledgement, and an
+   * acknowledgement can be lost: a socket reset, an RPC timeout or a
+   * gateway 502 leaves the node holding a transaction whose hash the caller
+   * never learned. Signing first means the caller writes down the hash it
+   * is *about to* broadcast, so even a broadcast that seems to have failed
+   * leaves a row naming the exact transaction to go looking for.
+   *
+   * @param nonce the nonce this transaction must consume, from
+   *              {@link nextNonce}. Fixed here rather than filled in by
+   *              ethers at send time, so the signature, the journal and the
+   *              broadcast all describe the same transaction
    */
-  async sendCompletion(
+  async prepareCompletion(
     moduleId: number,
     score: number,
     topic: string,
     nonce: number
-  ): Promise<SentTransaction> {
+  ): Promise<PreparedTransaction> {
     logger.info(`Recording completion on blockchain: Module ${moduleId}, Score ${score}`);
 
     try {
@@ -161,29 +178,65 @@ export class Web3Service {
         throw new Error('Wallet has no funds for gas fees');
       }
 
-      // Explicit nonce: the caller journaled this exact number before
-      // calling, so a lost acknowledgement still leaves the row naming the
-      // transaction the node may or may not have accepted.
-      const tx: ethers.TransactionResponse = await this.contract.recordCompletion(
+      const call = await this.contract.recordCompletion.populateTransaction(
         moduleId,
         score,
-        topic,
-        { nonce }
+        topic
       );
-      logger.debug(`Transaction sent: ${tx.hash} (nonce ${tx.nonce})`);
+      // Fills gas, fees, chainId and type from the network; the nonce is
+      // ours and is passed through untouched.
+      const populated = await this.wallet.populateTransaction({ ...call, nonce });
+      const raw = await this.wallet.signTransaction(populated);
+      const hash = ethers.Transaction.from(raw).hash;
+
+      if (!hash) {
+        // Unreachable for a signed transaction, and worth failing loudly
+        // rather than journaling an empty hash if ethers ever changes.
+        throw new Error('Signed transaction has no hash');
+      }
+
+      logger.debug(`Transaction signed: ${hash} (nonce ${nonce})`);
 
       return {
-        hash: tx.hash,
-        nonce: tx.nonce,
-        data: tx.data,
-        to: tx.to ?? config.CONTRACT_ADDRESS,
-        gasLimit: tx.gasLimit ?? null,
-        maxFeePerGas: tx.maxFeePerGas ?? null,
-        maxPriorityFeePerGas: tx.maxPriorityFeePerGas ?? null,
+        raw,
+        hash,
+        nonce,
+        data: populated.data ?? call.data,
+        to: (populated.to as string | null) ?? config.CONTRACT_ADDRESS,
+        gasLimit: this.asBigInt(populated.gasLimit),
+        maxFeePerGas: this.asBigInt(populated.maxFeePerGas),
+        maxPriorityFeePerGas: this.asBigInt(populated.maxPriorityFeePerGas),
       };
     } catch (error) {
       throw this.toDomainError(error);
     }
+  }
+
+  /**
+   * Hand an already-signed transaction to the node.
+   *
+   * Returns the same description {@link prepareCompletion} produced: the
+   * hash was fixed by the signature, so nothing the node says can change
+   * it, and a failure here is a failure to *deliver* a transaction that
+   * already exists and may well have arrived anyway.
+   */
+  async broadcastCompletion(prepared: PreparedTransaction): Promise<SentTransaction> {
+    try {
+      const sent = await this.provider.broadcastTransaction(prepared.raw);
+      logger.debug(`Transaction broadcast: ${sent.hash} (nonce ${prepared.nonce})`);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { raw: _raw, ...description } = prepared;
+      return description;
+    } catch (error) {
+      throw this.toDomainError(error);
+    }
+  }
+
+  /** Normalise the numeric shapes ethers may return for a populated field. */
+  private asBigInt(value: unknown): bigint | null {
+    if (typeof value === 'bigint') return value;
+    if (typeof value === 'number' || typeof value === 'string') return BigInt(value);
+    return null;
   }
 
   /**
@@ -254,20 +307,19 @@ export class Web3Service {
    *    re-broadcast the same calldata on the same nonce with bumped fees,
    *    which either replaces it or takes over the slot it vacated.
    *
-   * A journal carrying a nonce and no hashes at all is a normal input, not
-   * a corrupt one: the queue reserves the nonce before broadcasting, so a
-   * broadcast whose acknowledgement was lost leaves exactly that. It splits
-   * the same way — nonce untouched means nothing was sent and step 3 uses
-   * it, nonce consumed means the lost broadcast landed and step 2 parks the
-   * record.
+   * A journal carrying a nonce and no hashes at all is handled rather than
+   * rejected. The queue no longer produces one — it journals the hash it
+   * signed before broadcasting — but a row written by an older build, or a
+   * `blockchain_sent_hashes` that failed to parse, arrives here looking
+   * exactly like that, and the safe reading is the same one: nonce
+   * untouched means nothing of ours was sent and step 3 uses it, nonce
+   * consumed means step 2 parks the record.
    *
-   * Step 2 is where this design pays for its safety, and the price is worth
-   * naming: the completion is probably on-chain, under a hash nobody wrote
-   * down, while the row reads `failed_permanent`. That is a false negative
-   * a human can resolve from the wallet, and the alternative — sending on a
-   * fresh nonce — is a second permanent record on an append-only contract
-   * that nobody can resolve at all. Closing the window entirely means
-   * signing locally and journaling the hash before it reaches the node.
+   * Step 2 is the only path that ends in a human, and journaling the hash
+   * before the broadcast is what keeps it rare. It now means the nonce was
+   * consumed by a transaction this row never signed — someone else spending
+   * from the custodial wallet — which is a genuine "look at the wallet"
+   * event rather than a lost acknowledgement misfiling itself.
    */
   async recoverCompletion(
     journal: CompletionJournal,

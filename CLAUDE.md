@@ -59,12 +59,12 @@ Run each workspace directly — the root `npm test` covers only contracts and
 backend:
 
 ```bash
-cd server    && npx vitest run   # 181 tests, 14 files
+cd server    && npx vitest run   # 189 tests, 15 files
 cd frontend  && npx vitest run   #  49 tests,  5 files
 cd contracts && npx hardhat test #  23 tests
 ```
 
-Total: 253 tests. Keep the counts in `README.md` in sync when tests are added.
+Total: 261 tests. Keep the counts in `README.md` in sync when tests are added.
 
 ## Lint and build
 
@@ -90,16 +90,24 @@ lint step), on every push and pull request.
   nothing is reported, not assumed to have applied; in the journal it throws
   `LockLostError`, which `handleSendFailure` must keep treating as "this row is
   not mine" rather than as a send failure to retry.
-- The nonce is written to the row **before** `sendCompletion`, not after it.
-  Journaling after the broadcast returns leaves the hole it was meant to close:
-  a lost acknowledgement (socket reset, RPC timeout, gateway 502) means the node
-  accepted a transaction the row knows nothing about, and the retry then
-  allocates a fresh nonce and records the completion twice. Moving the write
-  earlier is what makes `recoverCompletion` see a nonce in every failure case.
-  Do not "optimise" the reservation away because it costs a write.
-- `recoverCompletion` accepts a journal with a nonce and no hashes — that is
-  what a reservation looks like — and must keep splitting it on the account
-  nonce: equal means nothing was sent, past means the lost broadcast landed and
-  the record parks for a human. Never resend on a fresh nonce there.
+- Sending is three calls, in this order: `prepareCompletion` (signs, locally,
+  and sends nothing), the journal write, then `broadcastCompletion`. Do not
+  collapse them back into one `contract.recordCompletion(...)`. A signed
+  transaction already carries its final hash, and writing that hash down before
+  the node can see it is the only reason a lost acknowledgement (socket reset,
+  RPC timeout, gateway 502) is recoverable: the node may have accepted a
+  transaction, and the row already names it. Learn the hash from the
+  acknowledgement instead and the retry signs a fresh nonce and records the
+  completion twice.
+- `services/web3.service.signing.test.ts` mocks nothing below our own code: a
+  real `ethers.Wallet` signs against a fake JSON-RPC server so the ordering is
+  checked against the real library. Keep it that way — the mocked tests in
+  `web3.service.test.ts` would happily agree with a broken `signTransaction`
+  after an ethers upgrade.
+- `recoverCompletion` still accepts a journal with a nonce and no hashes, for
+  rows written by older builds or a `blockchain_sent_hashes` that failed to
+  parse, and must keep splitting it on the account nonce: equal means nothing
+  was sent, past means the record parks for a human. Never resend on a fresh
+  nonce there.
 - `contracts/` needs to download the `solc` binary on first compile; restricted
   networks will fail there.

@@ -109,17 +109,18 @@ function parseSentHashes(raw: string | null): string[] {
  *    an idle deployment must not keep waking a scale-to-zero database
  *    (see idleWaitMs for the billing arithmetic that forces this).
  *
- * Exactly-once on-chain writes (reserve the nonce, then broadcast):
- *  - Sending a transaction and waiting for its receipt are two separate
- *    calls into web3.service, and the nonce is written to the row BEFORE
- *    the first of them. Every failure from the reservation onwards — a
- *    lost acknowledgement, a timeout, a hard kill — therefore leaves a row
- *    naming the nonce that may be in flight, and the worker that reclaims
- *    it after the stale-lock window resolves that nonce from its receipts
- *    (recoverInFlight) instead of broadcasting a second transaction. Since
- *    the recovery path re-broadcasts on the SAME nonce, at most one of
- *    those transactions can ever mine. See sendAndJournal for why
- *    journaling after the broadcast was not enough.
+ * Exactly-once on-chain writes (sign, journal, then broadcast):
+ *  - Signing, broadcasting and waiting are three separate calls into
+ *    web3.service, and the nonce and hash are written to the row between
+ *    the first and the second. A signed transaction already has its final
+ *    hash, so this is possible before any node has seen it. Every failure
+ *    from that write onwards — a lost acknowledgement, a timeout, a hard
+ *    kill — therefore leaves a row naming the exact transaction that may
+ *    be in flight, and the worker that reclaims it after the stale-lock
+ *    window resolves it from its receipts (recoverInFlight) instead of
+ *    broadcasting a second one. Since the recovery path re-broadcasts on
+ *    the SAME nonce, at most one of those transactions can ever mine. See
+ *    sendAndJournal for why journaling after the broadcast was not enough.
  *
  * Claim semantics (idempotency):
  *  - A record is claimed via a single conditional UPDATE
@@ -485,47 +486,47 @@ export class BlockchainQueueService {
   }
 
   /**
-   * Fresh send: reserve the nonce, broadcast, journal the hash, then wait.
+   * Fresh send: sign, journal what was signed, broadcast, then wait.
    *
-   * The reservation is the first write, and it is the one that closes the
-   * hole. An earlier version journaled the nonce only after the broadcast
-   * returned, and reasoned that everything before that point could be
-   * replayed for free because no transaction existed yet. That is not true
-   * of a broadcast whose ACKNOWLEDGEMENT is lost. A socket reset, an RPC
-   * timeout or a 502 from the gateway makes `sendCompletion` throw after
-   * the node already accepted the transaction: the row keeps a null nonce,
-   * the retry takes the fresh-send path, allocates a new nonce, and the
-   * append-only contract records the completion twice. No crash required,
-   * only a bad network moment, which is the common case rather than the
-   * rare one.
+   * The order is the whole design. Signing happens locally, so the hash is
+   * final before any node has seen the transaction, and the journal can name
+   * the exact transaction that is about to be broadcast instead of one the
+   * network has to report back.
    *
-   * Writing the nonce first means every failure from here on leaves the row
-   * naming a nonce, so the retry goes through `recoverInFlight` and asks the
-   * chain what happened. `recoverCompletion` already handles a journal with
-   * no hashes: nothing of ours mined, so if the account nonce has not passed
-   * this one, nothing was sent and it re-broadcasts on the same nonce.
+   * That is what closes the lost-acknowledgement window. A socket reset, an
+   * RPC timeout or a 502 from the gateway can make the broadcast throw AFTER
+   * the node accepted the transaction. Journal first and the row already
+   * names it, so the retry goes through `recoverInFlight`, finds the receipt
+   * and confirms. Journal afterwards and the row names nothing: the retry
+   * takes the fresh-send path, allocates a new nonce, and the append-only
+   * contract records the completion twice. No crash required, only a bad
+   * network moment, which is the common case rather than the rare one.
    *
-   * The old comment rejected this as trading a rare duplicate for a common
-   * false alarm. It is worth being precise about why that was wrong. A nonce
-   * reserved and never sent leaves the account nonce equal to it, not past
-   * it, so recovery reads "not consumed" and simply uses it. The alarm only
-   * fires when the nonce really was consumed by a transaction this row never
-   * recorded, which is exactly the case a human should look at. What the
-   * change actually trades is a silent duplicate on an append-only contract
-   * for a loud manual check, and for money on chain that is the right
-   * direction.
+   * An earlier version of this fix wrote the nonce before broadcasting but
+   * still learned the hash from the acknowledgement. That prevents the
+   * duplicate and not the false alarm: a lost acknowledgement whose
+   * transaction then mined left the row parked as `failed_permanent` while
+   * the completion sat on-chain under a hash nobody had written down.
+   * Journaling the hash removes that case too, because there is no longer a
+   * moment in which a transaction exists and the row cannot name it.
    */
   private async sendAndJournal(
     record: ClaimedRecord,
     topic: string
   ): Promise<BlockchainReceipt> {
     const nonce = await web3Service.nextNonce();
-    await this.journal(record, nonce, []);
+    const prepared = await web3Service.prepareCompletion(
+      record.moduleId,
+      record.score,
+      topic,
+      nonce
+    );
 
-    const sent = await web3Service.sendCompletion(record.moduleId, record.score, topic, nonce);
-
-    const hashes = [sent.hash];
+    // Written while the transaction still exists only in this process.
+    const hashes = [prepared.hash];
     await this.journal(record, nonce, hashes);
+
+    const sent = await web3Service.broadcastCompletion(prepared);
 
     return web3Service.waitForCompletion(
       sent,

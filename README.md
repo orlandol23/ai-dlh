@@ -74,17 +74,27 @@ This project treats the chain write as what it is: an unreliable, asynchronous s
 
 When a user passes a quiz (score >= 70), the API returns immediately and the write is handed to a queue backed by Postgres, not by an in-memory job runner:
 
-- **Atomic claim.** A worker takes a row with a single conditional `UPDATE ... WHERE id = ? AND (claimable) RETURNING`. Losers of the race get an empty result and exit cleanly, so multiple workers never grab the same job.
+- **Atomic claim, fenced by a token.** A worker takes a row with a single conditional `UPDATE ... WHERE id = ? AND (claimable) RETURNING`. Losers of the race get an empty result and exit cleanly, so multiple workers never grab the same job. The claim also mints a fresh `blockchain_lock_token`, and every later write is guarded by it rather than by the status: a row whose stale lock was reclaimed is still `processing`, so a status-only guard would let the superseded worker overwrite the one that owns the row now. A write that matches nothing is reported rather than assumed to have applied.
 - **Attempt counted at claim time.** A process that dies mid-broadcast still consumes an attempt, which prevents infinite retry loops after a crash.
 - **Exponential backoff with an error taxonomy.** Retries follow a fixed schedule and errors are classified: a contract revert is permanent and parks the row as `failed_permanent`, while `INSUFFICIENT_FUNDS` stays retryable on purpose because the wallet can be topped up.
 - **Replace-by-fee.** A transaction that does not confirm within the timeout is re-sent on the same nonce with fees bumped 25 percent, and a transaction that gets replaced or repriced is recovered as a success rather than double-sent.
-- **Journal before the wait, recovery from receipts.** A crash between the broadcast and the database write used to be the one path to a duplicate on-chain record: the row stayed `processing`, the stale lock expired, and the worker sent a brand-new transaction for a completion that was already in flight. Sending and waiting are now separate calls, and the nonce plus every hash sent on it are journaled in between. A reclaimed row is resolved from those receipts — confirmed if one mined, permanently failed if one reverted — and when nothing mined it re-broadcasts the SAME nonce instead of allocating a new one, so at most one transaction can ever take that slot. A nonce consumed by a transaction that is not in the journal stops the record instead of resending it: that case needs a human, not a retry.
+- **Reserve the nonce, then broadcast; recover from receipts.** The path to a duplicate on-chain record is a row that has a transaction in flight and does not say so: the row stays `processing`, the stale lock expires, and the next worker sends a brand-new transaction for a completion that was already broadcast. Sending and waiting are separate calls, and the nonce is written to the row **before** the send, not after it — a broadcast whose acknowledgement is lost to a socket reset or an RPC timeout has already been accepted by the node, so journaling after the call returns leaves exactly the hole it was meant to close, with no crash required. Every hash sent on that nonce, including replace-by-fee ones, is journaled as it goes. A reclaimed row is resolved from those receipts — confirmed if one mined, permanently failed if one reverted — and when nothing mined it re-broadcasts the SAME nonce instead of allocating a new one, so at most one transaction can ever take that slot. A nonce that was reserved but never sent leaves the account nonce equal to it, so recovery reads "not consumed" and simply uses it; a nonce consumed by a transaction that is not in the journal stops the record instead of resending it, because that case needs a human, not a retry.
 - **Idempotency enforced by the database.** A partial unique index guarantees at most one on-chain payout per (user, module). The application also checks first, and a lost race surfaces as a `23505` unique violation that is caught and downgraded instead of double-paying.
 - **Stale lock recovery.** Rows stuck in `processing` past a timeout are reclaimed, so a hard kill does not strand work.
 - **Wallet balance monitor.** The custodial wallet balance is polled and exposed on the health endpoint, because a rail that runs out of gas should be visible before it fails.
 - **Event-driven worker, polling only as a safety net.** The endpoints that enqueue work wake the worker directly, so a fresh record is processed in milliseconds; while the queue drains it re-polls at the fast interval. Once empty, the worker sleeps until the earliest scheduled retry (or stale lock), capped at a safety-net ceiling measured in hours. This is not micro-optimisation — it is what stops a background worker from bankrupting a serverless database, and it took two lessons to learn. A fixed 15-second poll never lets a scale-to-zero Postgres suspend, which burned the entire monthly compute allowance with zero traffic and took the deployment offline. The first fix — exponential idle backoff up to a 30-minute ceiling — cut queries 120× yet still blew the allowance, because the provider bills a full suspend-window minimum (~5 minutes on Neon's free plan) for every wakeup: 48 wakeups a day is ~4 hours of billed compute regardless of how little the polls do. What a scale-to-zero database bills for is the number of times it is woken, so the design goal is not "poll less often" but "do not poll at all unless something is scheduled".
 
 State machine: `pending -> processing -> confirmed | failed | failed_permanent`.
+
+#### What "exactly once" actually means here
+
+Worth stating precisely, because the phrase is used loosely and a queue that promises more than it delivers is worse than one that promises less.
+
+What is guaranteed is **at most one on-chain record per completion**, and it is guaranteed by the nonce rather than by care. A completion never gets a second nonce: the first one is reserved before any broadcast and every later attempt recovers that same slot, so two transactions for one completion cannot both mine — the second is rejected as a nonce that is already used. The database backs this from the other side with a partial unique index on (user, module).
+
+What is **not** guaranteed is that the completion always reaches the chain. Three outcomes park a record for a human instead: the attempt budget runs out, the contract reverts, or the journaled nonce turns out to have been consumed by a transaction this row never recorded. All three are visible as `failed_permanent` with the error on the row, and none of them silently writes twice. Delivery is therefore best-effort with a bounded number of attempts; uniqueness is the part that is absolute.
+
+One more limit, documented in the service itself rather than hidden: this worker assumes a **single instance**, which is the current deployment. The claim and the fence are safe with several, but two instances sharing one custodial wallet still contend for nonces, and one of the two broadcasts is simply rejected as underpriced. Horizontal scaling means moving the claim to `FOR UPDATE SKIP LOCKED` and electing a single sender, not just running more containers.
 
 ### Wallet-signature authentication
 
@@ -221,10 +231,10 @@ There is no Docker setup and no mock mode: a real database, a real RPC endpoint 
 
 ## Tests
 
-247 tests pass across the three workspaces. Run each one directly:
+253 tests pass across the three workspaces. Run each one directly:
 
 ```bash
-cd server    && npx vitest run     # 175 tests, 14 files
+cd server    && npx vitest run     # 181 tests, 14 files
 cd frontend  && npx vitest run     #  49 tests,  5 files
 cd contracts && npx hardhat test   #  23 tests
 ```

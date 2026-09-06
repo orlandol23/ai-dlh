@@ -208,12 +208,16 @@ describe('progress.retryBlockchain', () => {
     const result = await caller.retryBlockchain({ recordId: 5 });
 
     expect(result).toEqual({ recordId: 5, blockchainStatus: 'pending' });
-    // Full queue-state reset so the worker starts from attempt 1.
+    // Full queue-state reset so the worker starts from attempt 1. Both
+    // halves of the lock go together: the database rejects a row holding a
+    // token with no timestamp, and a row the fence cannot guard is worse
+    // than one that is plainly free.
     expect(mocks.updateSet).toHaveBeenCalledWith({
       blockchainStatus: 'pending',
       blockchainAttempts: 0,
       blockchainNextAttemptAt: null,
       blockchainLockedAt: null,
+      blockchainLockToken: null,
       blockchainError: null,
     });
     // Ownership and state checks live IN the WHERE — one atomic statement.

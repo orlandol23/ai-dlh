@@ -260,7 +260,11 @@ export const progressRouter = router({
           blockchainStatus: 'pending',
           blockchainAttempts: 0,
           blockchainNextAttemptAt: null,
+          // Both halves of the lock, always together: a row carrying a token
+          // and no timestamp (or the reverse) is one the fence cannot guard,
+          // and the database rejects it outright.
           blockchainLockedAt: null,
+          blockchainLockToken: null,
           blockchainError: null,
         })
         .where(

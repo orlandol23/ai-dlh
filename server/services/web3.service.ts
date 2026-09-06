@@ -17,9 +17,10 @@ export interface BlockchainReceipt {
 
 /**
  * Everything needed to wait for — or replace — a broadcast transaction,
- * without holding on to the ethers `TransactionResponse`. The queue
- * journals `hash` and `nonce` to the database BETWEEN the broadcast and
- * the wait, which is what makes the on-chain write survive a crash.
+ * without holding on to the ethers `TransactionResponse`. The queue writes
+ * the nonce to the database BEFORE the broadcast and the hash between the
+ * broadcast and the wait, which is what makes the on-chain write survive
+ * both a crash and a lost acknowledgement.
  */
 export interface SentTransaction {
   hash: string;
@@ -111,18 +112,43 @@ export class Web3Service {
   }
 
   /**
+   * The nonce the next broadcast from this wallet would consume.
+   *
+   * Read with `pending`, so a transaction already in the mempool is counted
+   * and two sends in a row do not collide on one nonce.
+   *
+   * Exists so the caller can write the nonce down BEFORE broadcasting.
+   * Without that, a broadcast whose acknowledgement is lost — a socket
+   * reset, an RPC timeout, a 502 from the gateway — leaves a transaction on
+   * the chain and nothing in the database pointing at it, and the retry
+   * allocates a fresh nonce and records the completion a second time. That
+   * needs no crash, only a bad network moment, which is why the journal
+   * cannot start at the hash.
+   */
+  async nextNonce(): Promise<number> {
+    return this.provider.getTransactionCount(this.wallet.address, 'pending');
+  }
+
+  /**
    * Broadcast a `recordCompletion` transaction and return as soon as the
    * node accepts it — WITHOUT waiting for the receipt.
    *
-   * The split exists so the caller can persist the hash and nonce before
-   * the (minutes-long) wait: a crash inside `sendCompletion` cannot have
-   * produced an on-chain record, while a crash after it leaves a journal
-   * that `recoverCompletion` can resolve without ever sending twice.
+   * The split exists so the caller can persist the hash before the
+   * (minutes-long) wait, and the explicit `nonce` exists so the caller can
+   * persist the nonce before the broadcast. Between them, every failure
+   * leaves the row pointing at a nonce that `recoverCompletion` can resolve
+   * from the chain, rather than at nothing.
+   *
+   * @param nonce the nonce this transaction must consume. Taken from
+   *              {@link nextNonce} and already journaled by the caller;
+   *              passing it rather than letting ethers fill it is what makes
+   *              the journal and the broadcast describe the same transaction
    */
   async sendCompletion(
     moduleId: number,
     score: number,
-    topic: string
+    topic: string,
+    nonce: number
   ): Promise<SentTransaction> {
     logger.info(`Recording completion on blockchain: Module ${moduleId}, Score ${score}`);
 
@@ -135,11 +161,14 @@ export class Web3Service {
         throw new Error('Wallet has no funds for gas fees');
       }
 
-      // Send transaction (ethers fills the nonce from the pending pool)
+      // Explicit nonce: the caller journaled this exact number before
+      // calling, so a lost acknowledgement still leaves the row naming the
+      // transaction the node may or may not have accepted.
       const tx: ethers.TransactionResponse = await this.contract.recordCompletion(
         moduleId,
         score,
-        topic
+        topic,
+        { nonce }
       );
       logger.debug(`Transaction sent: ${tx.hash} (nonce ${tx.nonce})`);
 
@@ -224,6 +253,21 @@ export class Web3Service {
    * 3. Otherwise the transaction is still pending (or was dropped):
    *    re-broadcast the same calldata on the same nonce with bumped fees,
    *    which either replaces it or takes over the slot it vacated.
+   *
+   * A journal carrying a nonce and no hashes at all is a normal input, not
+   * a corrupt one: the queue reserves the nonce before broadcasting, so a
+   * broadcast whose acknowledgement was lost leaves exactly that. It splits
+   * the same way — nonce untouched means nothing was sent and step 3 uses
+   * it, nonce consumed means the lost broadcast landed and step 2 parks the
+   * record.
+   *
+   * Step 2 is where this design pays for its safety, and the price is worth
+   * naming: the completion is probably on-chain, under a hash nobody wrote
+   * down, while the row reads `failed_permanent`. That is a false negative
+   * a human can resolve from the wallet, and the alternative — sending on a
+   * fresh nonce — is a second permanent record on an append-only contract
+   * that nobody can resolve at all. Closing the window entirely means
+   * signing locally and journaling the hash before it reaches the node.
    */
   async recoverCompletion(
     journal: CompletionJournal,

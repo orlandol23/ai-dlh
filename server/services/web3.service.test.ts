@@ -96,9 +96,9 @@ describe('Web3Service.sendCompletion', () => {
       maxPriorityFeePerGas: 20n,
     });
 
-    const sent = await service.sendCompletion(10, 85, 'Solidity');
+    const sent = await service.sendCompletion(10, 85, 'Solidity', 42);
 
-    expect(mocks.contract.recordCompletion).toHaveBeenCalledWith(10, 85, 'Solidity');
+    expect(mocks.contract.recordCompletion).toHaveBeenCalledWith(10, 85, 'Solidity', { nonce: 42 });
     expect(sent).toEqual({
       hash: '0xaaa',
       nonce: 42,
@@ -113,7 +113,7 @@ describe('Web3Service.sendCompletion', () => {
   it('refuses to broadcast from an empty wallet', async () => {
     mocks.provider.getBalance.mockResolvedValue(0n);
 
-    await expect(service.sendCompletion(10, 85, 'Solidity')).rejects.toThrow(
+    await expect(service.sendCompletion(10, 85, 'Solidity', 42)).rejects.toThrow(
       /no funds/i
     );
     expect(mocks.contract.recordCompletion).not.toHaveBeenCalled();
@@ -126,7 +126,7 @@ describe('Web3Service.sendCompletion', () => {
       message: 'execution reverted',
     });
 
-    await expect(service.sendCompletion(10, 85, 'Solidity')).rejects.toBeInstanceOf(
+    await expect(service.sendCompletion(10, 85, 'Solidity', 42)).rejects.toBeInstanceOf(
       NonRetryableBlockchainError
     );
   });
@@ -334,5 +334,65 @@ describe('Web3Service.recoverCompletion', () => {
 
     expect(error).not.toBeInstanceOf(NonRetryableBlockchainError);
     expect((error as Error).message).toBe('Network connection error');
+  });
+
+  /**
+   * The state a nonce reservation leaves behind: the queue wrote the nonce
+   * down and then the broadcast either never happened or its acknowledgement
+   * was lost, so the journal names a nonce and no hash at all. Reachable only
+   * since the reservation moved ahead of the send, and the whole point of
+   * moving it, so it gets its own tests.
+   */
+  describe('a journal with a reserved nonce and no hashes', () => {
+    it('broadcasts on the reserved nonce when nothing consumed it', async () => {
+      // Account nonce equal to ours, not past it: the reservation was
+      // written and no transaction ever took the slot.
+      mocks.provider.getTransactionCount.mockResolvedValue(42);
+      mocks.provider.getFeeData.mockResolvedValue({
+        maxFeePerGas: 200n,
+        maxPriorityFeePerGas: 40n,
+      });
+
+      const sent = stuckTx('0xeee', 42);
+      sent.wait.mockResolvedValue(minedReceipt('0xeee'));
+      mocks.wallet.sendTransaction.mockResolvedValue(sent);
+
+      const journal: string[] = [];
+      const result = await service.recoverCompletion(journalFor([]), 1_000, async (hash) => {
+        journal.push(hash);
+      });
+
+      expect(result.hash).toBe('0xeee');
+      expect(mocks.wallet.sendTransaction).toHaveBeenCalledWith(
+        expect.objectContaining({ nonce: 42, data: '0xencoded' })
+      );
+      expect(journal).toEqual(['0xeee']);
+      // An empty journal must never be turned into lookups of the empty
+      // string: a provider asked for receipt '' can answer anything, and
+      // the one answer this path cannot survive is a wrong one.
+      expect(mocks.provider.getTransaction).not.toHaveBeenCalled();
+      expect(mocks.provider.getTransactionReceipt).not.toHaveBeenCalled();
+    });
+
+    it('refuses to send when the reserved nonce was already consumed', async () => {
+      // The lost acknowledgement that actually landed: the node accepted
+      // the broadcast, the response never arrived, so the row kept the
+      // reservation and no hash. The nonce is gone and the completion is
+      // most likely on-chain under a hash nobody wrote down.
+      mocks.provider.getTransactionCount.mockResolvedValue(43);
+
+      const error = await service
+        .recoverCompletion(journalFor([]), 1_000)
+        .then(() => null)
+        .catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(NonRetryableBlockchainError);
+      expect((error as Error).message).toMatch(/no hashes/);
+      expect((error as Error).message).toMatch(/Manual check/i);
+      // Parking the record for a human is the correct end of this path.
+      // Sending again would allocate a fresh nonce and write the very
+      // duplicate the reservation exists to prevent.
+      expect(mocks.wallet.sendTransaction).not.toHaveBeenCalled();
+    });
   });
 });

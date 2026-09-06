@@ -13,6 +13,12 @@ const mocks = vi.hoisted(() => ({
   // is a no-op, which is exactly what we want).
   setCalls: [] as Array<Record<string, unknown>>,
   returningQueue: [] as unknown[],
+  // What a fenced transition (journal, confirmed, failed) reports back.
+  // A non-empty array means the UPDATE matched: this worker still holds the
+  // row. Set to [] to simulate the lock having been reclaimed, or to a
+  // function to decide per write which transition finds it gone.
+  transitionResult: [{ id: 1 }] as unknown[] | ((values: Record<string, unknown>) => unknown[]),
+  nextNonce: vi.fn(),
   sendCompletion: vi.fn(),
   waitForCompletion: vi.fn(),
   recoverCompletion: vi.fn(),
@@ -42,7 +48,18 @@ vi.mock('../db/index.js', () => ({
         mocks.setCalls.push(values);
         return {
           where: vi.fn(() => ({
-            returning: vi.fn(() => Promise.resolve(mocks.returningQueue.shift() ?? [])),
+            returning: vi.fn(() => {
+              // The claim is the only UPDATE that moves a row INTO
+              // 'processing'; everything else is a fenced transition out of
+              // one. Telling them apart keeps the claim queue from being
+              // drained by journal writes.
+              const isClaim = values.blockchainStatus === 'processing';
+              if (isClaim) {
+                return Promise.resolve(mocks.returningQueue.shift() ?? []);
+              }
+              const result = mocks.transitionResult;
+              return Promise.resolve(typeof result === 'function' ? result(values) : result);
+            }),
           })),
         };
       }),
@@ -63,6 +80,7 @@ vi.mock('./web3.service.js', () => {
   return {
     NonRetryableBlockchainError,
     web3Service: {
+      nextNonce: mocks.nextNonce,
       sendCompletion: mocks.sendCompletion,
       waitForCompletion: mocks.waitForCompletion,
       recoverCompletion: mocks.recoverCompletion,
@@ -103,11 +121,34 @@ function claimedRow(candidate: ReturnType<typeof makeCandidate>, attempts: numbe
       moduleId: candidate.moduleId,
       score: candidate.score,
       blockchainAttempts: attempts,
+      blockchainLockToken: LOCK_TOKEN,
       blockchainNonce: candidate.blockchainNonce,
       blockchainSentHashes: candidate.blockchainSentHashes,
     },
   ];
 }
+
+/** The token the claim minted. Every transition below is fenced on it. */
+const LOCK_TOKEN = '3f1b0c9e-4a2d-4c8b-9e7a-1d2c3b4a5f60';
+
+/**
+ * The writes, split by what they are, instead of by where they landed.
+ *
+ * Indexing setCalls by position made every test depend on the exact number
+ * of UPDATEs the happy path performs, so reserving the nonce before the
+ * broadcast broke nine of them at once without any of them being about the
+ * reservation. These say what they mean: the claim moves a row into
+ * processing, a journal write carries a nonce, and a status write is a
+ * transition out of the claim.
+ */
+const claimWrites = () => mocks.setCalls.filter((v) => v.blockchainStatus === 'processing');
+const journalWrites = () => mocks.setCalls.filter((v) => 'blockchainNonce' in v);
+const statusWrites = () =>
+  mocks.setCalls.filter(
+    (v) => 'blockchainStatus' in v && v.blockchainStatus !== 'processing'
+  );
+/** The transition that ended the record: confirmed, failed, failed_permanent. */
+const finalWrite = () => statusWrites()[statusWrites().length - 1];
 
 /** What web3Service.sendCompletion resolves to once the tx is broadcast. */
 function sentTx(overrides: Partial<Record<string, unknown>> = {}) {
@@ -127,6 +168,7 @@ const receipt = (hash = '0xabc') => ({ hash, blockNumber: 123, gasUsed: '21000' 
 
 /** Make the happy path work: broadcast succeeds, receipt confirms. */
 function mockSuccessfulSend(hash = '0xabc', nonce = 7) {
+  mocks.nextNonce.mockResolvedValue(nonce);
   mocks.sendCompletion.mockResolvedValue(sentTx({ hash, nonce }));
   mocks.waitForCompletion.mockResolvedValue(receipt(hash));
 }
@@ -155,6 +197,8 @@ describe('BlockchainQueueService.processOnce', () => {
     vi.clearAllMocks();
     mocks.setCalls.length = 0;
     mocks.returningQueue.length = 0;
+    mocks.transitionResult = [{ id: 1 }];
+    mocks.nextNonce.mockResolvedValue(7);
     service = new BlockchainQueueService();
   });
 
@@ -168,7 +212,7 @@ describe('BlockchainQueueService.processOnce', () => {
 
     // Broadcast with the module's topic; the wait carries the configured
     // tx timeout and the journal callback for fee-bump replacements.
-    expect(mocks.sendCompletion).toHaveBeenCalledWith(10, 85, 'Solidity');
+    expect(mocks.sendCompletion).toHaveBeenCalledWith(10, 85, 'Solidity', 7);
     expect(mocks.waitForCompletion).toHaveBeenCalledWith(
       expect.objectContaining({ hash: '0xabc', nonce: 7 }),
       90_000,
@@ -176,14 +220,16 @@ describe('BlockchainQueueService.processOnce', () => {
     );
 
     // claim → journal → final status.
-    expect(mocks.setCalls).toHaveLength(3);
-    expect(mocks.setCalls[0]).toMatchObject({ blockchainStatus: 'processing' });
-    expect(mocks.setCalls[1]).toMatchObject({
+    // claim, then the nonce reservation, then the hash, then the final status.
+    expect(claimWrites()).toHaveLength(1);
+    expect(journalWrites()).toHaveLength(2);
+    expect(journalWrites()[0]).toMatchObject({ blockchainNonce: 7, blockchainSentHashes: '[]' });
+    expect(journalWrites()[1]).toMatchObject({
       blockchainNonce: 7,
       blockchainSentHashes: '["0xabc"]',
       transactionHash: '0xabc',
     });
-    expect(mocks.setCalls[2]).toMatchObject({
+    expect(finalWrite()).toMatchObject({
       blockchainStatus: 'confirmed',
       transactionHash: '0xabc',
       blockchainError: null,
@@ -202,7 +248,7 @@ describe('BlockchainQueueService.processOnce', () => {
     expect(mocks.sendCompletion).not.toHaveBeenCalled();
     // Only the claim attempt — no status UPDATE afterwards.
     expect(mocks.setCalls).toHaveLength(1);
-    expect(mocks.setCalls[0]).toMatchObject({ blockchainStatus: 'processing' });
+    expect(claimWrites()).toHaveLength(1);
   });
 
   it('schedules a retry with exponential backoff on a retryable failure', async () => {
@@ -216,8 +262,7 @@ describe('BlockchainQueueService.processOnce', () => {
 
       await service.processOnce();
 
-      expect(mocks.setCalls).toHaveLength(2);
-      const retry = mocks.setCalls[1];
+      const retry = finalWrite();
       expect(retry).toMatchObject({
         blockchainStatus: 'failed',
         blockchainError: 'Network connection error',
@@ -244,7 +289,7 @@ describe('BlockchainQueueService.processOnce', () => {
       await service.processOnce();
 
       // Attempt 2 → +5 minutes.
-      expect(mocks.setCalls[1].blockchainNextAttemptAt).toEqual(
+      expect(finalWrite().blockchainNextAttemptAt).toEqual(
         new Date('2026-06-11T12:05:00Z')
       );
     } finally {
@@ -261,7 +306,7 @@ describe('BlockchainQueueService.processOnce', () => {
 
     await service.processOnce();
 
-    expect(mocks.setCalls[1]).toMatchObject({
+    expect(finalWrite()).toMatchObject({
       blockchainStatus: 'failed_permanent',
       blockchainError: 'still failing',
       blockchainNextAttemptAt: null,
@@ -279,7 +324,7 @@ describe('BlockchainQueueService.processOnce', () => {
 
     await service.processOnce();
 
-    expect(mocks.setCalls[1]).toMatchObject({
+    expect(finalWrite()).toMatchObject({
       blockchainStatus: 'failed_permanent',
       blockchainError: 'Contract reverted: bad score',
     });
@@ -293,7 +338,7 @@ describe('BlockchainQueueService.processOnce', () => {
     await service.processOnce();
 
     expect(mocks.sendCompletion).not.toHaveBeenCalled();
-    expect(mocks.setCalls[1]).toMatchObject({
+    expect(finalWrite()).toMatchObject({
       blockchainStatus: 'failed_permanent',
       blockchainError: 'Owning module no longer exists',
     });
@@ -312,11 +357,17 @@ describe('BlockchainQueueService.processOnce', () => {
     await service.processOnce();
 
     expect(mocks.sendCompletion).toHaveBeenCalledTimes(2);
-    // claim#1, failed#1, claim#2, journal#2, confirmed#2
-    expect(mocks.setCalls).toHaveLength(5);
-    expect(mocks.setCalls[1]).toMatchObject({ blockchainStatus: 'failed' });
-    expect(mocks.setCalls[3]).toMatchObject({ blockchainSentHashes: '["0xdef"]' });
-    expect(mocks.setCalls[4]).toMatchObject({
+    // Two claims, and only the second record reaches a hash: the first
+    // reserves a nonce, fails to broadcast, and is parked for retry.
+    expect(claimWrites()).toHaveLength(2);
+    expect(statusWrites()).toHaveLength(2);
+    expect(statusWrites()[0]).toMatchObject({ blockchainStatus: 'failed' });
+    expect(journalWrites().map((w) => w.blockchainSentHashes)).toEqual([
+      '[]',
+      '[]',
+      '["0xdef"]',
+    ]);
+    expect(finalWrite()).toMatchObject({
       blockchainStatus: 'confirmed',
       transactionHash: '0xdef',
     });
@@ -358,6 +409,8 @@ describe('BlockchainQueueService exactly-once journal', () => {
     vi.clearAllMocks();
     mocks.setCalls.length = 0;
     mocks.returningQueue.length = 0;
+    mocks.transitionResult = [{ id: 1 }];
+    mocks.nextNonce.mockResolvedValue(7);
     service = new BlockchainQueueService();
   });
 
@@ -365,6 +418,7 @@ describe('BlockchainQueueService exactly-once journal', () => {
     const candidate = makeCandidate();
     mocks.findMany.mockResolvedValue([candidate]);
     mocks.returningQueue.push(claimedRow(candidate, 1));
+    mocks.nextNonce.mockResolvedValue(42);
     mocks.sendCompletion.mockResolvedValue(sentTx({ hash: '0xaaa', nonce: 42 }));
 
     // Snapshot the UPDATEs that had already landed when the wait started.
@@ -376,20 +430,28 @@ describe('BlockchainQueueService exactly-once journal', () => {
 
     await service.processOnce();
 
-    expect(updatesBeforeWait).toHaveLength(2); // claim + journal
+    // claim, the nonce reservation, then the hash. All three land before
+    // the wait, which is the property this test exists for.
+    expect(updatesBeforeWait).toHaveLength(3);
     expect(updatesBeforeWait[1]).toMatchObject({
+      blockchainNonce: 42,
+      blockchainSentHashes: '[]',
+    });
+    expect(updatesBeforeWait[2]).toMatchObject({
       blockchainNonce: 42,
       blockchainSentHashes: '["0xaaa"]',
       transactionHash: '0xaaa',
     });
-    // The journal must not resolve the record: it is still in flight.
+    // Neither journal write may resolve the record: it is still in flight.
     expect(updatesBeforeWait[1]).not.toHaveProperty('blockchainStatus');
+    expect(updatesBeforeWait[2]).not.toHaveProperty('blockchainStatus');
   });
 
   it('appends a fee-bump replacement hash to the journal while it is in flight', async () => {
     const candidate = makeCandidate();
     mocks.findMany.mockResolvedValue([candidate]);
     mocks.returningQueue.push(claimedRow(candidate, 1));
+    mocks.nextNonce.mockResolvedValue(42);
     mocks.sendCompletion.mockResolvedValue(sentTx({ hash: '0xaaa', nonce: 42 }));
     mocks.waitForCompletion.mockImplementation(
       async (
@@ -404,14 +466,13 @@ describe('BlockchainQueueService exactly-once journal', () => {
 
     await service.processOnce();
 
-    // claim → journal(original) → journal(+replacement) → confirmed
-    expect(mocks.setCalls).toHaveLength(4);
-    expect(mocks.setCalls[2]).toMatchObject({
-      blockchainNonce: 42,
-      blockchainSentHashes: '["0xaaa","0xbbb"]',
-      transactionHash: '0xbbb',
-    });
-    expect(mocks.setCalls[3]).toMatchObject({
+    // claim, reserve, journal(original), journal(+replacement), confirmed
+    expect(journalWrites().map((w) => w.blockchainSentHashes)).toEqual([
+      '[]',
+      '["0xaaa"]',
+      '["0xaaa","0xbbb"]',
+    ]);
+    expect(finalWrite()).toMatchObject({
       blockchainStatus: 'confirmed',
       transactionHash: '0xbbb',
     });
@@ -421,6 +482,7 @@ describe('BlockchainQueueService exactly-once journal', () => {
     const candidate = makeCandidate();
     mocks.findMany.mockResolvedValue([candidate]);
     mocks.returningQueue.push(claimedRow(candidate, 1));
+    mocks.nextNonce.mockResolvedValue(42);
     mocks.sendCompletion.mockResolvedValue(sentTx({ hash: '0xaaa', nonce: 42 }));
     mocks.waitForCompletion.mockRejectedValue(
       new Error('Transaction not confirmed in time (will be retried)')
@@ -428,7 +490,7 @@ describe('BlockchainQueueService exactly-once journal', () => {
 
     await service.processOnce();
 
-    const failure = mocks.setCalls[2];
+    const failure = finalWrite();
     expect(failure).toMatchObject({ blockchainStatus: 'failed' });
     // Clearing these would let the retry allocate a fresh nonce next to a
     // transaction that is still in flight — the duplicate we are avoiding.
@@ -456,7 +518,7 @@ describe('BlockchainQueueService exactly-once journal', () => {
     );
     // claim → confirmed, with no new journal write: nothing new was sent.
     expect(mocks.setCalls).toHaveLength(2);
-    expect(mocks.setCalls[1]).toMatchObject({
+    expect(finalWrite()).toMatchObject({
       blockchainStatus: 'confirmed',
       transactionHash: '0xaaa',
     });
@@ -480,7 +542,7 @@ describe('BlockchainQueueService exactly-once journal', () => {
       90_000,
       expect.any(Function)
     );
-    expect(mocks.setCalls[1]).toMatchObject({
+    expect(finalWrite()).toMatchObject({
       blockchainStatus: 'confirmed',
       transactionHash: '0xbbb',
     });
@@ -501,7 +563,7 @@ describe('BlockchainQueueService exactly-once journal', () => {
     await service.processOnce();
 
     expect(mocks.sendCompletion).not.toHaveBeenCalled();
-    expect(mocks.setCalls[1]).toMatchObject({
+    expect(finalWrite()).toMatchObject({
       blockchainStatus: 'failed_permanent',
       blockchainError: 'Contract reverted on-chain: 0xaaa',
     });
@@ -525,8 +587,8 @@ describe('BlockchainQueueService exactly-once journal', () => {
     await service.processOnce();
 
     expect(mocks.sendCompletion).not.toHaveBeenCalled();
-    expect(mocks.setCalls[1]).toMatchObject({ blockchainStatus: 'failed_permanent' });
-    expect(String(mocks.setCalls[1].blockchainError)).toContain('Manual check');
+    expect(finalWrite()).toMatchObject({ blockchainStatus: 'failed_permanent' });
+    expect(String(finalWrite().blockchainError)).toContain('Manual check');
   });
 
   it('journals the re-broadcast of a still-pending nonce without a fresh send', async () => {
@@ -650,6 +712,8 @@ describe('BlockchainQueueService idle scheduling', () => {
     vi.setSystemTime(T0);
     mocks.setCalls.length = 0;
     mocks.returningQueue.length = 0;
+    mocks.transitionResult = [{ id: 1 }];
+    mocks.nextNonce.mockResolvedValue(7);
     // Default: nothing parked for the future.
     mocks.findFirst.mockResolvedValue(undefined);
     service = new BlockchainQueueService();
@@ -835,6 +899,109 @@ describe('BlockchainQueueService idle scheduling', () => {
 // wake() is the other half of the sleep-for-hours contract: the endpoints
 // that enqueue on-chain work nudge the worker, so a fresh record is picked
 // up in milliseconds while an idle deployment leaves the database suspended.
+describe('BlockchainQueueService fencing and the lost-acknowledgement window', () => {
+  let service: BlockchainQueueService;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.setCalls.length = 0;
+    mocks.returningQueue.length = 0;
+    mocks.transitionResult = [{ id: 1 }];
+    mocks.nextNonce.mockResolvedValue(7);
+    service = new BlockchainQueueService();
+  });
+
+  it('reserves the nonce BEFORE broadcasting, so a lost acknowledgement is recoverable', async () => {
+    // The hole this closes: sendCompletion throwing does not mean the node
+    // refused the transaction. A socket reset or an RPC timeout can arrive
+    // after it was accepted. Journaling only the returned hash left the row
+    // with a null nonce, so the retry took the fresh-send path, allocated a
+    // new nonce, and the append-only contract recorded the completion twice.
+    const candidate = makeCandidate();
+    mocks.findMany.mockResolvedValue([candidate]);
+    mocks.returningQueue.push(claimedRow(candidate, 1));
+    mocks.nextNonce.mockResolvedValue(42);
+    mocks.sendCompletion.mockRejectedValue(new Error('socket hang up'));
+
+    await service.processOnce();
+
+    // The reservation landed even though the broadcast reported failure.
+    expect(journalWrites()).toHaveLength(1);
+    expect(journalWrites()[0]).toMatchObject({ blockchainNonce: 42, blockchainSentHashes: '[]' });
+
+    // And it is the nonce the send was told to use, so the row names the
+    // transaction the node may or may not have accepted.
+    expect(mocks.sendCompletion).toHaveBeenCalledWith(10, 85, 'Solidity', 42);
+
+    // The record is parked for retry with its nonce intact, so the next
+    // attempt goes through recovery instead of sending again.
+    expect(finalWrite()).toMatchObject({ blockchainStatus: 'failed' });
+    expect(finalWrite()).not.toHaveProperty('blockchainNonce');
+  });
+
+  it('takes the recovery path on the retry, never a second send', async () => {
+    // The row from the test above, claimed again.
+    const candidate = makeCandidate({ blockchainNonce: 42, blockchainSentHashes: '[]' });
+    mocks.findMany.mockResolvedValue([candidate]);
+    mocks.returningQueue.push(claimedRow(candidate, 2));
+    mocks.recoverCompletion.mockResolvedValue(receipt('0xrecovered'));
+
+    await service.processOnce();
+
+    expect(mocks.sendCompletion).not.toHaveBeenCalled();
+    expect(mocks.recoverCompletion).toHaveBeenCalledWith(
+      expect.objectContaining({ nonce: 42, hashes: [] }),
+      90_000,
+      expect.any(Function)
+    );
+    expect(finalWrite()).toMatchObject({
+      blockchainStatus: 'confirmed',
+      transactionHash: '0xrecovered',
+    });
+  });
+
+  it('does not confirm a record whose lock was reclaimed mid-flight', async () => {
+    // Before the fence, this UPDATE was guarded by the row id alone, so it
+    // landed on a record another worker was already settling.
+    const candidate = makeCandidate();
+    mocks.findMany.mockResolvedValue([candidate]);
+    mocks.returningQueue.push(claimedRow(candidate, 1));
+    mockSuccessfulSend();
+    // The journals land; only the confirm finds the lock gone, which is the
+    // worst case: the write is on-chain and the row cannot record it.
+    mocks.transitionResult = (values) =>
+      values.blockchainStatus === 'confirmed' ? [] : [{ id: 1 }];
+
+    await service.processOnce();
+
+    // The send happened and the confirm was refused. What matters is that
+    // nothing else was written: no retry, no failure, no second send. The
+    // journal still names the nonce, so the next holder recovers from it.
+    expect(mocks.sendCompletion).toHaveBeenCalledTimes(1);
+    // The confirm was attempted and refused, and nothing followed it: no
+    // retry, no failure, no second send. The mock records attempts, so the
+    // assertion is about what came after, not about the attempt itself.
+    expect(statusWrites().map((w) => w.blockchainStatus)).toEqual(['confirmed']);
+    expect(journalWrites().at(-1)).toMatchObject({ blockchainSentHashes: '["0xabc"]' });
+  });
+
+  it('stops touching a record when the journal reports the lock is gone', async () => {
+    // The reservation is the first fenced write, so a lock lost before the
+    // broadcast is caught before any money is spent.
+    const candidate = makeCandidate();
+    mocks.findMany.mockResolvedValue([candidate]);
+    mocks.returningQueue.push(claimedRow(candidate, 1));
+    mocks.transitionResult = [];
+
+    await service.processOnce();
+
+    expect(mocks.sendCompletion).not.toHaveBeenCalled();
+    // No retry scheduled either: the row belongs to another worker now, and
+    // writing a retry onto it is the exact thing the fence prevents.
+    expect(statusWrites()).toHaveLength(0);
+  });
+});
+
 describe('BlockchainQueueService.wake', () => {
   let service: BlockchainQueueService;
 
@@ -846,6 +1013,8 @@ describe('BlockchainQueueService.wake', () => {
     vi.useFakeTimers();
     mocks.setCalls.length = 0;
     mocks.returningQueue.length = 0;
+    mocks.transitionResult = [{ id: 1 }];
+    mocks.nextNonce.mockResolvedValue(7);
     mocks.findFirst.mockResolvedValue(undefined);
     service = new BlockchainQueueService();
   });

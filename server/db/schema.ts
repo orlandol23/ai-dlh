@@ -1,4 +1,4 @@
-import { pgTable, serial, varchar, text, integer, timestamp, json, index, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, serial, varchar, text, integer, timestamp, json, index, uniqueIndex, uuid, check } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 
 /**
@@ -101,13 +101,19 @@ export const progressRecords = pgTable('progress_records', {
   // Set when the worker claims the row; rows stuck in 'processing' longer
   // than the stale-lock window are reclaimed (crash recovery).
   blockchainLockedAt: timestamp('blockchain_locked_at'),
+  // Minted fresh by every claim, and the guard on every transition out of
+  // one. `blockchain_status = 'processing'` does not identify a holder: a
+  // row whose stale lock another worker just reclaimed is still
+  // 'processing', so a status-only guard lets the superseded worker write
+  // over the one that owns the row now.
+  blockchainLockToken: uuid('blockchain_lock_token'),
   // Last error message (server-side detail, never sent verbatim to clients).
   blockchainError: text('blockchain_error'),
-  // Exactly-once journal, written BETWEEN broadcasting the transaction and
-  // waiting for its receipt (see blockchain-queue.service.processCandidate).
-  // `blockchain_nonce` is the nonce the broadcast consumed; a reclaimed row
-  // re-broadcasts THAT nonce instead of allocating a new one, so a crash in
-  // the send/wait window can never produce a second on-chain record.
+  // Exactly-once journal. `blockchain_nonce` is written BEFORE the broadcast
+  // (see blockchain-queue.service.sendAndJournal): a reclaimed row re-broadcasts
+  // THAT nonce instead of allocating a new one, so neither a crash nor a lost
+  // acknowledgement in the send/wait window can produce a second on-chain
+  // record.
   blockchainNonce: integer('blockchain_nonce'),
   // JSON array of every hash sent for that nonce — the original plus each
   // fee-bump replacement. Recovery checks their receipts before resending.
@@ -136,6 +142,15 @@ export const progressRecords = pgTable('progress_records', {
     onePayoutPerModule: uniqueIndex('progress_one_payout_per_module_idx')
       .on(table.userId, table.moduleId)
       .where(sql`${table.blockchainStatus} <> 'none'`),
+    // A lock is the pair, never half of it: a claim writes both columns and
+    // every transition clears both. Enforced here rather than trusted to the
+    // application because a row holding a timestamp with no token is a row
+    // the fence cannot protect — `heldBy` matches nothing on a NULL token, so
+    // the holder would find itself unable to record its own outcome.
+    lockIsWholeOrAbsent: check(
+      'progress_lock_token_with_locked_at',
+      sql`(${table.blockchainLockToken} IS NULL) = (${table.blockchainLockedAt} IS NULL)`
+    ),
   };
 });
 

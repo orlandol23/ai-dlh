@@ -59,12 +59,12 @@ Run each workspace directly — the root `npm test` covers only contracts and
 backend:
 
 ```bash
-cd server    && npx vitest run   # 175 tests, 14 files
+cd server    && npx vitest run   # 181 tests, 14 files
 cd frontend  && npx vitest run   #  49 tests,  5 files
 cd contracts && npx hardhat test #  23 tests
 ```
 
-Total: 247 tests. Keep the counts in `README.md` in sync when tests are added.
+Total: 253 tests. Keep the counts in `README.md` in sync when tests are added.
 
 ## Lint and build
 
@@ -82,5 +82,24 @@ lint step), on every push and pull request.
 - The backend validates its environment on boot and exits if anything required
   is missing. Local runs (`npm run dev`) need the variables in `.env.example`;
   the test suites do not — they mock the env module.
+- Every write the blockchain queue makes after claiming a row is fenced by the
+  `blockchain_lock_token` that claim minted (`heldBy`), never by
+  `blockchain_status = 'processing'` alone. A row whose stale lock another
+  worker reclaimed is still `processing`, so a status-only guard lets a
+  superseded worker overwrite the current holder. A fenced write that matches
+  nothing is reported, not assumed to have applied; in the journal it throws
+  `LockLostError`, which `handleSendFailure` must keep treating as "this row is
+  not mine" rather than as a send failure to retry.
+- The nonce is written to the row **before** `sendCompletion`, not after it.
+  Journaling after the broadcast returns leaves the hole it was meant to close:
+  a lost acknowledgement (socket reset, RPC timeout, gateway 502) means the node
+  accepted a transaction the row knows nothing about, and the retry then
+  allocates a fresh nonce and records the completion twice. Moving the write
+  earlier is what makes `recoverCompletion` see a nonce in every failure case.
+  Do not "optimise" the reservation away because it costs a write.
+- `recoverCompletion` accepts a journal with a nonce and no hashes — that is
+  what a reservation looks like — and must keep splitting it on the account
+  nonce: equal means nothing was sent, past means the lost broadcast landed and
+  the record parks for a human. Never resend on a fresh nonce there.
 - `contracts/` needs to download the `solc` binary on first compile; restricted
   networks will fail there.

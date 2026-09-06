@@ -221,10 +221,10 @@ There is no Docker setup and no mock mode: a real database, a real RPC endpoint 
 
 ## Tests
 
-239 tests pass across the three workspaces. Run each one directly:
+247 tests pass across the three workspaces. Run each one directly:
 
 ```bash
-cd server    && npx vitest run     # 167 tests, 13 files
+cd server    && npx vitest run     # 175 tests, 14 files
 cd frontend  && npx vitest run     #  49 tests,  5 files
 cd contracts && npx hardhat test   #  23 tests
 ```

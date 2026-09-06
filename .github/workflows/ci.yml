@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main, develop]
 
+# Least privilege by default. A job that needs to write (posting a PR comment,
+# for example) declares its own `permissions:`, which replaces this one for
+# that job rather than adding to it.
+permissions:
+  contents: read
+
 jobs:
   # Test and statically analyse Smart Contracts
   test-contracts:
@@ -45,19 +51,26 @@ jobs:
       # informational are printed but do not block. Compilation already
       # happened above, so the analysis reads the existing build-info
       # instead of recompiling.
-      - name: Slither
-        uses: crytic/slither-action@v0.4.1
+      #
+      # Run from a pinned pip install rather than crytic/slither-action. The
+      # action passes its inputs to docker as positionals, so `fail-on` never
+      # reaches Slither, and its image is Python 3.9, which caps
+      # slither-analyzer at 0.11.4 — a version that ignores the threshold from
+      # the config file and from the command line alike. Under the action this
+      # step reported success with a medium finding present, which is worse
+      # than having no gate at all. Verified in the CI log: it installed
+      # slither-analyzer 0.11.4.
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          target: contracts/
-          ignore-compile: true
-          fail-on: medium
-          slither-config: contracts/slither.config.json
+          python-version: '3.11'
 
-      # Informational only: the size-contracts plugin is not installed in
-      # this project, so this step must not be able to mask real failures.
-      - name: Check contract size (informational)
+      - name: Install Slither
+        run: pip install slither-analyzer==0.11.6
+
+      - name: Slither
         working-directory: contracts
-        run: npx hardhat size-contracts || echo "size-contracts plugin not configured — skipping"
+        run: slither . --hardhat-ignore-compile --config-file slither.config.json --fail-medium
 
   # Test Backend
   test-backend:

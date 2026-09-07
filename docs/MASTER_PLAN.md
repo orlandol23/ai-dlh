@@ -445,3 +445,58 @@ what the PR has to show.
 - **boxing-instructor**: has its own plan, `docs/ROADMAP.md` in its repository, with Phase 11 (security and operations) added on 2026-09-07 from the same audit.
 - **swiss-defi-optimizer**: has its own plan since 2026-09-07, `docs/ROADMAP.md` in its repository. It is not paused: the reentrancy fix and the ERC-4626 conformance work landed in September.
 - portfolio is paused.
+
+# Second review, 2026-09-07: beyond the audit
+
+A second pass over the plan asking what a paid product needs that no audit
+finding would surface, because none of it is a bug. Each item is a plan entry
+until the PR that closes it links back here.
+
+1. **Personal data and LGPD.** Wallet addresses, the VARK learning style, quiz
+   answers and, from Phase 1, payment records are personal data under the
+   LGPD. There is no retention policy, no deletion path and no privacy notice.
+   Gate on A7, next to the terms of service: a privacy notice; an
+   account-deletion procedure that also says what happens to on-chain records,
+   which cannot be deleted; a retention table per data class.
+2. **Terms of service and the no-refund rule.** E1 rules out refunds on-chain.
+   That has to be disclosed before the first payment, together with the "4
+   weeks (28 days)" wording. Gate on A7.
+3. **Custodial wallet rotation and the journal.** `blockchain_nonce` is per
+   wallet. Rotating the key while records are in flight breaks recovery for
+   them: a new wallet has a different nonce sequence. The rotation procedure
+   is therefore: pause enqueueing, drain the queue to zero in flight, rotate,
+   resume. Write it into the A4 runbook, and consider a `wallet_address` column
+   on the journal so a mixed state is at least detectable.
+4. **Backups, concretely.** "The Postgres backup is part of the money" is
+   named above and has no item. Neon point-in-time recovery enabled; one
+   restore drill actually run and dated; RPO and RTO stated. The journal is
+   what makes a duplicate on-chain record impossible; losing the journal loses
+   that guarantee.
+5. **Horizontal scaling.** The single-instance assumption lives in a code
+   comment, not in the plan. Phase 3 item: either an elected sender (one
+   process owns the nonce) with `FOR UPDATE SKIP LOCKED` claims, or a written
+   statement that single instance is the design and what its ceiling is.
+6. **Output safety for generated modules.** 0b.7 delimits user text in the
+   prompt, which protects the prompt. Nothing checks the output. A content
+   policy for generated educational material (which categories are refused,
+   which are flagged) and a report control on the module page. A product
+   decision either way; record it.
+7. **Alerts, not only exceptions.** Sentry catches what throws. Nothing alerts
+   on "oldest pending record older than X" or "wallet balance below Y days of
+   gas" (the monitor exposes the number; nobody is paged). Two alerts on the
+   health endpoint before go-live.
+
+### Repository hygiene (shared by all six repositories)
+
+- **Dependency update automation.** None of the six repositories has Dependabot
+  or Renovate. Add `.github/dependabot.yml` with weekly, grouped updates for the
+  package ecosystem and for `github-actions`, and daily security updates. The
+  recurring "npm audit fix without --force" items stop recurring once this
+  exists.
+- **Responsible disclosure.** No repository has a `SECURITY.md`. Enable GitHub
+  private vulnerability reporting (Settings > Security > "Private vulnerability
+  reporting") and add a `SECURITY.md` that points to it, so a report never has
+  to be a public issue. Do not put a personal email address in the file.
+- **Branch protection on the default branch.** Require the CI checks to pass
+  before merge; forbid force-push and deletion. An owner setting; costs nothing
+  and is the first thing a reviewer checks after the README.

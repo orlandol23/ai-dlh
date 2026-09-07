@@ -7,6 +7,7 @@ Welcome to the AI-Powered Decentralized Learning Hub documentation.
 | Document                                   | Description                                                |
 | ------------------------------------------ | ---------------------------------------------------------- |
 | [MASTER_PLAN.md](./MASTER_PLAN.md)         | **Current plan**: on-chain billing, adaptive v2, execution phases and current state |
+| [AUDIT-2026-09.md](./AUDIT-2026-09.md)     | Security and architecture audit of September 2026, with the status of every finding |
 | [SETUP.md](./SETUP.md)                     | Complete setup guide (prerequisites, API keys, deployment) |
 | [DEPLOYMENT.md](./DEPLOYMENT.md)           | Production deployment guide (Vercel + Railway + Neon)      |
 | [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) | Common issues and solutions                                |

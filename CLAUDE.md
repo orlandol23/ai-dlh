@@ -111,3 +111,12 @@ lint step), on every push and pull request.
   nonce there.
 - `contracts/` needs to download the `solc` binary on first compile; restricted
   networks will fail there.
+
+## Plans and audits
+
+- The plan is `docs/MASTER_PLAN.md`, with the ADRs under `docs/adr/`. Nothing in
+  it is ticked by intention: a box closes in the PR that closes it, with the PR
+  linked.
+- `docs/AUDIT-2026-09.md` is the September 2026 security and architecture
+  audit with the status of every finding. A status changes only in the PR that
+  changes the code. Later reviews go in a new dated file, never merged into it.

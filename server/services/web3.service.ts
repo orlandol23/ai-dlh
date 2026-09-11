@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import { config } from '../utils/env.js';
 import { logger } from '../utils/logger.js';
 import { getErrorCode, getErrorMessage } from '../utils/errors.js';
+import { LockLostError } from './queue-errors.js';
 
 // Learning Progress ABI (minimal - only what we need)
 const LEARNING_PROGRESS_ABI = [
@@ -20,7 +21,9 @@ export interface BlockchainReceipt {
  * without holding on to the ethers `TransactionResponse`. The queue writes
  * the nonce and the hash to the database BEFORE the transaction reaches the
  * node, which is what makes the on-chain write survive both a crash and a
- * lost acknowledgement.
+ * lost acknowledgement. The same order (sign → journal → broadcast) is used
+ * for replace-by-fee replacements: the replacement hash is journaled while
+ * the replacement exists only as a signature, never after the node has it.
  */
 export interface SentTransaction {
   hash: string;
@@ -57,9 +60,13 @@ export interface CompletionJournal {
 }
 
 /**
- * Called with each replacement hash the service broadcasts, BEFORE it
- * starts waiting on it. The queue appends the hash to the journal, so a
- * crash never leaves an in-flight hash the recovery path cannot check.
+ * Called with each replacement hash the service signs, BEFORE the signed
+ * transaction reaches the node. The queue appends the hash to the journal
+ * while the replacement is still only a signature, so a lost acknowledgement
+ * never leaves an in-flight hash that recovery cannot look up — and if that
+ * fenced journal write reports the lock lost (LockLostError), the service
+ * throws instead of broadcasting anything on a nonce that is not ours any
+ * more.
  */
 export type OnReplacementHash = (hash: string) => Promise<void>;
 
@@ -244,17 +251,17 @@ export class Web3Service {
    *
    * Stuck-transaction strategy (unchanged by the send/wait split):
    * 1. Wait up to `timeoutMs` for 1 confirmation.
-   * 2. If it doesn't confirm in time, re-send the SAME nonce with fees
-   *    bumped by 25% (replace-by-fee) and wait again. If the original
-   *    mines in the meantime, ethers reports TRANSACTION_REPLACED /
+   * 2. If it doesn't confirm in time, sign a replacement on the SAME nonce
+   *    with fees bumped by 25% (replace-by-fee) and wait again. If the
+   *    original mines in the meantime, ethers reports TRANSACTION_REPLACED /
    *    NONCE_EXPIRED and we recover the original receipt.
    * 3. If the replacement also times out, throw a retryable error — the
    *    queue worker retries later, and the retry goes through
    *    `recoverCompletion`, which reuses the still-stuck nonce.
    *
-   * `onReplacement` is invoked with every replacement hash BEFORE we wait
-   * on it, so the caller's journal always knows every hash sent on this
-   * nonce.
+   * `onReplacement` is invoked with the replacement hash BEFORE the signed
+   * replacement is handed to the node, so the caller's journal always knows
+   * every hash sent on this nonce before any of them is in flight.
    *
    * Throws NonRetryableBlockchainError for contract reverts
    * (CALL_EXCEPTION): retrying the exact same call can never succeed.
@@ -424,6 +431,10 @@ export class Web3Service {
   /** Map an ethers/unknown failure onto the queue's retry taxonomy. */
   private toDomainError(error: unknown): Error {
     if (error instanceof NonRetryableBlockchainError) return error;
+    // The journal callback's own fence: not a blockchain failure at all.
+    // Wrapping it would make a reclaimed lock look like a send failure to
+    // retry, which is the exact misreporting the fence exists to prevent.
+    if (error instanceof LockLostError) return error;
 
     logger.error('Blockchain transaction error', { error });
 
@@ -495,9 +506,14 @@ export class Web3Service {
    * fees bumped by 25% (nodes require >= +10% to accept a replacement).
    * If the original already mined, returns its receipt instead.
    *
-   * `onReplacement` is awaited BEFORE the wait, so the journal records
-   * the new hash while it is in flight: a crash here must never leave a
-   * broadcast hash that recovery cannot look up.
+   * `onReplacement` is invoked with the replacement hash BEFORE the signed
+   * transaction is handed to the node, so the journal records the new hash
+   * while the replacement exists only as a signature: a broadcast whose
+   * acknowledgement is lost can still have reached the node, and the row
+   * must already name it. If the caller's journal is a fenced write that
+   * reports the lock lost, this throws (LockLostError) and the replacement
+   * is never broadcast — a nonce this worker no longer holds must not be
+   * spent.
    */
   private async replaceWithFeeBump(
     sent: SentTransaction,
@@ -510,25 +526,19 @@ export class Web3Service {
       if (minedOriginal) return minedOriginal;
     }
 
+    // Sign the replacement locally. Signing fixes the hash with no network
+    // round trip, so the journal can learn the exact transaction that is
+    // about to be broadcast — the same ordering as the initial send.
+    const prepared = await this.prepareReplacement(sent);
+
+    // Journal BEFORE broadcasting. This is the fence, not a formality: the
+    // queue throws LockLostError when its fenced write matches no row, and
+    // a lost lock means this nonce is not ours to spend any more.
+    await onReplacement?.(prepared.hash);
+    logger.info(`Replacement transaction sent: ${prepared.hash} (nonce ${sent.nonce})`);
+
     try {
-      const bumped = await this.wallet.sendTransaction({
-        to: sent.to,
-        data: sent.data,
-        // recordCompletion is non-payable: nothing to carry over.
-        value: 0n,
-        nonce: sent.nonce,
-        gasLimit: sent.gasLimit ?? undefined,
-        maxFeePerGas:
-          sent.maxFeePerGas != null
-            ? (sent.maxFeePerGas * FEE_BUMP_PERCENT) / 100n
-            : undefined,
-        maxPriorityFeePerGas:
-          sent.maxPriorityFeePerGas != null
-            ? (sent.maxPriorityFeePerGas * FEE_BUMP_PERCENT) / 100n
-            : undefined,
-      });
-      logger.info(`Replacement transaction sent: ${bumped.hash} (nonce ${sent.nonce})`);
-      await onReplacement?.(bumped.hash);
+      const bumped = await this.provider.broadcastTransaction(prepared.raw);
       return await this.waitWithTimeout(bumped, timeoutMs);
     } catch (error) {
       // NONCE_EXPIRED / REPLACEMENT_UNDERPRICED usually mean the original
@@ -539,6 +549,56 @@ export class Web3Service {
       }
       throw error;
     }
+  }
+
+  /**
+   * Build and sign the replace-by-fee transaction for a stuck `sent`
+   * transaction, WITHOUT sending it anywhere.
+   *
+   * Same nonce and same calldata; fees bumped by `FEE_BUMP_PERCENT`
+   * (nodes require >= +10% to accept a replacement). When the stuck
+   * transaction's gas limit is unknown the request omits it, so
+   * `populateTransaction` estimates it against the node. Signing is
+   * local, so the returned transaction already has its final hash — the
+   * hash the journal must learn before the broadcast happens.
+   */
+  private async prepareReplacement(sent: SentTransaction): Promise<PreparedTransaction> {
+    const populated = await this.wallet.populateTransaction({
+      to: sent.to,
+      data: sent.data,
+      // recordCompletion is non-payable: nothing to carry over.
+      value: 0n,
+      nonce: sent.nonce,
+      gasLimit: sent.gasLimit ?? undefined,
+      maxFeePerGas:
+        sent.maxFeePerGas != null
+          ? (sent.maxFeePerGas * FEE_BUMP_PERCENT) / 100n
+          : undefined,
+      maxPriorityFeePerGas:
+        sent.maxPriorityFeePerGas != null
+          ? (sent.maxPriorityFeePerGas * FEE_BUMP_PERCENT) / 100n
+          : undefined,
+    });
+
+    const raw = await this.wallet.signTransaction(populated);
+    const hash = ethers.Transaction.from(raw).hash;
+
+    if (!hash) {
+      // Unreachable for a signed transaction, and worth failing loudly
+      // rather than journaling an empty hash if ethers ever changes.
+      throw new Error('Signed replacement transaction has no hash');
+    }
+
+    return {
+      raw,
+      hash,
+      nonce: sent.nonce,
+      data: populated.data ?? sent.data,
+      to: (populated.to as string | null) ?? sent.to,
+      gasLimit: this.asBigInt(populated.gasLimit),
+      maxFeePerGas: this.asBigInt(populated.maxFeePerGas),
+      maxPriorityFeePerGas: this.asBigInt(populated.maxPriorityFeePerGas),
+    };
   }
 
   /**

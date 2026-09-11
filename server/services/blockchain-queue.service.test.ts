@@ -18,6 +18,10 @@ const mocks = vi.hoisted(() => ({
   // row. Set to [] to simulate the lock having been reclaimed, or to a
   // function to decide per write which transition finds it gone.
   transitionResult: [{ id: 1 }] as unknown[] | ((values: Record<string, unknown>) => unknown[]),
+  // The `.set()` values of fenced transitions whose UPDATE matched nothing
+  // — the writes a reclaimed lock refused. Claims are not in here: an
+  // empty claim RETURNING means "claimed elsewhere", a different event.
+  refusedWrites: [] as Array<Record<string, unknown>>,
   nextNonce: vi.fn(),
   prepareCompletion: vi.fn(),
   broadcastCompletion: vi.fn(),
@@ -59,7 +63,11 @@ vi.mock('../db/index.js', () => ({
                 return Promise.resolve(mocks.returningQueue.shift() ?? []);
               }
               const result = mocks.transitionResult;
-              return Promise.resolve(typeof result === 'function' ? result(values) : result);
+              const resolved = typeof result === 'function' ? result(values) : result;
+              if (resolved.length === 0) {
+                mocks.refusedWrites.push({ ...values });
+              }
+              return Promise.resolve(resolved);
             }),
           })),
         };
@@ -151,6 +159,8 @@ const statusWrites = () =>
   );
 /** The transition that ended the record: confirmed, failed, failed_permanent. */
 const finalWrite = () => statusWrites()[statusWrites().length - 1];
+/** The fenced writes the lock loss refused: attempted, matched nothing. */
+const refusedWrites = () => mocks.refusedWrites;
 
 /** How web3Service describes a transaction once it exists. */
 function sentTx(overrides: Partial<Record<string, unknown>> = {}) {
@@ -205,6 +215,7 @@ describe('BlockchainQueueService.processOnce', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.setCalls.length = 0;
+    mocks.refusedWrites.length = 0;
     mocks.returningQueue.length = 0;
     mocks.transitionResult = [{ id: 1 }];
     mocks.nextNonce.mockResolvedValue(7);
@@ -463,6 +474,7 @@ describe('BlockchainQueueService exactly-once journal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.setCalls.length = 0;
+    mocks.refusedWrites.length = 0;
     mocks.returningQueue.length = 0;
     mocks.transitionResult = [{ id: 1 }];
     mocks.nextNonce.mockResolvedValue(7);
@@ -762,6 +774,7 @@ describe('BlockchainQueueService idle scheduling', () => {
     vi.useFakeTimers();
     vi.setSystemTime(T0);
     mocks.setCalls.length = 0;
+    mocks.refusedWrites.length = 0;
     mocks.returningQueue.length = 0;
     mocks.transitionResult = [{ id: 1 }];
     mocks.nextNonce.mockResolvedValue(7);
@@ -956,6 +969,7 @@ describe('BlockchainQueueService fencing and the lost-acknowledgement window', (
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.setCalls.length = 0;
+    mocks.refusedWrites.length = 0;
     mocks.returningQueue.length = 0;
     mocks.transitionResult = [{ id: 1 }];
     mocks.nextNonce.mockResolvedValue(7);
@@ -1063,6 +1077,116 @@ describe('BlockchainQueueService fencing and the lost-acknowledgement window', (
     // writing a retry onto it is the exact thing the fence prevents.
     expect(statusWrites()).toHaveLength(0);
   });
+
+  it('recovers a fee-bump replacement that mined after a lost acknowledgement', async () => {
+    // The full arc this fix closes: the replacement is journaled while it
+    // is in flight (inside the wait), the node accepts it, the
+    // acknowledgement is lost, and the retry resolves the row from the
+    // journaled replacement's receipt instead of ever sending again.
+    const candidate = makeCandidate();
+    mocks.findMany.mockResolvedValue([candidate]);
+    mocks.returningQueue.push(claimedRow(candidate, 1));
+    mocks.nextNonce.mockResolvedValue(42);
+    mocks.prepareCompletion.mockResolvedValue(preparedTx({ hash: '0xaaa', nonce: 42 }));
+    mocks.broadcastCompletion.mockResolvedValue(sentTx({ hash: '0xaaa', nonce: 42 }));
+    // Same shape as the real waitForCompletion: the replacement is
+    // journaled through onReplacement, then the broadcast "fails".
+    mocks.waitForCompletion.mockImplementation(
+      async (
+        _sent: unknown,
+        _timeoutMs: number,
+        onReplacement: (hash: string) => Promise<void>
+      ) => {
+        await onReplacement('0xbbb');
+        throw new Error('socket hang up');
+      }
+    );
+
+    await service.processOnce();
+
+    // Both hashes survive the failure: the journal already names the
+    // replacement that may or may not be in flight.
+    expect(journalWrites().map((w) => w.blockchainSentHashes)).toEqual([
+      '["0xaaa"]',
+      '["0xaaa","0xbbb"]',
+    ]);
+    expect(finalWrite()).toMatchObject({ blockchainStatus: 'failed' });
+    // The failure write never clears the journal: the retry must find it.
+    expect(finalWrite()).not.toHaveProperty('blockchainSentHashes');
+
+    // The row, claimed again after its backoff.
+    const retry = makeCandidate({
+      blockchainStatus: 'failed',
+      blockchainNonce: 42,
+      blockchainSentHashes: '["0xaaa","0xbbb"]',
+    });
+    mocks.findMany.mockResolvedValue([retry]);
+    mocks.returningQueue.push(claimedRow(retry, 2));
+    // The replacement the node actually took is the one with the receipt.
+    mocks.recoverCompletion.mockResolvedValue(receipt('0xbbb'));
+
+    await service.processOnce();
+
+    // Recovery, never a second send: the replacement is already on-chain.
+    expect(mocks.prepareCompletion).toHaveBeenCalledTimes(1);
+    expect(mocks.broadcastCompletion).toHaveBeenCalledTimes(1);
+    expect(mocks.recoverCompletion).toHaveBeenCalledWith(
+      expect.objectContaining({ nonce: 42, hashes: ['0xaaa', '0xbbb'] }),
+      90_000,
+      expect.any(Function)
+    );
+    expect(finalWrite()).toMatchObject({
+      blockchainStatus: 'confirmed',
+      transactionHash: '0xbbb',
+    });
+  });
+
+  it('never broadcasts a replacement whose journal write reports the lock lost', async () => {
+    // The replacement journal is a fenced write, and web3.service awaits it
+    // BEFORE broadcasting the replacement. A lock lost there must abort the
+    // replacement: this nonce is not this worker's to spend any more.
+    const candidate = makeCandidate();
+    mocks.findMany.mockResolvedValue([candidate]);
+    mocks.returningQueue.push(claimedRow(candidate, 1));
+    mocks.nextNonce.mockResolvedValue(42);
+    mocks.prepareCompletion.mockResolvedValue(preparedTx({ hash: '0xaaa', nonce: 42 }));
+    mocks.broadcastCompletion.mockResolvedValue(sentTx({ hash: '0xaaa', nonce: 42 }));
+    // The original journal lands; only the replacement's journal write
+    // discovers that another worker reclaimed the row.
+    mocks.transitionResult = (values) =>
+      values.transactionHash === '0xbbb' ? [] : [{ id: 1 }];
+
+    // Stands in for the replacement broadcast that real web3.service would
+    // only attempt after the journal succeeded.
+    let replacementBroadcast = false;
+    mocks.waitForCompletion.mockImplementation(
+      async (
+        _sent: unknown,
+        _timeoutMs: number,
+        onReplacement: (hash: string) => Promise<void>
+      ) => {
+        await onReplacement('0xbbb'); // throws LockLostError
+        replacementBroadcast = true; // unreachable in the real service
+        return receipt('0xbbb');
+      }
+    );
+
+    await service.processOnce();
+
+    // The replacement was never "sent": the queue aborted at the journal.
+    expect(replacementBroadcast).toBe(false);
+    // The write the lock loss stopped is the replacement journal: it was
+    // attempted and refused, so the row still holds only the original hash.
+    expect(refusedWrites()).toEqual([
+      expect.objectContaining({
+        blockchainNonce: 42,
+        blockchainSentHashes: '["0xaaa","0xbbb"]',
+        transactionHash: '0xbbb',
+      }),
+    ]);
+    // And nothing followed the refusal: no retry, no failure, no confirm.
+    expect(statusWrites()).toHaveLength(0);
+  });
 });
 
 describe('BlockchainQueueService.wake', () => {
@@ -1075,6 +1199,7 @@ describe('BlockchainQueueService.wake', () => {
     vi.clearAllMocks();
     vi.useFakeTimers();
     mocks.setCalls.length = 0;
+    mocks.refusedWrites.length = 0;
     mocks.returningQueue.length = 0;
     mocks.transitionResult = [{ id: 1 }];
     mocks.nextNonce.mockResolvedValue(7);

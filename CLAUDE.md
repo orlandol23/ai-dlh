@@ -59,12 +59,12 @@ Run each workspace directly — the root `npm test` covers only contracts and
 backend:
 
 ```bash
-cd server    && npx vitest run   # 189 tests, 15 files
+cd server    && npx vitest run   # 194 tests, 15 files
 cd frontend  && npx vitest run   #  49 tests,  5 files
 cd contracts && npx hardhat test #  23 tests
 ```
 
-Total: 261 tests. Keep the counts in `README.md` in sync when tests are added.
+Total: 266 tests. Keep the counts in `README.md` in sync when tests are added.
 
 ## Lint and build
 
@@ -88,17 +88,35 @@ lint step), on every push and pull request.
   worker reclaimed is still `processing`, so a status-only guard lets a
   superseded worker overwrite the current holder. A fenced write that matches
   nothing is reported, not assumed to have applied; in the journal it throws
-  `LockLostError`, which `handleSendFailure` must keep treating as "this row is
-  not mine" rather than as a send failure to retry.
-- Sending is three calls, in this order: `prepareCompletion` (signs, locally,
-  and sends nothing), the journal write, then `broadcastCompletion`. Do not
-  collapse them back into one `contract.recordCompletion(...)`. A signed
+  `LockLostError` (defined in `services/queue-errors.ts`, shared with
+  web3.service so its error mapper can pass it through), which
+  `handleSendFailure` must keep treating as "this row is not mine" rather than
+  as a send failure to retry.
+- The initial send is three calls, in this order: `prepareCompletion` (signs,
+  locally, and sends nothing), the journal write, then `broadcastCompletion`.
+  Do not collapse them back into one `contract.recordCompletion(...)`. A signed
   transaction already carries its final hash, and writing that hash down before
   the node can see it is the only reason a lost acknowledgement (socket reset,
   RPC timeout, gateway 502) is recoverable: the node may have accepted a
   transaction, and the row already names it. Learn the hash from the
   acknowledgement instead and the retry signs a fresh nonce and records the
   completion twice.
+- The replace-by-fee replacement follows the same order inside web3.service:
+  `replaceWithFeeBump` signs the fee-bumped transaction locally
+  (`prepareReplacement`), reports the new hash through `onReplacement` BEFORE
+  broadcasting, and only then calls `provider.broadcastTransaction(raw)`. It
+  must never go back to `wallet.sendTransaction(...)`, which signs and
+  broadcasts in one call: journaled-after-the-acknowledgement reopens the lost
+  ack window for replacements, and the retry then reports the journaled nonce
+  as consumed by an unknown transaction. If the `onReplacement` write reports
+  the lock lost, the replacement is not broadcast — a nonce this worker no
+  longer holds must not be spent, and `toDomainError` must keep passing
+  `LockLostError` through instead of wrapping it as "Blockchain error".
+- Recovery identifies an already-transmitted replacement by receipt: every
+  hash in the journal is checked (`getTransactionReceipt`), and the first one
+  that mined decides the outcome — status 1 confirms, status 0 parks the
+  record as permanently failed. A fee bump that mined therefore confirms a
+  record whose original never did, exactly like the initial-send case.
 - `services/web3.service.signing.test.ts` mocks nothing below our own code: a
   real `ethers.Wallet` signs against a fake JSON-RPC server so the ordering is
   checked against the real library. Keep it that way — the mocked tests in

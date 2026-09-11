@@ -28,6 +28,15 @@ const NONCE = 42;
 /** Raw payloads the fake node received through eth_sendRawTransaction. */
 const broadcast: string[] = [];
 
+/**
+ * The caller's journal, snapshotted the instant each raw transaction
+ * reaches the node. The replacement test reads it to prove the hash was
+ * durable BEFORE the node saw the bytes — the property that makes a lost
+ * acknowledgement recoverable rather than a stranded transaction.
+ */
+const journal: string[] = [];
+const journalAtBroadcast: string[][] = [];
+
 function rpcAnswer(method: string, params: unknown[]): unknown {
   switch (method) {
     case 'eth_chainId':
@@ -57,9 +66,39 @@ function rpcAnswer(method: string, params: unknown[]): unknown {
         extraData: '0x',
         transactions: [],
       };
+    case 'eth_getTransactionReceipt': {
+      // The node has a receipt only for what it actually received through
+      // eth_sendRawTransaction; every other hash is unknown to it.
+      const hash = (params[0] as string).toLowerCase();
+      const raw = broadcast.find((raw) => ethers.keccak256(raw).toLowerCase() === hash);
+      if (!raw) return null;
+      const tx = ethers.Transaction.from(raw);
+      return {
+        transactionHash: hash,
+        blockHash: '0x' + '33'.repeat(32),
+        blockNumber: '0x101',
+        transactionIndex: '0x0',
+        from: tx.from,
+        to: tx.to,
+        contractAddress: null,
+        root: null,
+        gasUsed: '0x15f90',
+        cumulativeGasUsed: '0x15f90',
+        effectiveGasPrice: '0x3b9aca00',
+        blobGasUsed: null,
+        blobGasPrice: null,
+        logsBloom: '0x',
+        logs: [],
+        status: '0x1',
+        type: '0x2',
+      };
+    }
     case 'eth_sendRawTransaction': {
       const raw = params[0] as string;
       broadcast.push(raw);
+      // Snapshot taken by the node itself: this is what the journal held
+      // when the bytes arrived, not what the caller remembers afterwards.
+      journalAtBroadcast.push([...journal]);
       return ethers.keccak256(raw);
     }
     default:
@@ -171,5 +210,58 @@ describe('Web3Service signing, against a real signer', () => {
       /no funds/i
     );
     expect(broadcast).toHaveLength(0);
+  });
+
+  it('signs a fee-bump replacement locally and journals its hash before the node sees it', async () => {
+    // The initial send closed the lost-acknowledgement window by journaling
+    // the signed hash first. This is the same property for replace-by-fee:
+    // a replacement is signed (which fixes its hash), journaled, and only
+    // then handed to the node — so a replacement the node accepted while
+    // the acknowledgement was lost is still a hash the row can look up.
+    broadcast.length = 0;
+    journal.length = 0;
+    journalAtBroadcast.length = 0;
+
+    // A timed-out transaction is exactly this: a signed description of a
+    // transaction the node has already accepted. Nothing is broadcast here.
+    const stuck = await service.prepareCompletion(10, 85, 'Solidity', NONCE);
+    expect(broadcast).toHaveLength(0);
+
+    const receipt = await service.waitForCompletion(stuck, 30_000, async (hash) => {
+      journal.push(hash);
+    });
+
+    // Only the replacement reached the node.
+    expect(broadcast).toHaveLength(1);
+    const replacementRaw = broadcast[0];
+    const decoded = ethers.Transaction.from(replacementRaw);
+
+    // Same nonce, same sender, same recipient, same call: a replacement,
+    // never a second transaction on a fresh nonce.
+    expect(decoded.nonce).toBe(NONCE);
+    expect(decoded.chainId).toBe(CHAIN_ID);
+    expect(decoded.from).toBe(wallet.address);
+    expect(decoded.to?.toLowerCase()).toBe(CONTRACT.toLowerCase());
+    const call = new ethers.Interface([
+      'function recordCompletion(uint256 _moduleId, uint256 _score, string memory _moduleTopic) external',
+    ]).parseTransaction({ data: decoded.data });
+    expect(call?.name).toBe('recordCompletion');
+    expect([call?.args[0], call?.args[1], call?.args[2]]).toEqual([10n, 85n, 'Solidity']);
+
+    // Fees bumped by 25% over the stuck transaction's, on both legs —
+    // well past the mempool's +10% replacement rule.
+    expect(decoded.maxFeePerGas).toBe((stuck.maxFeePerGas! * 125n) / 100n);
+    expect(decoded.maxPriorityFeePerGas).toBe((stuck.maxPriorityFeePerGas! * 125n) / 100n);
+    expect(decoded.maxFeePerGas!).toBeGreaterThan(stuck.maxFeePerGas!);
+
+    // The journal learned the replacement's hash before the node received
+    // the bytes, and the hash it learned is the hash of those bytes.
+    expect(journal).toEqual([decoded.hash]);
+    expect(journalAtBroadcast).toEqual([[decoded.hash]]);
+    expect(ethers.keccak256(replacementRaw)).toBe(decoded.hash);
+
+    // The wait resolved on the replacement's own receipt.
+    expect(receipt.hash).toBe(decoded.hash);
+    expect(receipt.blockNumber).toBe(257); // 0x101, the fake node's receipt
   });
 });

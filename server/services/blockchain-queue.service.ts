@@ -10,6 +10,7 @@ import { config } from '../utils/env.js';
 import { logger } from '../utils/logger.js';
 import { captureException } from '../utils/sentry.js';
 import { getErrorMessage } from '../utils/errors.js';
+import { LockLostError } from './queue-errors.js';
 
 /**
  * Exponential backoff schedule between send attempts.
@@ -44,22 +45,6 @@ interface QueueCandidate {
   blockchainNonce: number | null;
   blockchainSentHashes: string | null;
   module: { topic: string } | null;
-}
-
-/**
- * This worker no longer holds the row it was working on.
- *
- * Thrown by the journal when its fenced UPDATE matches nothing, which means
- * the stale-lock window expired and another worker reclaimed the record. It
- * is not a send failure and must not be treated as one: the row belongs to
- * someone else, so the correct response is to stop touching it, not to
- * schedule a retry on it.
- */
-class LockLostError extends Error {
-  constructor(recordId: number) {
-    super(`Queue record ${recordId}: lock reclaimed by another worker`);
-    this.name = 'LockLostError';
-  }
 }
 
 /** A claimed row, as returned by the conditional claim UPDATE. */
@@ -121,6 +106,14 @@ function parseSentHashes(raw: string | null): string[] {
  *    broadcasting a second one. Since the recovery path re-broadcasts on
  *    the SAME nonce, at most one of those transactions can ever mine. See
  *    sendAndJournal for why journaling after the broadcast was not enough.
+ *  - Replace-by-fee replacements follow the same order, inside
+ *    web3.service: the fee-bumped transaction is signed locally, its hash
+ *    is reported through the journal callback (onReplacement) and only
+ *    then are the bytes handed to the node. A replacement whose
+ *    acknowledgement is lost therefore lands as a hash the row already
+ *    names, and recovery confirms from its receipt rather than reporting
+ *    the nonce consumed by an unknown transaction. If the journal callback
+ *    reports the lock lost, the replacement is not broadcast at all.
  *
  * Claim semantics (idempotency):
  *  - A record is claimed via a single conditional UPDATE

@@ -8,6 +8,28 @@
     "intermediate": "Intermediate",
     "advanced": "Advanced"
   },
+  "desk": {
+    "eyebrow": "Module",
+    "passNote": "70% to pass"
+  },
+  "rail": {
+    "eyebrow": "Module status",
+    "notStarted": "Not started",
+    "noAttempt": "No attempt yet",
+    "scoreEyebrow": "Latest score",
+    "chainEyebrow": "On-chain",
+    "nextEyebrow": "Next action",
+    "hintNotStarted": "Pass the quiz at 70% or above to record it on Sepolia.",
+    "hintBelow": "Retake the quiz to reach the 70% threshold.",
+    "hintPending": "The queue continues even if you leave this page.",
+    "hintRetry": "A retry has been scheduled — follow the status here.",
+    "hintFailed": "Re-queue the registration from here.",
+    "hintRecorded": "Your score is recorded on Sepolia — the certificate is public."
+  },
+  "errors": {
+    "loadTitle": "Couldn't load this module.",
+    "loadHint": "Nothing was lost — your saved attempts are safe. Check your connection and retry."
+  },
   "topicLabel": "Topic: {{topic}}",
   "notFound": {
     "title": "Module not found",
@@ -16,14 +38,14 @@
   "alreadyCompleted": {
     "title": "You've already completed this module",
     "scoreLine": "Score: {{score}}% — {{result}}",
-    "passed": "Passed ✅",
-    "failed": "Failed ❌",
+    "passed": "Passed",
+    "failed": "Below the 70% threshold",
     "viewOnBlockchain": "View on Blockchain"
   },
-  "startQuiz": "Start Quiz",
-  "retakeQuiz": "Retake Quiz",
+  "startQuiz": "Start quiz",
+  "retakeQuiz": "Retake quiz",
   "focus": {
-    "enter": "Focus mode",
+    "enter": "Enter focus mode",
     "exit": "Exit focus mode"
   }
 }

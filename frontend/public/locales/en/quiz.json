@@ -17,24 +17,28 @@
   "submitError": "Error submitting quiz",
   "results": {
     "correctOfTotal": "{{correct}} of {{total}} correct",
-    "passedTitle": "🎉 Congratulations! You passed!",
-    "passedDescription": "You reached the minimum score of 70%",
-    "failedTitle": "Not this time",
-    "failedDescription": "You need 70% to pass. Try again!",
+    "outcomeEyebrow": "Outcome",
+    "registrationEyebrow": "Registration",
+    "passedTitle": "Passed.",
+    "passedDescription": "You reached the 70% threshold.",
+    "failedTitle": "Below the 70% threshold.",
+    "failedDescription": "Your score was saved.",
+    "queuedLine": "Passed. Registration is queued.",
+    "retryScheduledLine": "Passed. A registration retry is scheduled.",
     "onChainBadge": "ON-CHAIN",
-    "onChainTitle": "⛓️ Recorded on the Blockchain!",
+    "onChainTitle": "Recorded on Sepolia. Transaction hash available.",
     "onChainDescription": "Your certificate has been permanently recorded on the Ethereum blockchain",
     "viewOnEtherscan": "View on Etherscan",
-    "blockchainRegisteringTitle": "⛓️ Registering on the blockchain…",
+    "blockchainRegisteringTitle": "Passed. Registering on Sepolia.",
     "blockchainRegisteringDescription": "Your certificate is being recorded on Sepolia. This can take a few minutes — you can leave this page, the registration continues in the background.",
-    "blockchainFailedTitle": "⚠️ Blockchain registration failed",
+    "blockchainFailedTitle": "Registration failed. Your score was saved. You can re-queue it.",
     "blockchainFailedDescription": "Your score was saved, but the on-chain registration failed after several attempts. You can try again.",
     "retryBlockchain": "Try again",
     "retryQueued": "Registration re-queued — follow the status here.",
     "retryError": "Could not re-queue the registration",
     "backToDashboard": "Back to Dashboard",
-    "alreadyRecordedTitle": "✅ Already recorded on-chain",
-    "alreadyRecordedDescription": "You'd already earned the on-chain record for this module — no new blockchain transaction was needed. Your score was saved."
+    "alreadyRecordedTitle": "Recorded on Sepolia in an earlier attempt.",
+    "alreadyRecordedDescription": "No new blockchain transaction was needed for this module — your score was saved."
   },
   "review": {
     "title": "Answer review",
@@ -42,6 +46,7 @@
     "correct": "Correct",
     "incorrect": "Incorrect",
     "yourAnswer": "Your answer: {{letter}}. {{content}}",
-    "lockedHint": "Answers are shown only for questions you got right. Retake the quiz to unlock the ones you missed."
+    "lockedHint": "Answers are shown only for questions you got right. Retake the quiz to unlock the ones you missed.",
+    "lockedLine": "Explanation locked. Answer this question correctly on a retake to unlock it."
   }
 }

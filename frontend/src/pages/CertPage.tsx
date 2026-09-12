@@ -70,7 +70,9 @@ export const CertPage = () => {
           <Card className="mx-auto max-w-md">
             <CardContent className="pt-6" role="alert">
               <p className="eyebrow">{t('page.invalidLink')}</p>
-              <p className="mt-2 text-lg font-semibold">{t('page.invalidLink')}</p>
+              <h1 className="mt-2 font-display text-2xl font-semibold tracking-tight">
+                {t('page.invalidLink')}
+              </h1>
               <Button className="mt-4" onClick={() => (window.location.href = '/')}>
                 {t('page.createYour')}
               </Button>
@@ -82,7 +84,9 @@ export const CertPage = () => {
           <Card className="mx-auto max-w-md">
             <CardContent className="pt-6" role="alert">
               <p className="eyebrow">{t('page.verification')}</p>
-              <p className="mt-2 text-lg font-semibold">{t('page.notFound')}</p>
+              <h1 className="mt-2 font-display text-2xl font-semibold tracking-tight">
+                {t('page.notFound')}
+              </h1>
               <Button className="mt-4" onClick={() => (window.location.href = '/')}>
                 {t('page.createYour')}
               </Button>

@@ -60,8 +60,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
           <Card className="max-w-lg w-full">
             <CardHeader>
-              <p className="eyebrow">⚠️ Unexpected error</p>
-              <CardTitle className="font-display tracking-tight">Something went wrong</CardTitle>
+              <p className="eyebrow">Unexpected render error</p>
+              <CardTitle className="font-display tracking-tight">The application could not render this view</CardTitle>
               <CardDescription>
                 We ran into a problem rendering this part of the application.
                 You can try again or reload the page.

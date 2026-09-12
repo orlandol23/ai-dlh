@@ -198,7 +198,9 @@ export const ModulePage = () => {
           className="mx-auto w-full max-w-[72ch] px-4 py-12 sm:px-6"
         >
           <div role="alert" className="rounded-sm border border-error-border bg-error-bg p-4">
-            <p className="font-medium text-error-fg">{t('module:errors.loadTitle')}</p>
+            <h1 className="font-display text-2xl font-semibold tracking-tight text-error-fg">
+              {t('module:errors.loadTitle')}
+            </h1>
             <p className="mt-1 break-all font-mono text-xs text-error-fg/80">
               {moduleError.message}
             </p>

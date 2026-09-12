@@ -228,7 +228,11 @@ const ResultView = ({ counts, style, isMultimodal, isSaving, onRetake, onBack }:
 
   return (
     <div className="max-w-3xl space-y-8">
-      <section className="border-y-2 border-foreground py-8" aria-labelledby="vark-result-title">
+      <section
+        className="border-y-2 border-foreground py-8"
+        aria-labelledby="vark-result-title"
+        aria-busy={isSaving}
+      >
           <p className="eyebrow">{t('result.eyebrow')}</p>
           <h1 id="vark-result-title" className="mt-2 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
             {t('result.title')}{' '}

@@ -84,9 +84,16 @@ export const HomePage = () => {
           <div className="flex items-center gap-2">
             <LanguageSelector />
             <ThemeToggle />
-            <Button onClick={connectWallet} disabled={isConnecting} className="hidden sm:inline-flex">
+            {/* Quiet text link — the hero CTA is the only primary on this
+                page; the header keeps a low-key path to the same action. */}
+            <button
+              type="button"
+              onClick={connectWallet}
+              disabled={isConnecting}
+              className="hidden h-11 items-center rounded-sm text-sm font-medium text-muted-foreground underline decoration-border underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-45 sm:inline-flex"
+            >
               {isConnecting ? t('auth:connecting') : t('auth:connectWallet')}
-            </Button>
+            </button>
           </div>
         </div>
       </header>

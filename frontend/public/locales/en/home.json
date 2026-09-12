@@ -1,42 +1,31 @@
 {
-  "hero": {
-    "titleLine1": "Learn with <0>AI</0>",
-    "titleLine2": "Certify <0>on chain</0>",
-    "subtitle": "A personalized learning hub that uses Generative AI to create educational content on-demand and records your progress on the Ethereum blockchain.",
-    "ctaPrimary": "Get started",
-    "ctaSecondary": "Learn more"
+  "eyebrow": "Study bench",
+  "statement": "Generate a study module on any topic. Pass its quiz at 70%. The pass is recorded on the Sepolia testnet — verifiable on Etherscan.",
+  "ctaSecondary": "See the verified contract",
+  "metamaskNote": "Requires the MetaMask browser extension — sign-in is a wallet signature.",
+  "ledger": {
+    "eyebrow": "Evidence ledger",
+    "caption": "What your ledger looks like after a few attempts.",
+    "item1": "TypeScript generics",
+    "item1Meta": "2 d ago · 0x3f…9a",
+    "item2": "SQL indexes",
+    "item2Meta": "1 h ago",
+    "item3": "Event loop",
+    "item3Meta": "6 d ago",
+    "stateRecorded": "recorded",
+    "stateRegistering": "registering…",
+    "stateBelow": "below 70%"
   },
-  "features": {
-    "ai": {
-      "title": "Generative AI",
-      "description": "Personalized educational content powered by Google Gemini AI"
-    },
-    "blockchain": {
-      "title": "Blockchain",
-      "description": "Permanent certificates recorded on the Ethereum blockchain"
-    },
-    "progress": {
-      "title": "Progress",
-      "description": "Track your learning progress and statistics"
-    }
-  },
-  "howItWorks": {
-    "title": "How it works",
-    "step1": {
-      "title": "Connect your wallet",
-      "description": "Use MetaMask to authenticate via Web3"
-    },
-    "step2": {
-      "title": "Pick a topic",
-      "description": "Type what you want to learn and the difficulty level"
-    },
-    "step3": {
-      "title": "Study and practice",
-      "description": "Read the generated content and complete the quiz"
-    },
-    "step4": {
-      "title": "Earn a certificate",
-      "description": "Score ≥ 70% records on the blockchain"
-    }
+  "pipeline": {
+    "eyebrow": "How it works",
+    "step1Title": "Connect your wallet",
+    "step1Body": "MetaMask signature. No email, no password.",
+    "step2Title": "Name a topic and a level",
+    "step2Body": "The module and its quiz are generated for you.",
+    "step3Title": "Read, answer, get graded",
+    "step3Body": "Grading runs on the server. Explanations for missed questions stay locked until a retake earns them.",
+    "step4Title": "Reach 70% — it's recorded",
+    "step4Body": "A queue writes the pass to the Sepolia testnet. You can leave the page while it registers."
   }
 }
+

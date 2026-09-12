@@ -6,9 +6,6 @@ import { SUPPORTED_LOCALES, type SupportedLocale } from '@/i18n';
 import { Button } from '@/components/atoms/Button';
 import { Input } from '@/components/atoms/Input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/atoms/Card';
-import { ThemeToggle } from '@/components/atoms/ThemeToggle';
-import { LanguageSelector } from '@/components/molecules/LanguageSelector';
-import { Avatar } from '@/components/atoms/Avatar';
 import { Skeleton } from '@/components/atoms/Skeleton';
 import {
   Select,
@@ -21,11 +18,9 @@ import { Sparkline } from '@/components/molecules/Sparkline';
 import { AchievementsGrid } from '@/components/molecules/AchievementsGrid';
 import { OnChainTimeline } from '@/components/molecules/OnChainTimeline';
 import { OnboardingTour } from '@/components/molecules/OnboardingTour';
-import { PreferencesPanel } from '@/components/molecules/PreferencesPanel';
 import { toast } from '@/components/molecules/Toaster';
 import { useAuth } from '@/hooks/useAuth';
 import { trpc } from '@/lib/trpc';
-import { formatAddress } from '@/lib/utils';
 import { buildSparklinePoints, calculateStreakDays, deriveAchievements } from '@/lib/achievements';
 
 const STAGE_KEYS = ['0', '1', '2', '3', '4'] as const;
@@ -33,7 +28,7 @@ const STAGE_KEYS = ['0', '1', '2', '3', '4'] as const;
 export const DashboardPage = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation(['dashboard', 'common', 'auth', 'vark']);
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [topic, setTopic] = useState('');
   const [level, setLevel] = useState<'beginner' | 'intermediate' | 'advanced'>('beginner');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -137,49 +132,29 @@ export const DashboardPage = () => {
     generateMutation.mutate({ topic, level, locale });
   };
 
-  const walletAddress = user?.walletAddress || '';
-
   return (
     <div className="min-h-screen bg-background">
-      <header className="bg-card border-b border-border">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <img src="/logo.svg" alt={t('dashboard:header.logoAlt')} className="w-10 h-10" />
-              <div>
-                <h1 className="font-display text-xl font-bold tracking-tight">{t('dashboard:header.title')}</h1>
-                <div className="flex items-center gap-2">
-                  <Avatar seed={walletAddress} size={16} />
-                  <p className="font-mono text-sm text-muted-foreground">
-                    {formatAddress(walletAddress)}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {streakDays > 0 && (
-                <div
-                  className="flex items-center gap-1 px-2 py-1 rounded-full bg-warning-bg border border-warning-border"
-                  aria-label={t('dashboard:streak.badge', { count: streakDays })}
-                  title={t('dashboard:streak.badge', { count: streakDays })}
-                >
-                  <span className="text-warning-fg font-mono text-xs font-semibold">
-                    🔥 {streakDays}
-                  </span>
-                </div>
-              )}
-              <LanguageSelector />
-              <ThemeToggle />
-              <PreferencesPanel />
-              <Button variant="outline" onClick={logout}>
-                {t('auth:disconnect')}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* P1.1: the persistent AppShell (App.tsx) owns the top bar — wordmark,
+          nav, identity, tier, language, theme, preferences and disconnect
+          live there now. The page keeps its own main content unchanged and
+          keeps an sr-only h1 for the document outline. */}
+      <h1 className="sr-only">{t('dashboard:header.title')}</h1>
 
       <main id="main-content" tabIndex={-1} className="container mx-auto px-4 py-8 space-y-6">
+        {/* Streak chip — relocated from the removed page header (P1.1).
+            Ink chip per v3 §5: a streak is neutral metadata, not a warning,
+            and it names the count instead of using 🔥. */}
+        {streakDays > 0 && (
+          <p className="flex">
+            <span
+              className="inline-flex items-center rounded-sm border border-border bg-card px-2.5 py-1 font-mono text-xs font-semibold text-foreground"
+              aria-label={t('dashboard:streak.badge', { count: streakDays })}
+              title={t('dashboard:streak.badge', { count: streakDays })}
+            >
+              {t('dashboard:streak.badge', { count: streakDays })}
+            </span>
+          </p>
+        )}
         {/* VARK onboarding CTA — only until the user takes the questionnaire.
             Fase 1 da fusão aprendaMais; the
             quiz can be retaken later from the preferences panel. */}

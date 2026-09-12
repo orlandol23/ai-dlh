@@ -6,8 +6,6 @@ import { Button } from '@/components/atoms/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/atoms/Card';
 import { Badge } from '@/components/atoms/Badge';
 import { Skeleton } from '@/components/atoms/Skeleton';
-import { ThemeToggle } from '@/components/atoms/ThemeToggle';
-import { LanguageSelector } from '@/components/molecules/LanguageSelector';
 import { toast } from '@/components/molecules/Toaster';
 import { trpc, type RouterOutputs } from '@/lib/trpc';
 import { getEtherscanUrl } from '@/lib/utils';
@@ -200,45 +198,51 @@ export const ModulePage = () => {
     chainStatus === 'confirmed' ? submittedRecord?.transactionHash ?? null : null;
 
   return (
-    <div className={`min-h-screen bg-background ${focusMode ? 'hash-grid' : ''}`}>
-      {/* Header — escondido em modo focado */}
+    <div
+      className="min-h-screen bg-background"
+      // P1.1: render-time mirror of the localStorage-backed focus flag. The
+      // AppShell reads it via CSS (html:has([data-focus-mode='true']) hides
+      // the bar) so focus mode behaves exactly as with the page's own old
+      // header — no state management changes.
+      data-focus-mode={focusMode ? 'true' : 'false'}
+    >
+      {/* Context row — P1.1: the persistent AppShell owns wordmark, nav,
+          identity, language, theme and preferences. This row keeps the
+          module's own context: back, level, estimated time and focus mode.
+          (focusMode hides it, exactly as before.) */}
       {!focusMode && (
-        <header className="bg-card border-b border-border">
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
-              <Button variant="outline" onClick={() => navigate('/dashboard')}>
+        <div className="border-b border-border bg-card">
+          <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-6">
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm" onClick={() => navigate('/dashboard')}>
                 <span className="font-mono inline-block rtl:rotate-180 me-1">←</span>
                 {t('module:header.back')}
               </Button>
-              <div className="flex items-center gap-2">
-                <Badge
-                  variant={
-                    module.level === 'beginner'
-                      ? 'success'
-                      : module.level === 'intermediate'
-                      ? 'warning'
-                      : 'error'
-                  }
-                >
-                  {t(`module:level.${module.level}`)}
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  {module.estimatedTime} {t('module:header.minutes')}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setFocusMode(true)}
-                  aria-label={t('module:focus.enter')}
-                >
-                  {t('module:focus.enter')}
-                </Button>
-                <LanguageSelector />
-                <ThemeToggle />
-              </div>
+              <Badge
+                variant={
+                  module.level === 'beginner'
+                    ? 'success'
+                    : module.level === 'intermediate'
+                    ? 'warning'
+                    : 'error'
+                }
+              >
+                {t(`module:level.${module.level}`)}
+              </Badge>
+              <span className="text-sm text-muted-foreground">
+                {module.estimatedTime} {t('module:header.minutes')}
+              </span>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setFocusMode(true)}
+              aria-label={t('module:focus.enter')}
+            >
+              {t('module:focus.enter')}
+            </Button>
           </div>
-        </header>
+        </div>
       )}
 
       <main

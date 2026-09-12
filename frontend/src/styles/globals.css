@@ -338,6 +338,19 @@
 }
 
 /* =========================================================
+   P1.1 shell + module focus mode.
+   ModulePage mirrors its localStorage-backed focusMode flag onto
+   [data-focus-mode="true"]; the shell bar steps aside while the
+   reader is in focus mode, exactly as its own header already did.
+   :has() degrades gracefully (bar simply stays visible) and no
+   state management changes: localStorage remains the source of
+   truth, the attribute is a render-time mirror.
+   ========================================================= */
+html:has([data-focus-mode='true']) .app-shell-bar {
+  display: none;
+}
+
+/* =========================================================
    Indeterminate progress bar — animated horizontal gradient
    Overlay it on a button to indicate work in progress.
    ========================================================= */

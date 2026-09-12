@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { SUPPORTED_LOCALES } from '@/i18n';
+import { cn } from '@/lib/utils';
 import {
   Select,
   SelectContent,
@@ -17,13 +18,18 @@ const LOCALE_NAMES: Record<string, string> = {
   'ar': 'العربية',
 };
 
-export function LanguageSelector() {
+/**
+ * Optional `className` merges onto the trigger so host surfaces (e.g. the
+ * app-shell mobile sheet) can raise the control to a 44px touch target
+ * without changing the default compact header size.
+ */
+export function LanguageSelector({ className }: { className?: string }) {
   const { i18n, t } = useTranslation();
 
   return (
     <Select value={i18n.language} onValueChange={(v) => i18n.changeLanguage(v)}>
       <SelectTrigger
-        className="w-auto h-8 px-2 text-xs font-mono bg-transparent border-border"
+        className={cn('w-auto h-8 px-2 text-xs font-mono bg-transparent border-border', className)}
         aria-label={t('common:language')}
       >
         <SelectValue />

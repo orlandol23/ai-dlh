@@ -8,6 +8,7 @@ import { ErrorBoundary } from './components/molecules/ErrorBoundary';
 import { Toaster } from './components/molecules/Toaster';
 import { SkipLink } from './components/atoms/SkipLink';
 import { Spinner } from './components/atoms/Spinner';
+import { AppShell } from './components/molecules/AppShell';
 import { useAuthStore } from './store/authStore';
 import { RtlProvider } from './i18n/RtlProvider';
 
@@ -93,7 +94,11 @@ function App() {
                       path="/dashboard"
                       element={
                         <ProtectedRoute>
-                          <DashboardPage />
+                          {/* P1.1: persistent authenticated shell wraps the
+                              page; routes and page mains are unchanged. */}
+                          <AppShell>
+                            <DashboardPage />
+                          </AppShell>
                         </ProtectedRoute>
                       }
                     />
@@ -101,7 +106,9 @@ function App() {
                       path="/module/:id"
                       element={
                         <ProtectedRoute>
-                          <ModulePage />
+                          <AppShell>
+                            <ModulePage />
+                          </AppShell>
                         </ProtectedRoute>
                       }
                     />
@@ -109,7 +116,9 @@ function App() {
                       path="/vark"
                       element={
                         <ProtectedRoute>
-                          <VarkPage />
+                          <AppShell>
+                            <VarkPage />
+                          </AppShell>
                         </ProtectedRoute>
                       }
                     />

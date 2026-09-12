@@ -68,3 +68,40 @@ export function registrationTone(state: RegistrationState): MarkerTone {
 export function ledgerGutterClass(state: RegistrationState): string {
   return TONES[state].gutterClassName;
 }
+
+/**
+ * Pure state resolution for one graded attempt (v3 §9 P1) — the single place
+ * where `blockchainStatus` + score map to a ledger state.
+ *
+ * Score has priority over status (review finding: the server schema defines
+ * blockchainStatus "none" as score < 70 with nothing recorded on-chain, so a
+ * below-threshold attempt must never render as "registering"):
+ *   score < 70                          → belowThreshold (always wins)
+ *   score ≥ 70 + confirmed + tx hash    → recorded
+ *   score ≥ 70 + pending                → queued
+ *   score ≥ 70 + processing             → registering
+ *   score ≥ 70 + failed                 → retryScheduled
+ *   score ≥ 70 + failed_permanent       → failedNeedsAttention
+ *   score ≥ 70 + anything else          → registering (unknown in-progress
+ *                                         status; same fallback as before)
+ */
+export function resolveRegistrationState(
+  score: number,
+  blockchainStatus: string,
+  transactionHash?: string | null,
+): RegistrationState {
+  if (score < 70) return 'belowThreshold';
+  if (blockchainStatus === 'confirmed' && !!transactionHash) return 'recorded';
+  switch (blockchainStatus) {
+    case 'pending':
+      return 'queued';
+    case 'processing':
+      return 'registering';
+    case 'failed':
+      return 'retryScheduled';
+    case 'failed_permanent':
+      return 'failedNeedsAttention';
+    default:
+      return 'registering';
+  }
+}

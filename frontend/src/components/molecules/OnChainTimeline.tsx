@@ -2,7 +2,10 @@ import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { cn, getEtherscanUrl } from '@/lib/utils';
 import { LedgerRow } from '@/components/dashboard/LedgerRow';
-import type { RegistrationState } from '@/components/dashboard/registration-states';
+import {
+  resolveRegistrationState,
+  type RegistrationState,
+} from '@/components/dashboard/registration-states';
 import type { ProgressLike } from '@/lib/achievements';
 
 interface TimelineRecord extends ProgressLike {
@@ -92,28 +95,29 @@ export const OnChainTimeline = ({
       {sorted.map((r) => {
         const passed = r.score >= 70;
         const isOnChain = r.blockchainStatus === 'confirmed' && !!r.transactionHash;
-        // Async on-chain queue mapping (existing data model only):
-        // pending = queued for the worker; processing = actively
-        // registering; failed = will retry after backoff;
-        // failed_permanent = gave up (the module page offers a retry).
-        const state: RegistrationState = isOnChain
-          ? 'recorded'
-          : r.blockchainStatus === 'failed_permanent'
-            ? 'failedNeedsAttention'
-            : r.blockchainStatus === 'pending'
-              ? 'queued'
-              : r.blockchainStatus === 'failed'
-                ? 'retryScheduled'
-                : 'registering';
-        const stateLabel = isOnChain
-          ? t('timeline.state.recorded')
-          : r.blockchainStatus === 'failed_permanent'
-            ? t('timeline.state.failed')
-            : r.blockchainStatus === 'pending'
-              ? t('timeline.state.queued')
-              : r.blockchainStatus === 'failed'
-                ? t('timeline.state.retryScheduled')
-                : t('timeline.state.registering');
+        // Pure state mapping (registration-states.ts) — score priority first,
+        // so blockchainStatus "none" (score < 70) is belowThreshold, never a
+        // pulsing "registering".
+        const state: RegistrationState = resolveRegistrationState(
+          r.score,
+          r.blockchainStatus,
+          r.transactionHash,
+        );
+        // One label per state id — the localized state always matches the
+        // resolved state (below-threshold rows use
+        // dashboard:timeline.state.belowThreshold).
+        const stateLabels: Record<RegistrationState, string> = {
+          recorded: t('timeline.state.recorded'),
+          registering: t('timeline.state.registering'),
+          queued: t('timeline.state.queued'),
+          retryScheduled: t('timeline.state.retryScheduled'),
+          failedNeedsAttention: t('timeline.state.failed'),
+          belowThreshold: t('timeline.state.belowThreshold'),
+          noAttempt: t('timeline.state.belowThreshold'),
+        };
+        const stateLabel = stateLabels[state];
+        // Only the genuinely in-progress state pulses.
+        const statePulse = state === 'registering';
 
         const title = r.module?.title ?? t('timeline.moduleFallback', { id: r.moduleId });
 
@@ -126,7 +130,7 @@ export const OnChainTimeline = ({
             dateText={formatRelativeTime(new Date(r.completedAt), i18n.language)}
             state={state}
             stateLabel={stateLabel}
-            statePulse={state === 'registering'}
+            statePulse={statePulse}
             hashText={isOnChain ? shortHash(r.transactionHash!) : undefined}
             etherscanHref={isOnChain ? getEtherscanUrl(r.transactionHash!) : undefined}
             etherscanLabel={t('timeline.viewOnEtherscan')}

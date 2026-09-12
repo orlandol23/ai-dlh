@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { cn, getEtherscanUrl } from '@/lib/utils';
+import { LedgerRow } from '@/components/dashboard/LedgerRow';
+import type { RegistrationState } from '@/components/dashboard/registration-states';
 import type { ProgressLike } from '@/lib/achievements';
 
 interface TimelineRecord extends ProgressLike {
@@ -36,6 +38,23 @@ function shortHash(hash: string): string {
   return `${hash.slice(0, 6)}…${hash.slice(-4)}`;
 }
 
+/**
+ * Evidence ledger (v3 §9 P1) — one row per graded attempt, newest first.
+ *
+ * Public API unchanged ({ records, className, emptyHint }); row presentation
+ * moved to the presentational LedgerRow/RegistrationMarker primitives. All
+ * state decisions stay here, mapped strictly from the existing data model:
+ *   confirmed            → recorded
+ *   pending              → queued
+ *   processing | failed  → registering (a transient failure still retries —
+ *                          same mapping as ModulePage's CHAIN_IN_PROGRESS)
+ *   failed_permanent     → failed — needs attention
+ *   score < 70           → below threshold
+ *
+ * Preserved behaviour: newest-first ordering, stretched-link navigation,
+ * relative-date localization, Etherscan links, pending/failed states,
+ * ARIA labels, empty-state copy via emptyHint.
+ */
 export const OnChainTimeline = ({
   records,
   className,
@@ -51,16 +70,16 @@ export const OnChainTimeline = ({
     return (
       <div
         className={cn(
-          'relative rounded-lg border border-dashed border-primary/30 bg-card p-12 text-center hash-grid overflow-hidden',
-          className
+          'rounded-sm border border-dashed border-border p-8 text-center',
+          className,
         )}
+        role="status"
       >
-        <div className="text-5xl mb-4" aria-hidden="true">⛓️</div>
-        <p className="font-display text-lg font-semibold tracking-tight">
+        <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
           {emptyHint ?? t('timeline.empty.title')}
         </p>
         {!emptyHint && (
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="mt-2 text-sm text-muted-foreground">
             {t('timeline.empty.hint')}
           </p>
         )}
@@ -69,104 +88,51 @@ export const OnChainTimeline = ({
   }
 
   return (
-    <ol
-      className={cn(
-        'relative space-y-3 before:content-[""] before:absolute before:left-[15px] before:top-2 before:bottom-2 before:w-px before:bg-border',
-        className
-      )}
-    >
+    <ol className={cn('space-y-2', className)}>
       {sorted.map((r) => {
-        const isOnChain = r.blockchainStatus === 'confirmed' && !!r.transactionHash;
-        // Async on-chain queue: pending/processing/failed = the server
-        // worker is still (re)trying; failed_permanent = it gave up
-        // (the module page offers a retry button).
-        const isChainPending = ['pending', 'processing', 'failed'].includes(
-          r.blockchainStatus
-        );
-        const isChainFailed = r.blockchainStatus === 'failed_permanent';
         const passed = r.score >= 70;
+        const isOnChain = r.blockchainStatus === 'confirmed' && !!r.transactionHash;
+        // Async on-chain queue mapping (existing data model only):
+        // pending = queued for the worker; processing = actively
+        // registering; failed = will retry after backoff;
+        // failed_permanent = gave up (the module page offers a retry).
+        const state: RegistrationState = isOnChain
+          ? 'recorded'
+          : r.blockchainStatus === 'failed_permanent'
+            ? 'failedNeedsAttention'
+            : r.blockchainStatus === 'pending'
+              ? 'queued'
+              : r.blockchainStatus === 'failed'
+                ? 'retryScheduled'
+                : 'registering';
+        const stateLabel = isOnChain
+          ? t('timeline.state.recorded')
+          : r.blockchainStatus === 'failed_permanent'
+            ? t('timeline.state.failed')
+            : r.blockchainStatus === 'pending'
+              ? t('timeline.state.queued')
+              : r.blockchainStatus === 'failed'
+                ? t('timeline.state.retryScheduled')
+                : t('timeline.state.registering');
+
+        const title = r.module?.title ?? t('timeline.moduleFallback', { id: r.moduleId });
+
         return (
-          <li key={r.id} className="relative pl-10">
-            <span
-              className={cn(
-                'absolute left-0 top-1 w-8 h-8 rounded-full flex items-center justify-center text-xs font-mono font-semibold border-2',
-                isOnChain
-                  ? 'bg-onchain-bg border-primary text-primary'
-                  : passed
-                    ? 'bg-success-bg border-success text-success-fg'
-                    : 'bg-muted border-border text-muted-foreground'
-              )}
-              aria-hidden="true"
-            >
-              {isOnChain ? '⛓' : isChainPending ? '⏳' : passed ? '✓' : '·'}
-            </span>
-            <div className="relative flex items-start justify-between gap-3 rounded-md border border-border bg-card p-3 hover:border-primary/40 hover:bg-muted/30 transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background">
-              {/*
-                Stretched-link pattern: an invisible button covers the whole
-                card so clicks anywhere navigate. The visible content has
-                `pointer-events-none` to let clicks fall through. The Etherscan
-                <a> uses `relative` to gain a higher stacking context, staying
-                clickable as a separate target — no interactive-in-interactive
-                nesting.
-              */}
-              <button
-                type="button"
-                onClick={() => navigate(`/module/${r.moduleId}`)}
-                aria-label={t('timeline.moduleAriaLabel', {
-                  title: r.module?.title ?? t('timeline.moduleFallback', { id: r.moduleId }),
-                  score: r.score,
-                })}
-                className="absolute inset-0 rounded-md focus:outline-none"
-              />
-              <div className="min-w-0 flex-1 pointer-events-none">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm truncate">
-                    {r.module?.title ?? t('timeline.moduleFallback', { id: r.moduleId })}
-                  </span>
-                  <span
-                    className={cn(
-                      'font-mono text-xs px-1.5 py-0.5 rounded',
-                      passed
-                        ? 'bg-success-bg text-success-fg'
-                        : 'bg-error-bg text-error-fg'
-                    )}
-                  >
-                    {r.score}%
-                  </span>
-                </div>
-                <div className="mt-1 text-xs text-muted-foreground flex items-center gap-2">
-                  <span>{formatRelativeTime(new Date(r.completedAt), i18n.language)}</span>
-                  {r.module?.topic && (
-                    <>
-                      <span aria-hidden>·</span>
-                      <span className="truncate">{r.module.topic}</span>
-                    </>
-                  )}
-                </div>
-              </div>
-              {isOnChain && (
-                <a
-                  href={getEtherscanUrl(r.transactionHash!)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="relative font-mono text-[11px] text-primary hover:underline shrink-0"
-                  title={t('timeline.viewOnEtherscan')}
-                >
-                  {shortHash(r.transactionHash!)} ↗
-                </a>
-              )}
-              {isChainPending && (
-                <span className="relative font-mono text-[11px] text-muted-foreground animate-pulse shrink-0">
-                  {t('timeline.chainPending')}
-                </span>
-              )}
-              {isChainFailed && (
-                <span className="relative font-mono text-[11px] text-error-fg shrink-0">
-                  {t('timeline.chainFailed')}
-                </span>
-              )}
-            </div>
-          </li>
+          <LedgerRow
+            key={r.id}
+            title={title}
+            scoreText={`${r.score}%`}
+            relationText={passed ? t('timeline.relationPassed') : t('timeline.relationBelow')}
+            dateText={formatRelativeTime(new Date(r.completedAt), i18n.language)}
+            state={state}
+            stateLabel={stateLabel}
+            statePulse={state === 'registering'}
+            hashText={isOnChain ? shortHash(r.transactionHash!) : undefined}
+            etherscanHref={isOnChain ? getEtherscanUrl(r.transactionHash!) : undefined}
+            etherscanLabel={t('timeline.viewOnEtherscan')}
+            ariaLabel={t('timeline.moduleAriaLabel', { title, score: r.score })}
+            onOpen={() => navigate(`/module/${r.moduleId}`)}
+          />
         );
       })}
     </ol>

@@ -3,21 +3,57 @@
     "title": "Dashboard",
     "logoAlt": "AI-DLH"
   },
+  "page": {
+    "eyebrow": "Livro de evidências"
+  },
   "stats": {
-    "modules": { "eyebrow": "Módulos", "label": "Gerados com IA" },
-    "quizzes": { "eyebrow": "Quizzes", "label": "Feitos", "sub": "{{passed}} aprovados ({{rate}}%)" },
+    "modules": { "eyebrow": "Módulos", "label": "Gerados" },
+    "quizzes": { "eyebrow": "Tentativas", "label": "Quizzes feitos", "sub": "{{passed}} aprovados ({{rate}}%)" },
     "avgScore": { "eyebrow": "Score médio", "label": "Em todos os quizzes" },
-    "onChain": { "eyebrow": "⛓ On-chain", "label": "Certificados ativos" }
+    "onChain": { "eyebrow": "Registrados", "label": "aprovações na testnet Sepolia" }
+  },
+  "streak": {
+    "badge_one": "{{count}} dia de sequência",
+    "badge_other": "{{count}} dias de sequência"
+  },
+  "ledger": {
+    "eyebrow": "Tentativas corrigidas",
+    "title": "Suas tentativas",
+    "description": "Quizzes corrigidos, mais recentes primeiro — toda aprovação com 70% ou mais entra na fila de registro na testnet Sepolia."
+  },
+  "vark": {
+    "eyebrow": "Perfil de aprendizagem"
+  },
+  "timeline": {
+    "state": {
+      "recorded": "registrado",
+      "registering": "registrando…",
+      "queued": "na fila",
+      "retryScheduled": "nova tentativa agendada",
+      "failed": "falhou — precisa de atenção",
+      "belowThreshold": "abaixo de 70%"
+    },
+    "relationPassed": "aprovado (limiar de 70%)",
+    "relationBelow": "abaixo do limiar de 70%",
+    "moduleAriaLabel": "Abrir {{title}} (score {{score}}%)",
+    "moduleFallback": "Módulo #{{id}}",
+    "viewOnEtherscan": "Ver no Etherscan",
+    "empty": {
+      "title": "Nenhuma tentativa ainda",
+      "hint": "Gere seu primeiro módulo para começar o registro — aprovações com 70% ou mais são registradas na testnet Sepolia."
+    }
   },
   "sparkline": {
     "eyebrow": "Histórico",
-    "title": "Evolução de score",
-    "descriptionEmpty": "Nenhum quiz concluído ainda — a linha tracejada marca o limiar de 70%",
-    "descriptionWithData": "Últimos {{count}} quizzes — linha tracejada marca o limiar de 70%",
+    "title": "Histórico de scores",
+    "descriptionEmpty": "Nenhuma tentativa ainda — a linha tracejada marca o limiar de 70%.",
+    "descriptionWithData": "Últimas {{count}} tentativas — a linha tracejada marca o limiar de 70%.",
     "aria": "Histórico de scores",
+    "ariaWithData": "Histórico de scores — últimas {{count}} tentativas contra o limiar de 70%",
+    "thresholdLabel": "70% para aprovar",
     "empty": {
-      "title": "Nenhum quiz concluído ainda",
-      "hint": "Gere seu primeiro módulo com IA"
+      "title": "Nenhuma tentativa ainda",
+      "hint": "Gere seu primeiro módulo para começar o registro"
     }
   },
   "achievements": {
@@ -62,29 +98,11 @@
       }
     }
   },
-  "streak": {
-    "badge_one": "{{count}} dia de sequência",
-    "badge_other": "{{count}} dias de sequência"
-  },
-  "timeline": {
-    "eyebrow": "Timeline",
-    "title": "Atividade on-chain",
-    "description": "Quizzes completados e seus carimbos na blockchain Sepolia",
-    "moduleAriaLabel": "Abrir {{title}} (score {{score}}%)",
-    "moduleFallback": "Módulo #{{id}}",
-    "viewOnEtherscan": "Ver no Etherscan",
-    "chainPending": "registrando…",
-    "chainFailed": "falhou",
-    "empty": {
-      "title": "Nenhum certificado on-chain ainda",
-      "hint": "Passe num quiz para emitir seu primeiro certificado"
-    }
-  },
   "generator": {
-    "eyebrow": "🤖 IA",
+    "eyebrow": "Novo módulo",
     "title": "Gerar módulo",
-    "description": "Conteúdo personalizado sob demanda",
-    "topicLabel": "Tópico de Estudo",
+    "description": "Diga o tema e o nível — o módulo e o quiz são gerados para você.",
+    "topicLabel": "Tópico de estudo",
     "topicPlaceholder": "Ex: TypeScript, React Hooks…",
     "levelLabel": "Nível",
     "levels": {
@@ -92,9 +110,9 @@
       "intermediate": "Intermediário",
       "advanced": "Avançado"
     },
-    "submit": "🤖 Gerar com IA",
+    "submit": "Gerar módulo",
     "generating": "Gerando…",
-    "workingEyebrow": "IA trabalhando",
+    "workingEyebrow": "Etapas da geração",
     "stages": {
       "0": "Analisando o tópico",
       "1": "Estruturando o módulo",
@@ -104,11 +122,22 @@
     }
   },
   "pending": {
-    "eyebrow": "Pendentes ({{count}})",
+    "eyebrow": "Não tentados ({{count}})",
     "minutes": "min"
   },
   "generating": {
     "eyebrow": "Construindo seu módulo"
+  },
+  "errors": {
+    "statsTitle": "Não foi possível carregar suas estatísticas.",
+    "ledgerTitle": "Não foi possível carregar suas tentativas.",
+    "modulesTitle": "Não foi possível carregar seus módulos.",
+    "scoresTitle": "Não foi possível carregar seu histórico de scores.",
+    "hint": "Seus dados estão salvos — verifique a conexão e tente novamente.",
+    "retry": "Tentar novamente",
+    "statsLoading": "Carregando suas estatísticas…",
+    "ledgerLoading": "Carregando suas tentativas…",
+    "modulesLoading": "Carregando seus módulos…"
   },
   "onboarding": {
     "skip": "Pular",
@@ -128,8 +157,8 @@
     }
   },
   "toasts": {
-    "moduleGenerated": "🎉 Módulo gerado!",
-    "moduleGeneratedDesc": "Abrindo o conteúdo…",
+    "moduleGenerated": "Módulo gerado",
+    "moduleGeneratedDesc": "Abrindo o módulo…",
     "unexpectedResponse": "Resposta inesperada ao gerar módulo",
     "unexpectedResponseDesc": "O módulo foi criado, mas não foi possível abri-lo automaticamente.",
     "generationError": "Erro ao gerar módulo",

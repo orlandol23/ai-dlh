@@ -3,21 +3,57 @@
     "title": "Dashboard",
     "logoAlt": "AI-DLH"
   },
+  "page": {
+    "eyebrow": "Evidence ledger"
+  },
   "stats": {
-    "modules": { "eyebrow": "Modules", "label": "Generated with AI" },
-    "quizzes": { "eyebrow": "Quizzes", "label": "Taken", "sub": "{{passed}} passed ({{rate}}%)" },
+    "modules": { "eyebrow": "Modules", "label": "Generated" },
+    "quizzes": { "eyebrow": "Attempts", "label": "Quizzes taken", "sub": "{{passed}} passed ({{rate}}%)" },
     "avgScore": { "eyebrow": "Average score", "label": "Across all quizzes" },
-    "onChain": { "eyebrow": "⛓ On-chain", "label": "Active certificates" }
+    "onChain": { "eyebrow": "Recorded", "label": "passes on the Sepolia testnet" }
+  },
+  "streak": {
+    "badge_one": "{{count}} day streak",
+    "badge_other": "{{count}} day streak"
+  },
+  "ledger": {
+    "eyebrow": "Graded attempts",
+    "title": "Your attempts",
+    "description": "Graded quizzes, newest first — every pass at 70% or above is queued for registration on the Sepolia testnet."
+  },
+  "vark": {
+    "eyebrow": "Learning profile"
+  },
+  "timeline": {
+    "state": {
+      "recorded": "recorded",
+      "registering": "registering…",
+      "queued": "queued",
+      "retryScheduled": "retry scheduled",
+      "failed": "failed — needs attention",
+      "belowThreshold": "below 70%"
+    },
+    "relationPassed": "passed (threshold 70%)",
+    "relationBelow": "below the 70% threshold",
+    "moduleAriaLabel": "Open {{title}} (score {{score}}%)",
+    "moduleFallback": "Module #{{id}}",
+    "viewOnEtherscan": "View on Etherscan",
+    "empty": {
+      "title": "No attempts yet",
+      "hint": "Generate your first module to start the ledger — passes at 70% or above are recorded on the Sepolia testnet."
+    }
   },
   "sparkline": {
-    "eyebrow": "History",
-    "title": "Score evolution",
-    "descriptionEmpty": "No quiz completed yet — the dashed line marks the 70% threshold",
-    "descriptionWithData": "Last {{count}} quizzes — dashed line marks the 70% threshold",
+    "eyebrow": "Score history",
+    "title": "Score history",
+    "descriptionEmpty": "No attempts yet — the dashed line marks the 70% pass threshold.",
+    "descriptionWithData": "Last {{count}} attempts — the dashed line marks the 70% pass threshold.",
     "aria": "Score history",
+    "ariaWithData": "Score history — last {{count}} attempts against the 70% pass threshold",
+    "thresholdLabel": "70% pass",
     "empty": {
-      "title": "No quiz completed yet",
-      "hint": "Generate your first module with AI"
+      "title": "No attempts yet",
+      "hint": "Generate your first module to start the ledger"
     }
   },
   "achievements": {
@@ -62,28 +98,10 @@
       }
     }
   },
-  "streak": {
-    "badge_one": "{{count}} day streak",
-    "badge_other": "{{count}} day streak"
-  },
-  "timeline": {
-    "eyebrow": "Timeline",
-    "title": "On-chain activity",
-    "description": "Completed quizzes and their stamps on the Sepolia blockchain",
-    "moduleAriaLabel": "Open {{title}} (score {{score}}%)",
-    "moduleFallback": "Module #{{id}}",
-    "viewOnEtherscan": "View on Etherscan",
-    "chainPending": "registering…",
-    "chainFailed": "failed",
-    "empty": {
-      "title": "No on-chain certificate yet",
-      "hint": "Pass a quiz to mint your first certificate"
-    }
-  },
   "generator": {
-    "eyebrow": "🤖 AI",
+    "eyebrow": "New module",
     "title": "Generate module",
-    "description": "Personalized content on-demand",
+    "description": "Name a topic and a level — the module and its quiz are generated for you.",
     "topicLabel": "Study topic",
     "topicPlaceholder": "e.g., TypeScript, React Hooks…",
     "levelLabel": "Level",
@@ -92,9 +110,9 @@
       "intermediate": "Intermediate",
       "advanced": "Advanced"
     },
-    "submit": "🤖 Generate with AI",
+    "submit": "Generate module",
     "generating": "Generating…",
-    "workingEyebrow": "AI working",
+    "workingEyebrow": "Generation trace",
     "stages": {
       "0": "Analyzing the topic",
       "1": "Structuring the module",
@@ -104,11 +122,22 @@
     }
   },
   "pending": {
-    "eyebrow": "Pending ({{count}})",
+    "eyebrow": "Not attempted ({{count}})",
     "minutes": "min"
   },
   "generating": {
     "eyebrow": "Building your module"
+  },
+  "errors": {
+    "statsTitle": "Couldn't load your statistics.",
+    "ledgerTitle": "Couldn't load your attempt records.",
+    "modulesTitle": "Couldn't load your modules.",
+    "scoresTitle": "Couldn't load your score history.",
+    "hint": "Nothing was lost — check your connection and retry.",
+    "retry": "Retry",
+    "statsLoading": "Loading your statistics…",
+    "ledgerLoading": "Loading your attempt records…",
+    "modulesLoading": "Loading your modules…"
   },
   "onboarding": {
     "skip": "Skip",
@@ -128,8 +157,8 @@
     }
   },
   "toasts": {
-    "moduleGenerated": "🎉 Module generated!",
-    "moduleGeneratedDesc": "Opening content…",
+    "moduleGenerated": "Module generated",
+    "moduleGeneratedDesc": "Opening the module…",
     "unexpectedResponse": "Unexpected response when generating module",
     "unexpectedResponseDesc": "The module was created, but couldn't be opened automatically.",
     "generationError": "Error generating module",

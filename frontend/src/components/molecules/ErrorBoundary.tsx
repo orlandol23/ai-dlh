@@ -1,7 +1,7 @@
 import type { ErrorInfo, ReactNode } from 'react';
 import { Component } from 'react';
 import { Button } from '@/components/atoms/Button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/atoms/Card';
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/atoms/Card';
 import { captureException } from '@/lib/sentry';
 
 interface ErrorBoundaryProps {
@@ -61,7 +61,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <Card className="max-w-lg w-full">
             <CardHeader>
               <p className="eyebrow">Unexpected render error</p>
-              <CardTitle className="font-display tracking-tight">The application could not render this view</CardTitle>
+              <h1 className="font-display tracking-tight text-xl font-semibold leading-tight">
+                The application could not render this view
+              </h1>
               <CardDescription>
                 We ran into a problem rendering this part of the application.
                 You can try again or reload the page.

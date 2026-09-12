@@ -58,7 +58,7 @@ export const CertPage = () => {
       </header>
 
       <main id="main-content" tabIndex={-1} className="container mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:py-16">
-        {isLoading && (
+        {isValidHash && isLoading && (
           <div className="mx-auto max-w-3xl space-y-6" role="status" aria-label={t('page.loading')}>
             <Skeleton className="h-8 w-40" />
             <Skeleton className="h-16 w-3/4" />

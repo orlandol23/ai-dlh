@@ -1,14 +1,14 @@
 {
   "cta": {
-    "eyebrow": "🧠 Perfil de aprendizagem",
-    "title": "Descubra seu estilo de aprendizagem",
-    "description": "Responda 15 perguntas rápidas (modelo VARK) e a IA passará a gerar módulos adaptados ao jeito que você aprende melhor.",
+    "eyebrow": "Perfil de aprendizagem",
+    "title": "Registre seu perfil de aprendizagem",
+    "description": "Responda a um questionário de 15 perguntas sobre como você prefere trabalhar com materiais de estudo. O perfil pode informar os módulos gerados.",
     "button": "Fazer o questionário"
   },
   "intro": {
     "eyebrow": "Questionário VARK",
     "title": "Qual é o seu estilo de aprendizagem?",
-    "description": "O modelo VARK identifica como você prefere absorver informação: Visual, Auditivo, Leitura/Escrita ou Cinestésico. São 15 perguntas de múltipla escolha — leva cerca de 5 minutos. O resultado personaliza os módulos gerados pela IA.",
+    "description": "Este questionário registra preferências entre as abordagens Visual, Auditiva, Leitura/Escrita e Cinestésica. São 15 perguntas de múltipla escolha e leva cerca de 5 minutos.",
     "start": "Começar",
     "cancel": "Voltar ao dashboard"
   },
@@ -260,11 +260,11 @@
     "eyebrow": "Seu resultado",
     "title": "Seu estilo dominante é",
     "multimodalNote": "Houve empate entre estilos — seu perfil é multimodal. Persistimos \"{{style}}\" como estilo dominante para personalizar a IA, mas você se beneficia de combinar abordagens.",
-    "aiNote": "A partir de agora, os módulos gerados pela IA serão adaptados ao seu estilo de aprendizagem.",
+    "aiNote": "Seu perfil de aprendizagem pode informar a geração de módulos.",
     "distributionTitle": "Distribuição das suas respostas",
     "pointsLabel": "{{count}} de {{total}}",
     "saving": "Salvando seu resultado…",
-    "savedToast": "🧠 Estilo de aprendizagem salvo!",
+    "savedToast": "Perfil de aprendizagem salvo",
     "savedToastDescription": "Os próximos módulos serão adaptados ao seu perfil.",
     "saveErrorToast": "Erro ao salvar o estilo",
     "backToDashboard": "Voltar ao dashboard",

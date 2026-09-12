@@ -15,7 +15,6 @@ const PAD_Y = 8;
 export const Sparkline = ({ points, height = 96, className }: SparklineProps) => {
   const { t } = useTranslation('dashboard');
   const reactId = useId();
-  const strokeId = `spark-stroke-${reactId}`;
   const fillId = `spark-fill-${reactId}`;
   const width = 480;
   const usableW = width - PAD_X * 2;
@@ -70,10 +69,6 @@ export const Sparkline = ({ points, height = 96, className }: SparklineProps) =>
       aria-label={t('sparkline.aria')}
     >
       <defs>
-        <linearGradient id={strokeId} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="hsl(var(--primary))" />
-          <stop offset="100%" stopColor="hsl(var(--accent))" />
-        </linearGradient>
         <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.25" />
           <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
@@ -92,9 +87,10 @@ export const Sparkline = ({ points, height = 96, className }: SparklineProps) =>
       />
 
       <path d={area} fill={`url(#${fillId})`} />
+      {/* v3 §5: the data line is solid teal — no gradient stroke. */}
       <path
         d={path}
-        stroke={`url(#${strokeId})`}
+        stroke="hsl(var(--primary))"
         strokeWidth="2.5"
         fill="none"
         strokeLinecap="round"

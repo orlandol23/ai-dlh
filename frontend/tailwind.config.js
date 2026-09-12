@@ -16,7 +16,10 @@ export default {
         mono: ['"JetBrains Mono"', '"Noto Sans Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
       },
       colors: {
-        border: "hsl(var(--border))",
+        border: {
+          DEFAULT: "hsl(var(--border))",
+          strong: "hsl(var(--border-strong))",
+        },
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
@@ -50,11 +53,6 @@ export default {
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
-          50:  "hsl(var(--accent-50))",
-          100: "hsl(var(--accent-100))",
-          300: "hsl(var(--accent-300))",
-          500: "hsl(var(--accent-500))",
-          600: "hsl(var(--accent-600))",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
@@ -96,9 +94,19 @@ export default {
         },
       },
       borderRadius: {
+        seal: "var(--radius-seal)",
+        row: "var(--radius-row)",
+        dialog: "var(--radius-dialog)",
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      // v3 §7: neutral, warm-ink shadow scale. Elevation is reserved for
+      // floating layers; no coloured/purple-tinted shadows anywhere.
+      boxShadow: {
+        sm: "0 1px 2px hsl(30 6% 8% / 0.06)",
+        md: "0 4px 12px hsl(30 6% 8% / 0.10)",
+        lg: "0 12px 32px hsl(30 6% 8% / 0.14)",
       },
       keyframes: {
         spin: {

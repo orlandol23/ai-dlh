@@ -27,6 +27,7 @@ export const CertPage = () => {
   const [searchParams] = useSearchParams();
   const { t, i18n } = useTranslation('cert');
   const formatDate = useFormatDate();
+  const isValidHash = /^0x[a-fA-F0-9]{64}$/.test(hash ?? '');
 
   // Honor ?lang= query param (only switch if locale is supported)
   useEffect(() => {
@@ -38,7 +39,7 @@ export const CertPage = () => {
 
   const { data, isLoading, error } = trpc.cert.getByHash.useQuery(
     { hash: hash ?? '' },
-    { enabled: !!hash, retry: false },
+    { enabled: isValidHash, retry: false },
   );
 
   return (
@@ -65,10 +66,22 @@ export const CertPage = () => {
           </div>
         )}
 
-        {error && (
+        {!isValidHash && (
           <Card className="mx-auto max-w-md">
             <CardContent className="pt-6" role="alert">
-              <p className="eyebrow">{hash ? t('page.verification') : t('page.invalidLink')}</p>
+              <p className="eyebrow">{t('page.invalidLink')}</p>
+              <p className="mt-2 text-lg font-semibold">{t('page.invalidLink')}</p>
+              <Button className="mt-4" onClick={() => (window.location.href = '/')}>
+                {t('page.createYour')}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {isValidHash && error && (
+          <Card className="mx-auto max-w-md">
+            <CardContent className="pt-6" role="alert">
+              <p className="eyebrow">{t('page.verification')}</p>
               <p className="mt-2 text-lg font-semibold">{t('page.notFound')}</p>
               <Button className="mt-4" onClick={() => (window.location.href = '/')}>
                 {t('page.createYour')}

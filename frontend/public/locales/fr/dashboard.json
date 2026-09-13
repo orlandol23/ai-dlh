@@ -3,6 +3,13 @@
     "title": "Tableau de bord",
     "logoAlt": "AI-DLH"
   },
+  "page": { "eyebrow": "Registre des preuves" },
+  "ledger": {
+    "eyebrow": "Tentatives corrigées",
+    "title": "Vos tentatives",
+    "description": "Quiz corrigés, du plus récent au plus ancien : chaque réussite à 70 % ou plus est mise en file pour être enregistrée sur le réseau de test Sepolia."
+  },
+  "vark": { "eyebrow": "Profil d'apprentissage" },
   "stats": {
     "modules": { "eyebrow": "Modules", "label": "Générés avec l'IA" },
     "quizzes": { "eyebrow": "Quiz", "label": "Réalisés", "sub": "{{passed}} validés ({{rate}} %)" },
@@ -15,6 +22,8 @@
     "descriptionEmpty": "Aucun quiz complété — la ligne pointillée marque le seuil de 70 %",
     "descriptionWithData": "Derniers {{count}} quiz — ligne pointillée marque le seuil de 70 %",
     "aria": "Historique des scores",
+    "ariaWithData": "Historique des scores — derniers {{count}} quiz par rapport au seuil de 70 %",
+    "thresholdLabel": "réussite à 70 %",
     "empty": {
       "title": "Aucun quiz complété",
       "hint": "Générez votre premier module avec l'IA"
@@ -67,11 +76,21 @@
     "badge_other": "{{count}} jours de série"
   },
   "timeline": {
+    "state": {
+      "recorded": "enregistré",
+      "registering": "enregistrement…",
+      "queued": "en file d'attente",
+      "retryScheduled": "nouvel essai programmé",
+      "failed": "échec — intervention requise",
+      "belowThreshold": "moins de 70 %"
+    },
     "eyebrow": "Chronologie",
     "title": "Activité on-chain",
     "description": "Quiz complétés et leurs empreintes sur la blockchain Sepolia",
     "moduleAriaLabel": "Ouvrir {{title}} (score {{score}} %)",
     "moduleFallback": "Module #{{id}}",
+    "relationPassed": "validé (seuil de 70 %)",
+    "relationBelow": "sous le seuil de 70 %",
     "viewOnEtherscan": "Voir sur Etherscan",
     "chainPending": "enregistrement…",
     "chainFailed": "échec",
@@ -109,6 +128,17 @@
   },
   "generating": {
     "eyebrow": "Construction de votre module"
+  },
+  "errors": {
+    "statsTitle": "Impossible de charger vos statistiques.",
+    "ledgerTitle": "Impossible de charger vos tentatives.",
+    "modulesTitle": "Impossible de charger vos modules.",
+    "scoresTitle": "Impossible de charger votre historique des scores.",
+    "hint": "Rien n'a été perdu : vérifiez votre connexion et réessayez.",
+    "retry": "Réessayer",
+    "statsLoading": "Chargement de vos statistiques…",
+    "ledgerLoading": "Chargement de vos tentatives…",
+    "modulesLoading": "Chargement de vos modules…"
   },
   "onboarding": {
     "skip": "Passer",

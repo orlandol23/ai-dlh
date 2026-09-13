@@ -1,4 +1,32 @@
 {
+  "eyebrow": "学習ベンチ",
+  "statement": "好きなトピックで学習モジュールを生成し、クイズで70%以上を取りましょう。合格結果はSepoliaテストネットに記録され、Etherscanで確認できます。",
+  "ctaSecondary": "検証済みコントラクトを見る",
+  "metamaskNote": "MetaMaskブラウザー拡張機能が必要です。ログインにはウォレット署名を使います。",
+  "ledger": {
+    "eyebrow": "学習記録",
+    "caption": "いくつかの受験後に表示される記録の例です。",
+    "item1": "TypeScriptジェネリクス",
+    "item1Meta": "2日前 · 0x3f…9a",
+    "item2": "SQLインデックス",
+    "item2Meta": "1時間前",
+    "item3": "イベントループ",
+    "item3Meta": "6日前",
+    "stateRecorded": "記録済み",
+    "stateRegistering": "記録中…",
+    "stateBelow": "70%未満"
+  },
+  "pipeline": {
+    "eyebrow": "仕組み",
+    "step1Title": "ウォレットを接続",
+    "step1Body": "MetaMaskで署名します。メールもパスワードも不要です。",
+    "step2Title": "トピックとレベルを指定",
+    "step2Body": "モジュールとクイズが生成されます。",
+    "step3Title": "読み、答え、採点する",
+    "step3Body": "採点はサーバーで行います。間違えた問題の解説は、再受験で条件を満たすまで表示されません。",
+    "step4Title": "70%に到達すると記録されます",
+    "step4Body": "合格結果はSepoliaテストネットに記録されます。記録中にページを離れても処理は続きます。"
+  },
   "hero": {
     "titleLine1": "<0>AI</0>で学ぶ",
     "titleLine2": "<0>チェーン</0>で証明する",

@@ -12,6 +12,17 @@
   "skipToContent": "تخطي إلى المحتوى",
   "loading": "جارٍ التحميل…",
   "error": { "generic": "حدث خطأ ما" },
+  "shell": {
+    "menu": "القائمة",
+    "openMenu": "فتح قائمة التنقل",
+    "primaryNav": "الرئيسية",
+    "navDashboard": "لوحة التحكم",
+    "navProfile": "الملف الشخصي",
+    "identityLabel": "المحفظة المتصلة",
+    "tierDefault": "المستوى الافتراضي",
+    "tierPremium": "المستوى المميز",
+    "controls": "التفضيلات وعناصر التحكم"
+  },
   "footer": {
     "copyright": "© {{year}} AI-DLH. مشروع محفظة يُظهر Frontend وFull Stack والذكاء الاصطناعي التوليدي وWeb3.",
     "poweredBy": "Powered by React, TypeScript, Gemini AI, Ethereum & Solidity"

@@ -1,4 +1,32 @@
 {
+  "eyebrow": "Banc d'étude",
+  "statement": "Générez un module d'étude sur n'importe quel sujet. Validez son quiz avec 70 %. La réussite est enregistrée sur le réseau de test Sepolia et vérifiable sur Etherscan.",
+  "ctaSecondary": "Voir le contrat vérifié",
+  "metamaskNote": "L'extension MetaMask est requise : la connexion utilise une signature de portefeuille.",
+  "ledger": {
+    "eyebrow": "Registre des preuves",
+    "caption": "Voici à quoi ressemble votre registre après quelques tentatives.",
+    "item1": "Génériques TypeScript",
+    "item1Meta": "Il y a 2 j · 0x3f…9a",
+    "item2": "Index SQL",
+    "item2Meta": "Il y a 1 h",
+    "item3": "Boucle d'événements",
+    "item3Meta": "Il y a 6 j",
+    "stateRecorded": "enregistré",
+    "stateRegistering": "enregistrement…",
+    "stateBelow": "moins de 70 %"
+  },
+  "pipeline": {
+    "eyebrow": "Comment ça marche",
+    "step1Title": "Connectez votre portefeuille",
+    "step1Body": "Signature MetaMask. Aucun e-mail ni mot de passe.",
+    "step2Title": "Indiquez un sujet et un niveau",
+    "step2Body": "Le module et son quiz sont générés pour vous.",
+    "step3Title": "Lisez, répondez, obtenez votre score",
+    "step3Body": "La correction est effectuée sur le serveur. Les explications des questions manquées restent verrouillées jusqu'à ce qu'une nouvelle tentative les débloque.",
+    "step4Title": "Atteignez 70 % : c'est enregistré",
+    "step4Body": "Une file enregistre la réussite sur le réseau de test Sepolia. Vous pouvez quitter la page pendant l'enregistrement."
+  },
   "hero": {
     "titleLine1": "Apprenez avec l'<0>IA</0>",
     "titleLine2": "Certifiez sur la <0>chaîne</0>",

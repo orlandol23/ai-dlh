@@ -17,6 +17,10 @@
   "submitError": "Erreur lors de l'envoi du quiz",
   "results": {
     "correctOfTotal": "{{correct}} sur {{total}} correctes",
+    "outcomeEyebrow": "Résultat",
+    "registrationEyebrow": "Enregistrement",
+    "queuedLine": "Réussite. L'enregistrement est en file d'attente.",
+    "retryScheduledLine": "Réussite. Un nouvel essai d'enregistrement est programmé.",
     "passedTitle": "🎉 Félicitations ! Quiz validé !",
     "passedDescription": "Vous avez atteint le score minimum de 70 %",
     "failedTitle": "Pas cette fois",
@@ -42,6 +46,7 @@
     "correct": "Correcte",
     "incorrect": "Incorrecte",
     "yourAnswer": "Votre réponse : {{letter}}. {{content}}",
-    "lockedHint": "Les réponses ne s'affichent que pour les questions réussies. Refaites le quiz pour débloquer celles que vous avez manquées."
+    "lockedHint": "Les réponses ne s'affichent que pour les questions réussies. Refaites le quiz pour débloquer celles que vous avez manquées.",
+    "lockedLine": "Explication verrouillée. Répondez correctement à cette question lors d'une nouvelle tentative pour la débloquer."
   }
 }

@@ -3,6 +3,13 @@
     "title": "لوحة التحكم",
     "logoAlt": "AI-DLH"
   },
+  "page": { "eyebrow": "سجل الأدلة" },
+  "ledger": {
+    "eyebrow": "المحاولات المصححة",
+    "title": "محاولاتك",
+    "description": "اختبارات مصححة مرتبة من الأحدث إلى الأقدم؛ كل نتيجة ناجحة بنسبة 70٪ أو أكثر توضع في قائمة تسجيلها على شبكة Sepolia التجريبية."
+  },
+  "vark": { "eyebrow": "ملف التعلّم" },
   "stats": {
     "modules": { "eyebrow": "الوحدات", "label": "مُولَّدة بالذكاء الاصطناعي" },
     "quizzes": { "eyebrow": "الاختبارات", "label": "التي أجريتها", "sub": "{{passed}} ناجحة ({{rate}}٪)" },
@@ -15,6 +22,8 @@
     "descriptionEmpty": "لم يُكتمل أي اختبار بعد — يشير الخط المتقطع إلى عتبة 70٪",
     "descriptionWithData": "آخر {{count}} اختبارات — الخط المتقطع يشير إلى عتبة 70٪",
     "aria": "سجل النتائج",
+    "ariaWithData": "سجل النتائج — آخر {{count}} محاولات مقارنة بحد النجاح 70٪",
+    "thresholdLabel": "نجاح 70٪",
     "empty": {
       "title": "لم يُكتمل أي اختبار بعد",
       "hint": "ولّد أول وحدة لك بالذكاء الاصطناعي"
@@ -63,15 +72,25 @@
     }
   },
   "streak": {
-    "badge_one": "سلسلة يوم واحد",
+    "badge_one": "سلسلة {{count}} يوم",
     "badge_other": "سلسلة {{count}} أيام"
   },
   "timeline": {
+    "state": {
+      "recorded": "مسجّل",
+      "registering": "جارٍ التسجيل…",
+      "queued": "في قائمة الانتظار",
+      "retryScheduled": "تمت جدولة إعادة المحاولة",
+      "failed": "فشل — يحتاج إلى عناية",
+      "belowThreshold": "أقل من 70٪"
+    },
     "eyebrow": "الجدول الزمني",
     "title": "النشاط على السلسلة",
     "description": "الاختبارات المُكتملة وأختامها على بلوكتشين Sepolia",
     "moduleAriaLabel": "فتح {{title}} (النتيجة {{score}}٪)",
     "moduleFallback": "الوحدة #{{id}}",
+    "relationPassed": "ناجح (حد النجاح 70٪)",
+    "relationBelow": "أقل من حد النجاح 70٪",
     "viewOnEtherscan": "عرض على Etherscan",
     "chainPending": "جارٍ التسجيل…",
     "chainFailed": "فشل",
@@ -109,6 +128,17 @@
   },
   "generating": {
     "eyebrow": "جارٍ بناء وحدتك"
+  },
+  "errors": {
+    "statsTitle": "تعذّر تحميل إحصاءاتك.",
+    "ledgerTitle": "تعذّر تحميل سجلات محاولاتك.",
+    "modulesTitle": "تعذّر تحميل وحداتك.",
+    "scoresTitle": "تعذّر تحميل سجل نتائجك.",
+    "hint": "لم يضِع شيء؛ تحقّق من اتصالك وحاول مرة أخرى.",
+    "retry": "إعادة المحاولة",
+    "statsLoading": "جارٍ تحميل إحصاءاتك…",
+    "ledgerLoading": "جارٍ تحميل سجلات محاولاتك…",
+    "modulesLoading": "جارٍ تحميل وحداتك…"
   },
   "onboarding": {
     "skip": "تخطي",

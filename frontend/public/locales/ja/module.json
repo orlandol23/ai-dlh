@@ -8,6 +8,28 @@
     "intermediate": "中級",
     "advanced": "上級"
   },
+  "desk": {
+    "eyebrow": "モジュール",
+    "passNote": "合格基準70%"
+  },
+  "rail": {
+    "eyebrow": "モジュールの状態",
+    "notStarted": "未開始",
+    "noAttempt": "受験記録はありません",
+    "scoreEyebrow": "最新スコア",
+    "chainEyebrow": "オンチェーン",
+    "nextEyebrow": "次の操作",
+    "hintNotStarted": "クイズで70%以上を取り、Sepoliaに記録しましょう。",
+    "hintBelow": "クイズを再受験して70%の基準に到達しましょう。",
+    "hintPending": "ページを離れてもキューの処理は続きます。",
+    "hintRetry": "再試行が予定されています。ここで状態を確認できます。",
+    "hintFailed": "ここから記録をキューに戻せます。",
+    "hintRecorded": "スコアはSepoliaに記録されています。証明書は公開されています。"
+  },
+  "errors": {
+    "loadTitle": "このモジュールを読み込めませんでした。",
+    "loadHint": "データは失われていません。保存済みの受験記録は安全です。接続を確認して再試行してください。"
+  },
   "topicLabel": "トピック: {{topic}}",
   "notFound": {
     "title": "モジュールが見つかりません",

@@ -17,6 +17,10 @@
   "submitError": "クイズの送信エラー",
   "results": {
     "correctOfTotal": "{{total}}問中 {{correct}}問正解",
+    "outcomeEyebrow": "結果",
+    "registrationEyebrow": "記録",
+    "queuedLine": "合格しました。記録はキューに入りました。",
+    "retryScheduledLine": "合格しました。記録の再試行が予定されています。",
     "passedTitle": "🎉 おめでとうございます!合格です!",
     "passedDescription": "最低スコア70%に到達しました",
     "failedTitle": "今回は届きませんでした",
@@ -42,6 +46,7 @@
     "correct": "正解",
     "incorrect": "不正解",
     "yourAnswer": "あなたの解答: {{letter}}. {{content}}",
-    "lockedHint": "正解した問題のみ答えが表示されます。間違えた問題はクイズを再受験すると表示されます。"
+    "lockedHint": "正解した問題のみ答えが表示されます。間違えた問題はクイズを再受験すると表示されます。",
+    "lockedLine": "解説はロックされています。再受験でこの問題に正解すると表示されます。"
   }
 }

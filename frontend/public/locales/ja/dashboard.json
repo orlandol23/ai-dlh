@@ -3,6 +3,13 @@
     "title": "ダッシュボード",
     "logoAlt": "AI-DLH"
   },
+  "page": { "eyebrow": "学習記録" },
+  "ledger": {
+    "eyebrow": "採点済みの受験",
+    "title": "受験記録",
+    "description": "採点済みクイズを新しい順に表示します。70%以上の合格結果はSepoliaテストネットへの記録キューに入ります。"
+  },
+  "vark": { "eyebrow": "学習プロフィール" },
   "stats": {
     "modules": { "eyebrow": "モジュール", "label": "AIで生成" },
     "quizzes": { "eyebrow": "クイズ", "label": "受験数", "sub": "{{passed}}件合格（{{rate}}%）" },
@@ -15,6 +22,8 @@
     "descriptionEmpty": "まだクイズが完了していません — 破線は70%のしきい値を示します",
     "descriptionWithData": "直近{{count}}件のクイズ — 破線は70%のしきい値",
     "aria": "スコア履歴",
+    "ariaWithData": "スコア履歴 — 直近{{count}}件と70%の合格基準",
+    "thresholdLabel": "70%合格",
     "empty": {
       "title": "まだクイズが完了していません",
       "hint": "AIで最初のモジュールを生成しましょう"
@@ -67,11 +76,21 @@
     "badge_other": "{{count}}日連続"
   },
   "timeline": {
+    "state": {
+      "recorded": "記録済み",
+      "registering": "記録中…",
+      "queued": "キュー待ち",
+      "retryScheduled": "再試行を予定",
+      "failed": "失敗 — 対応が必要です",
+      "belowThreshold": "70%未満"
+    },
     "eyebrow": "タイムライン",
     "title": "オンチェーン活動",
     "description": "完了したクイズとSepoliaブロックチェーン上のスタンプ",
     "moduleAriaLabel": "{{title}}を開く (スコア {{score}}%)",
     "moduleFallback": "モジュール #{{id}}",
+    "relationPassed": "合格（基準70%）",
+    "relationBelow": "70%の基準未満",
     "viewOnEtherscan": "Etherscanで確認",
     "chainPending": "記録中…",
     "chainFailed": "失敗",
@@ -109,6 +128,17 @@
   },
   "generating": {
     "eyebrow": "モジュールを構築中"
+  },
+  "errors": {
+    "statsTitle": "統計を読み込めませんでした。",
+    "ledgerTitle": "受験記録を読み込めませんでした。",
+    "modulesTitle": "モジュールを読み込めませんでした。",
+    "scoresTitle": "スコア履歴を読み込めませんでした。",
+    "hint": "データは失われていません。接続を確認して再試行してください。",
+    "retry": "再試行",
+    "statsLoading": "統計を読み込み中…",
+    "ledgerLoading": "受験記録を読み込み中…",
+    "modulesLoading": "モジュールを読み込み中…"
   },
   "onboarding": {
     "skip": "スキップ",

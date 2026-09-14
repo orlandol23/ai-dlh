@@ -8,7 +8,9 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
     <div
       ref={ref}
       className={cn(
-        'rounded-lg border bg-card text-card-foreground shadow-sm',
+        // v3 §7: panels are flat — 1px border, no resting shadow. Elevation
+        // is reserved for floating layers (menus, dialogs, toasts, tooltips).
+        'rounded-lg border bg-card text-card-foreground',
         className
       )}
       {...props}
@@ -32,8 +34,9 @@ export const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttrib
   ({ className, ...props }, ref) => (
     <h3
       ref={ref}
+      // v3 §6 title step: 20px/600 — was fixed text-2xl in v2.
       className={cn(
-        'text-2xl font-semibold leading-none tracking-tight',
+        'text-xl font-semibold leading-tight tracking-tight',
         className
       )}
       {...props}

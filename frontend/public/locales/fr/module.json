@@ -8,6 +8,28 @@
     "intermediate": "Intermédiaire",
     "advanced": "Avancé"
   },
+  "desk": {
+    "eyebrow": "Module",
+    "passNote": "70 % pour valider"
+  },
+  "rail": {
+    "eyebrow": "État du module",
+    "notStarted": "Pas commencé",
+    "noAttempt": "Aucune tentative",
+    "scoreEyebrow": "Dernier score",
+    "chainEyebrow": "Sur la chaîne",
+    "nextEyebrow": "Prochaine action",
+    "hintNotStarted": "Validez le quiz à 70 % ou plus pour l'enregistrer sur Sepolia.",
+    "hintBelow": "Refaites le quiz pour atteindre le seuil de 70 %.",
+    "hintPending": "La file continue même si vous quittez cette page.",
+    "hintRetry": "Un nouvel essai est programmé : suivez l'état ici.",
+    "hintFailed": "Remettez l'enregistrement en file depuis cette page.",
+    "hintRecorded": "Votre score est enregistré sur Sepolia : le certificat est public."
+  },
+  "errors": {
+    "loadTitle": "Impossible de charger ce module.",
+    "loadHint": "Rien n'a été perdu : vos tentatives enregistrées sont conservées. Vérifiez votre connexion et réessayez."
+  },
   "topicLabel": "Sujet : {{topic}}",
   "notFound": {
     "title": "Module introuvable",

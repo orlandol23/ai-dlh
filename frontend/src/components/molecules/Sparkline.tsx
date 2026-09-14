@@ -1,4 +1,4 @@
-import { useId, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import type { SparklinePoint } from '@/lib/achievements';
@@ -12,18 +12,21 @@ interface SparklineProps {
 const PAD_X = 6;
 const PAD_Y = 8;
 
+/**
+ * Score history (v3 §4 score-history region). Solid teal data line, dashed
+ * 70% threshold rule with a mono threshold label, one dot per attempt.
+ * No area fill, no gradient, no animated drawing (v3 §10: the line renders
+ * settled). Props and score math unchanged.
+ */
 export const Sparkline = ({ points, height = 96, className }: SparklineProps) => {
   const { t } = useTranslation('dashboard');
-  const reactId = useId();
-  const strokeId = `spark-stroke-${reactId}`;
-  const fillId = `spark-fill-${reactId}`;
   const width = 480;
   const usableW = width - PAD_X * 2;
   const usableH = height - PAD_Y * 2;
 
-  const { path, area, dots } = useMemo(() => {
+  const { path, dots } = useMemo(() => {
     if (points.length === 0) {
-      return { path: '', area: '', dots: [] as { x: number; y: number; score: number }[] };
+      return { path: '', dots: [] as { x: number; y: number; score: number }[] };
     }
 
     const xs =
@@ -36,25 +39,23 @@ export const Sparkline = ({ points, height = 96, className }: SparklineProps) =>
       .map((x, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${ys[i].toFixed(1)}`)
       .join(' ');
 
-    const areaD = `${pathD} L${xs[xs.length - 1].toFixed(1)},${height - PAD_Y} L${xs[0].toFixed(1)},${height - PAD_Y} Z`;
-
     const dotsArr = xs.map((x, i) => ({ x, y: ys[i], score: points[i].score }));
-    return { path: pathD, area: areaD, dots: dotsArr };
-  }, [points, usableW, usableH, height, width]);
+    return { path: pathD, dots: dotsArr };
+  }, [points, usableW, usableH, width]);
 
   if (points.length === 0) {
     return (
       <div
         className={cn(
-          'relative rounded-lg border border-dashed border-primary/30 bg-card p-12 text-center hash-grid overflow-hidden',
-          className
+          'rounded-sm border border-dashed border-border p-8 text-center',
+          className,
         )}
+        role="status"
       >
-        <div className="text-5xl mb-4" aria-hidden="true">📊</div>
-        <p className="font-display text-lg font-semibold tracking-tight">
+        <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
           {t('sparkline.empty.title')}
         </p>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="mt-2 text-sm text-muted-foreground">
           {t('sparkline.empty.hint')}{' '}
           <span className="font-mono inline-block rtl:rotate-180" aria-hidden="true">←</span>
         </p>
@@ -62,39 +63,41 @@ export const Sparkline = ({ points, height = 96, className }: SparklineProps) =>
     );
   }
 
+  const y70 = PAD_Y + (1 - 0.7) * usableH;
+
   return (
     <svg
       viewBox={`0 0 ${width} ${height}`}
       preserveAspectRatio="none"
       className={cn('w-full h-24 spark', className)}
-      aria-label={t('sparkline.aria')}
+      role="img"
+      aria-label={t('sparkline.ariaWithData', { count: points.length })}
     >
-      <defs>
-        <linearGradient id={strokeId} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="hsl(var(--primary))" />
-          <stop offset="100%" stopColor="hsl(var(--accent))" />
-        </linearGradient>
-        <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-
-      {/* baseline 70% (passing threshold) */}
+      {/* threshold rule at 70% (passing threshold) + mono label */}
       <line
         x1={PAD_X}
         x2={width - PAD_X}
-        y1={PAD_Y + (1 - 0.7) * usableH}
-        y2={PAD_Y + (1 - 0.7) * usableH}
+        y1={y70}
+        y2={y70}
         stroke="hsl(var(--border))"
         strokeDasharray="3 4"
         strokeWidth="1"
       />
+      <text
+        x={width - PAD_X}
+        y={y70 - 3}
+        textAnchor="end"
+        fontSize="9"
+        fontFamily="JetBrains Mono, monospace"
+        fill="hsl(var(--muted-foreground))"
+      >
+        {t('sparkline.thresholdLabel')}
+      </text>
 
-      <path d={area} fill={`url(#${fillId})`} />
+      {/* v3 §5: the data line is solid teal — no gradient stroke, no area fill. */}
       <path
         d={path}
-        stroke={`url(#${strokeId})`}
+        stroke="hsl(var(--primary))"
         strokeWidth="2.5"
         fill="none"
         strokeLinecap="round"

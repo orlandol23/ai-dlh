@@ -12,8 +12,18 @@
   "skipToContent": "Skip to content",
   "loading": "Loading…",
   "error": { "generic": "Something went wrong" },
+  "shell": {
+    "menu": "Menu",
+    "openMenu": "Open navigation menu",
+    "primaryNav": "Primary",
+    "navDashboard": "Dashboard",
+    "navProfile": "Profile",
+    "identityLabel": "Connected wallet",
+    "tierDefault": "Default tier",
+    "tierPremium": "Premium tier",
+    "controls": "Preferences and controls"
+  },
   "footer": {
-    "copyright": "© {{year}} AI-DLH. Portfolio project demonstrating Frontend, Full Stack, Generative AI, and Web3.",
-    "poweredBy": "Powered by React, TypeScript, Gemini AI, Ethereum & Solidity"
+    "copyright": "© {{year}} AI-DLH — generated modules, server-graded quizzes, passes recorded on the Sepolia testnet."
   }
 }

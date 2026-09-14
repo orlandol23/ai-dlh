@@ -8,15 +8,15 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', ...props }, ref) => {
-    const baseStyles = 'inline-flex items-center justify-center rounded-md font-medium transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 disabled:pointer-events-none';
+    // v3 "Bench & Ledger": primary = solid ink; hover is a colour shift only —
+    // no translation and no glow (docs/DESIGN-SYSTEM.md §7, §8). Focus is the
+    // single 2px token ring with a 2px offset, matching .focus-ring-v2.
+    const baseStyles = 'inline-flex items-center justify-center rounded-lg font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-45 disabled:pointer-events-none';
 
     const variants = {
-      primary:
-        'bg-primary text-primary-foreground hover:-translate-y-px ' +
-        'hover:shadow-[0_0_0_4px_hsl(var(--primary)/0.12),0_8px_24px_-4px_hsl(var(--primary)/0.30)] ' +
-        'active:translate-y-0 active:shadow-none',
+      primary: 'bg-foreground text-background hover:bg-foreground/90 active:bg-foreground/75',
       secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-      outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
+      outline: 'border border-input bg-card text-foreground hover:border-border-strong hover:bg-accent hover:text-accent-foreground',
       destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
     };
 

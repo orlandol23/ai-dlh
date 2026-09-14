@@ -2,13 +2,6 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/atoms/Button';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from '@/components/atoms/Card';
 import { toast } from '@/components/molecules/Toaster';
 import { trpc } from '@/lib/trpc';
 import { useAuthStore } from '@/store/authStore';
@@ -92,36 +85,40 @@ export const VarkPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <main id="main-content" tabIndex={-1} className="container mx-auto px-4 py-8 max-w-3xl">
+      <main id="main-content" tabIndex={-1} className="container mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:py-12">
         {step === 'intro' && (
-          <Card>
-            <CardHeader>
-              <p className="eyebrow">{t('intro.eyebrow')}</p>
-              <CardTitle className="font-display tracking-tight text-2xl">
-                {t('intro.title')}
-              </CardTitle>
-              <CardDescription>{t('intro.description')}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col sm:flex-row gap-3">
+          <section className="max-w-3xl border-y-2 border-foreground py-8 sm:py-10" aria-labelledby="vark-title">
+            <p className="eyebrow">{t('intro.eyebrow')}</p>
+            <h1 id="vark-title" className="mt-2 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+              {t('intro.title')}
+            </h1>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
+              {t('intro.description')}
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button onClick={() => setStep('quiz')}>{t('intro.start')}</Button>
               <Button variant="outline" onClick={() => navigate('/dashboard')}>
                 {t('intro.cancel')}
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </section>
         )}
 
         {step === 'quiz' && (
-          <Card>
-            <CardHeader>
+          <section className="max-w-3xl border-y-2 border-foreground py-6 sm:py-8" aria-labelledby="vark-question">
+            <div className="flex items-baseline justify-between gap-4">
               <p className="eyebrow">
                 {t('quiz.progressLabel', {
                   current: questionIndex + 1,
                   total: VARK_QUESTION_COUNT,
                 })}
               </p>
+              <span className="font-mono text-xs text-muted-foreground">
+                {String(questionIndex + 1).padStart(2, '0')} / {String(VARK_QUESTION_COUNT).padStart(2, '0')}
+              </span>
+            </div>
               <div
-                className="h-2 w-full rounded-full bg-muted overflow-hidden"
+                className="mt-4 h-1 w-full overflow-hidden bg-muted"
                 role="progressbar"
                 aria-valuemin={0}
                 aria-valuemax={VARK_QUESTION_COUNT}
@@ -131,25 +128,20 @@ export const VarkPage = () => {
                   total: VARK_QUESTION_COUNT,
                 })}
               >
-                <div
-                  className="h-full rounded-full bg-primary transition-all"
-                  style={{ width: `${((questionIndex + 1) / VARK_QUESTION_COUNT) * 100}%` }}
-                />
+                <div className="h-full bg-primary transition-all" style={{ width: `${((questionIndex + 1) / VARK_QUESTION_COUNT) * 100}%` }} />
               </div>
-              <CardTitle className="font-display tracking-tight text-xl pt-2">
+              <h1 id="vark-question" className="mt-8 font-display text-2xl font-semibold tracking-tight sm:text-3xl">
                 {t(`questions.q${questionId}.text`)}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <fieldset className="space-y-3">
+              </h1>
+              <fieldset className="mt-8 space-y-3">
                 <legend className="sr-only">{t(`questions.q${questionId}.text`)}</legend>
                 {LEARNING_STYLES.map((style) => (
                   <label
                     key={style}
-                    className={`flex items-start gap-3 cursor-pointer rounded-md border p-3 transition-colors ${
+                    className={`flex min-h-11 cursor-pointer items-start gap-3 border p-3 transition-colors ${
                       selected === style
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:bg-muted'
+                        ? 'border-primary bg-primary/10'
+                        : 'border-border hover:border-border-strong hover:bg-muted'
                     }`}
                   >
                     <input
@@ -173,7 +165,7 @@ export const VarkPage = () => {
                 <p className="text-xs text-muted-foreground">{t('quiz.selectAnswer')}</p>
               )}
 
-              <div className="flex justify-between pt-2">
+              <div className="flex justify-between gap-3 border-t border-border pt-6">
                 <Button
                   variant="outline"
                   disabled={questionIndex === 0}
@@ -197,8 +189,7 @@ export const VarkPage = () => {
                   </Button>
                 )}
               </div>
-            </CardContent>
-          </Card>
+          </section>
         )}
 
         {step === 'result' && result && (
@@ -236,76 +227,70 @@ const ResultView = ({ counts, style, isMultimodal, isSaving, onRetake, onBack }:
   }) as Recommendation[];
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
+    <div className="max-w-3xl space-y-8">
+      <section
+        className="border-y-2 border-foreground py-8"
+        aria-labelledby="vark-result-title"
+        aria-busy={isSaving}
+      >
           <p className="eyebrow">{t('result.eyebrow')}</p>
-          <CardTitle className="font-display tracking-tight text-2xl">
+          <h1 id="vark-result-title" className="mt-2 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
             {t('result.title')}{' '}
-            <span className="text-primary">
-              {t(`styles.${profileKey}.emoji`)} {t(`styles.${profileKey}.name`)}
-            </span>
-          </CardTitle>
-          <CardDescription>{t(`styles.${profileKey}.description`)}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+            <span className="text-primary">{t(`styles.${profileKey}.name`)}</span>
+          </h1>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">{t(`styles.${profileKey}.description`)}</p>
           {isMultimodal && (
-            <p className="text-sm rounded-md border border-info-border bg-info-bg text-info-fg p-3">
+            <p className="mt-5 border-s-2 border-info bg-info-bg p-3 text-sm text-info-fg">
               {t('result.multimodalNote', { style: t(`styles.${style}.name`) })}
             </p>
           )}
-          <p className="text-sm text-muted-foreground">{t('result.aiNote')}</p>
+          <p className="mt-5 text-sm text-muted-foreground">{t('result.aiNote')}</p>
           {isSaving && (
-            <p className="text-sm text-muted-foreground" role="status">
+            <p className="mt-3 text-sm text-muted-foreground" role="status">
               {t('result.saving')}
             </p>
           )}
-        </CardContent>
-      </Card>
+      </section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-display tracking-tight text-lg">
+      <section aria-labelledby="vark-distribution-title">
+          <h2 id="vark-distribution-title" className="font-display text-xl font-semibold tracking-tight">
             {t('result.distributionTitle')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+          </h2>
+        <div className="mt-4 divide-y divide-border border-y border-border">
           {LEARNING_STYLES.map((s) => (
-            <div key={s}>
+            <div key={s} className="py-4">
               <div className="flex justify-between text-sm mb-1">
                 <span>
-                  {t(`styles.${s}.emoji`)} {t(`styles.${s}.name`)}
+                  {t(`styles.${s}.name`)}
                 </span>
                 <span className="font-mono text-muted-foreground">
                   {t('result.pointsLabel', { count: counts[s], total: VARK_QUESTION_COUNT })}
                 </span>
               </div>
-              <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+              <div className="h-1 w-full overflow-hidden bg-muted">
                 <div
-                  className={`h-full rounded-full ${s === style ? 'bg-primary' : 'bg-primary/40'}`}
+                  className={`h-full ${s === style ? 'bg-primary' : 'bg-primary/40'}`}
                   style={{ width: `${(counts[s] / VARK_QUESTION_COUNT) * 100}%` }}
                 />
               </div>
             </div>
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-display tracking-tight text-lg">
+      <section aria-labelledby="vark-recommendations-title">
+          <h2 id="vark-recommendations-title" className="font-display text-xl font-semibold tracking-tight">
             {t('recommendations.title')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </h2>
+        <div className="mt-4 divide-y divide-border border-y border-border">
           {recommendations.map((rec) => (
-            <div key={rec.title}>
+            <div key={rec.title} className="py-4">
               <h3 className="font-semibold text-sm">{rec.title}</h3>
               <p className="text-sm text-muted-foreground">{rec.description}</p>
             </div>
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       <div className="flex flex-col sm:flex-row gap-3">
         <Button onClick={onBack}>{t('result.backToDashboard')}</Button>

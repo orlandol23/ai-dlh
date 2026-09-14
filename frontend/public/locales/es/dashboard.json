@@ -3,6 +3,13 @@
     "title": "Panel",
     "logoAlt": "AI-DLH"
   },
+  "page": { "eyebrow": "Libro de evidencias" },
+  "ledger": {
+    "eyebrow": "Intentos corregidos",
+    "title": "Tus intentos",
+    "description": "Quizzes corregidos, del más reciente al más antiguo: cada aprobado con 70% o más se pone en cola para registrarse en la red de pruebas Sepolia."
+  },
+  "vark": { "eyebrow": "Perfil de aprendizaje" },
   "stats": {
     "modules": { "eyebrow": "Módulos", "label": "Generados con IA" },
     "quizzes": { "eyebrow": "Quizzes", "label": "Realizados", "sub": "{{passed}} aprobados ({{rate}}%)" },
@@ -15,6 +22,8 @@
     "descriptionEmpty": "Ningún quiz completado aún — la línea discontinua marca el umbral del 70%",
     "descriptionWithData": "Últimos {{count}} quizzes — línea discontinua marca el umbral del 70%",
     "aria": "Historial de puntuaciones",
+    "ariaWithData": "Historial de puntuaciones: últimos {{count}} intentos frente al umbral del 70%",
+    "thresholdLabel": "aprobado al 70%",
     "empty": {
       "title": "Aún no hay quizzes completados",
       "hint": "Genera tu primer módulo con IA"
@@ -67,11 +76,21 @@
     "badge_other": "{{count}} días de racha"
   },
   "timeline": {
+    "state": {
+      "recorded": "registrado",
+      "registering": "registrando…",
+      "queued": "en cola",
+      "retryScheduled": "reintento programado",
+      "failed": "fallo: requiere atención",
+      "belowThreshold": "menos del 70%"
+    },
     "eyebrow": "Cronología",
     "title": "Actividad on-chain",
     "description": "Quizzes completados y sus sellos en la blockchain Sepolia",
     "moduleAriaLabel": "Abrir {{title}} (puntuación {{score}}%)",
     "moduleFallback": "Módulo #{{id}}",
+    "relationPassed": "aprobado (umbral del 70%)",
+    "relationBelow": "por debajo del umbral del 70%",
     "viewOnEtherscan": "Ver en Etherscan",
     "chainPending": "registrando…",
     "chainFailed": "falló",
@@ -109,6 +128,17 @@
   },
   "generating": {
     "eyebrow": "Construyendo tu módulo"
+  },
+  "errors": {
+    "statsTitle": "No se pudieron cargar tus estadísticas.",
+    "ledgerTitle": "No se pudieron cargar tus registros de intentos.",
+    "modulesTitle": "No se pudieron cargar tus módulos.",
+    "scoresTitle": "No se pudo cargar tu historial de puntuaciones.",
+    "hint": "No se ha perdido nada: comprueba la conexión y vuelve a intentarlo.",
+    "retry": "Reintentar",
+    "statsLoading": "Cargando tus estadísticas…",
+    "ledgerLoading": "Cargando tus registros de intentos…",
+    "modulesLoading": "Cargando tus módulos…"
   },
   "onboarding": {
     "skip": "Omitir",

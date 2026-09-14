@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { motion, useReducedMotion } from 'framer-motion';
 import { Button } from '@/components/atoms/Button';
 import { Card, CardContent } from '@/components/atoms/Card';
 import { Skeleton } from '@/components/atoms/Skeleton';
@@ -10,6 +9,7 @@ import { LanguageSelector } from '@/components/molecules/LanguageSelector';
 import { trpc } from '@/lib/trpc';
 import { getEtherscanUrl, formatAddress } from '@/lib/utils';
 import { useFormatDate } from '@/lib/intl';
+import { toast } from '@/components/molecules/Toaster';
 import { SUPPORTED_LOCALES, type SupportedLocale } from '@/i18n';
 
 /**
@@ -26,8 +26,8 @@ export const CertPage = () => {
   const { hash } = useParams<{ hash: string }>();
   const [searchParams] = useSearchParams();
   const { t, i18n } = useTranslation('cert');
-  const reduce = useReducedMotion();
   const formatDate = useFormatDate();
+  const isValidHash = /^0x[a-fA-F0-9]{64}$/.test(hash ?? '');
 
   // Honor ?lang= query param (only switch if locale is supported)
   useEffect(() => {
@@ -39,15 +39,12 @@ export const CertPage = () => {
 
   const { data, isLoading, error } = trpc.cert.getByHash.useQuery(
     { hash: hash ?? '' },
-    { enabled: !!hash, retry: false },
+    { enabled: isValidHash, retry: false },
   );
 
   return (
-    <div className="min-h-screen hero-gradient relative overflow-hidden">
-      <div className="absolute inset-0 hash-grid opacity-60 pointer-events-none" aria-hidden="true" />
-
-      {/* Top bar — minimal, just logo + language/theme controls */}
-      <header className="relative border-b border-border bg-background/60 backdrop-blur-sm">
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 focus-ring-v2 rounded-md">
             <img src="/logo.svg" alt="" aria-hidden="true" className="w-8 h-8" />
@@ -60,19 +57,36 @@ export const CertPage = () => {
         </div>
       </header>
 
-      <main id="main-content" tabIndex={-1} className="relative container mx-auto px-4 py-12 md:py-20">
-        {isLoading && (
-          <div className="max-w-2xl mx-auto space-y-6">
-            <Skeleton className="h-12 w-3/4 mx-auto" />
-            <Skeleton className="h-32 w-1/2 mx-auto" />
+      <main id="main-content" tabIndex={-1} className="container mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:py-16">
+        {isValidHash && isLoading && (
+          <div className="mx-auto max-w-3xl space-y-6" role="status" aria-label={t('page.loading')}>
+            <Skeleton className="h-8 w-40" />
+            <Skeleton className="h-16 w-3/4" />
             <Skeleton className="h-24 w-full" />
           </div>
         )}
 
-        {error && (
-          <Card className="max-w-md mx-auto">
-            <CardContent className="pt-6 text-center">
-              <p className="text-lg font-semibold">{t('page.notFound')}</p>
+        {!isValidHash && (
+          <Card className="mx-auto max-w-md">
+            <CardContent className="pt-6" role="alert">
+              <p className="eyebrow">{t('page.invalidLink')}</p>
+              <h1 className="mt-2 font-display text-2xl font-semibold tracking-tight">
+                {t('page.invalidLink')}
+              </h1>
+              <Button className="mt-4" onClick={() => (window.location.href = '/')}>
+                {t('page.createYour')}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {isValidHash && error && (
+          <Card className="mx-auto max-w-md">
+            <CardContent className="pt-6" role="alert">
+              <p className="eyebrow">{t('page.verification')}</p>
+              <h1 className="mt-2 font-display text-2xl font-semibold tracking-tight">
+                {t('page.notFound')}
+              </h1>
               <Button className="mt-4" onClick={() => (window.location.href = '/')}>
                 {t('page.createYour')}
               </Button>
@@ -81,62 +95,86 @@ export const CertPage = () => {
         )}
 
         {data && (
-          <div className="max-w-3xl mx-auto text-center space-y-8">
-            {/* On-chain badge stamp */}
-            <motion.div
-              initial={reduce ? false : { opacity: 0, scale: 1.4, rotate: -12 }}
-              animate={reduce ? { opacity: 1 } : { opacity: 1, scale: 1, rotate: -8 }}
-              transition={{ duration: reduce ? 0 : 0.6, ease: [0.22, 1, 0.36, 1] }}
-              className="inline-block px-4 py-1.5 rounded-md border-2 border-primary/60 bg-card font-mono text-xs font-bold tracking-widest text-primary uppercase shadow-md"
-              aria-hidden="true"
-            >
-              ⛓ {t('page.badge')}
-            </motion.div>
+          <div className="mx-auto max-w-3xl">
+            <p className="eyebrow">{t('page.verification')}</p>
+            <div className="mt-3 border-y-2 border-foreground py-8 sm:py-10">
+              <h1 className="max-w-2xl font-display text-3xl font-semibold tracking-tight sm:text-5xl">
+                {data.title || data.topic}
+              </h1>
+              {data.title && <p className="mt-2 text-base text-muted-foreground">{data.topic}</p>}
 
-            {/* Topic title */}
-            <h1 className="font-display text-5xl md:text-7xl font-bold tracking-tighter leading-[1.05]">
-              {data.topic}
-            </h1>
+              <div className="mt-10 grid gap-8 sm:grid-cols-[1fr_auto] sm:items-end">
+                <div>
+                  <p className="eyebrow">{t('page.scoreLabel')}</p>
+                  <p className="mt-2 font-display text-6xl font-bold leading-none tabular-nums text-success-fg sm:text-7xl">
+                    {data.score}%
+                  </p>
+                  <p className="mt-3 font-mono text-sm text-success-fg">{t('page.thresholdPassed')}</p>
+                </div>
+                <div className="border-s-2 border-success p-4 sm:max-w-xs">
+                  <p className="font-mono text-sm font-semibold text-success-fg">{t('page.verifiedSepolia')}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{t('page.publicRecord')}</p>
+                </div>
+              </div>
 
-            {/* Score gigante */}
-            <div className="flex flex-col items-center">
-              <p className="eyebrow">{t('page.scoreLabel')}</p>
-              <p className="font-display text-8xl md:text-9xl font-bold text-gradient-brand tabular-nums leading-none mt-2">
-                {data.score}%
-              </p>
+              <dl className="mt-10 grid gap-4 border-t border-border pt-6 sm:grid-cols-2">
+                <div>
+                  <dt className="eyebrow">{t('page.walletLabel')}</dt>
+                  <dd className="mt-1 font-mono text-sm">{formatAddress(data.walletAddress)}</dd>
+                </div>
+                <div>
+                  <dt className="eyebrow">{t('page.completedLabel')}</dt>
+                  <dd className="mt-1 text-sm">{formatDate(new Date(data.completedAt))}</dd>
+                </div>
+                <div className="sm:col-span-2">
+                  <dt className="eyebrow">{t('page.transactionLabel')}</dt>
+                  <dd className="mt-1 break-all font-mono text-xs">{data.transactionHash}</dd>
+                </div>
+              </dl>
             </div>
 
-            {/* Meta */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-muted-foreground">
-              <span>{t('page.completedAt', { date: formatDate(new Date(data.completedAt)) })}</span>
-              <span aria-hidden="true">·</span>
-              <span className="font-mono">{formatAddress(data.walletAddress)}</span>
-            </div>
-
-            {/* CTAs */}
-            <div className="flex flex-wrap items-center justify-center gap-3 pt-6">
+            <div className="mt-6 flex flex-wrap gap-3">
               {data.transactionHash && (
-                <a
-                  href={getEtherscanUrl(data.transactionHash)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center h-11 px-6 rounded-md bg-primary text-primary-foreground font-medium hover:opacity-90 transition focus-ring-v2"
-                >
-                  {t('page.verifyEtherscan')}
-                  <span className="font-mono inline-block rtl:rotate-180 ms-2">→</span>
+                <a href={getEtherscanUrl(data.transactionHash)} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-foreground px-4 text-sm font-medium text-background transition-colors hover:bg-foreground/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                  {t('page.verifyEtherscan')} <span aria-hidden="true" className="ms-2">↗</span>
                 </a>
               )}
-              <Link
-                to="/"
-                className="inline-flex items-center justify-center h-11 px-6 rounded-md border border-input bg-background hover:bg-accent transition focus-ring-v2"
-              >
+              <Link to="/" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-input bg-card px-4 text-sm font-medium transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                 {t('page.createYour')}
-                <span className="font-mono inline-block rtl:rotate-180 ms-2">→</span>
               </Link>
             </div>
+
+            {data.transactionHash && <CertShareRow topic={data.topic} score={data.score} txHash={data.transactionHash} />}
           </div>
         )}
       </main>
     </div>
   );
 };
+
+function CertShareRow({ topic, score, txHash }: { topic: string; score: number; txHash: string }) {
+  const { t, i18n } = useTranslation(['cert', 'common']);
+  const shareText = t('cert:share.text', { topic, score });
+  const shareUrl = `${window.location.origin}/cert/${txHash}?lang=${i18n.language}`;
+  const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+  const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(shareUrl);
+    toast.success(t('cert:share.copied'));
+  };
+
+  return (
+    <div className="mt-6 flex flex-wrap gap-3 border-t border-border pt-4">
+      <a target="_blank" rel="noopener noreferrer" href={linkedInUrl} className="inline-flex min-h-11 items-center rounded-lg border border-input bg-card px-3 text-sm hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+        {t('cert:share.linkedin')}
+      </a>
+      <a target="_blank" rel="noopener noreferrer" href={twitterUrl} className="inline-flex min-h-11 items-center rounded-lg border border-input bg-card px-3 text-sm hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+        {t('cert:share.twitter')}
+      </a>
+      <Button variant="outline" size="sm" className="h-11" onClick={copy}>
+        {t('cert:share.copyLink')}
+      </Button>
+    </div>
+  );
+}

@@ -9,7 +9,10 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       <input
         type={type}
         className={cn(
-          'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-ring-v2 disabled:cursor-not-allowed disabled:opacity-50',
+          // v3 §8: 44px control, 4px radius, surface background, hint-sized
+          // text (16px on mobile to prevent iOS zoom). Focus via the shared
+          // single-ring utility.
+          'flex h-11 w-full rounded-sm border border-input bg-card px-3 py-2 text-base sm:text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-ring-v2 disabled:cursor-not-allowed disabled:opacity-50',
           className
         )}
         ref={ref}

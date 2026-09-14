@@ -12,6 +12,17 @@
   "skipToContent": "Aller au contenu",
   "loading": "Chargement…",
   "error": { "generic": "Une erreur est survenue" },
+  "shell": {
+    "menu": "Menu",
+    "openMenu": "Ouvrir le menu de navigation",
+    "primaryNav": "Navigation principale",
+    "navDashboard": "Tableau de bord",
+    "navProfile": "Profil",
+    "identityLabel": "Portefeuille connecté",
+    "tierDefault": "Niveau standard",
+    "tierPremium": "Niveau premium",
+    "controls": "Préférences et contrôles"
+  },
   "footer": {
     "copyright": "© {{year}} AI-DLH. Projet portfolio démontrant Frontend, Full Stack, IA générative et Web3.",
     "poweredBy": "Powered by React, TypeScript, Gemini AI, Ethereum & Solidity"

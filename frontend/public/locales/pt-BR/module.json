@@ -8,6 +8,28 @@
     "intermediate": "Intermediário",
     "advanced": "Avançado"
   },
+  "desk": {
+    "eyebrow": "Módulo",
+    "passNote": "70% para aprovar"
+  },
+  "rail": {
+    "eyebrow": "Status do módulo",
+    "notStarted": "Não iniciado",
+    "noAttempt": "Nenhuma tentativa ainda",
+    "scoreEyebrow": "Última pontuação",
+    "chainEyebrow": "On-chain",
+    "nextEyebrow": "Próxima ação",
+    "hintNotStarted": "Faça o quiz com 70% ou mais para registrar na Sepolia.",
+    "hintBelow": "Refazer o quiz para alcançar o limite de 70%.",
+    "hintPending": "A fila continua mesmo se você sair desta página.",
+    "hintRetry": "Uma nova tentativa foi agendada — acompanhe o status aqui.",
+    "hintFailed": "Reenfileire o registro daqui.",
+    "hintRecorded": "Sua pontuação está registrada na Sepolia — o certificado é público."
+  },
+  "errors": {
+    "loadTitle": "Não foi possível carregar este módulo.",
+    "loadHint": "Nada foi perdido — suas tentativas salvas estão seguras. Verifique a conexão e tente novamente."
+  },
   "topicLabel": "Tópico: {{topic}}",
   "notFound": {
     "title": "Módulo não encontrado",
@@ -16,14 +38,14 @@
   "alreadyCompleted": {
     "title": "Você já completou este módulo",
     "scoreLine": "Score: {{score}}% — {{result}}",
-    "passed": "Aprovado ✅",
-    "failed": "Reprovado ❌",
+    "passed": "Aprovado",
+    "failed": "Abaixo do limite de 70%",
     "viewOnBlockchain": "Ver na Blockchain"
   },
-  "startQuiz": "Iniciar Quiz",
-  "retakeQuiz": "Refazer Quiz",
+  "startQuiz": "Iniciar quiz",
+  "retakeQuiz": "Refazer quiz",
   "focus": {
-    "enter": "Modo focado",
+    "enter": "Entrar no modo focado",
     "exit": "Sair do modo focado"
   }
 }

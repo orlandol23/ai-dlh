@@ -25,8 +25,11 @@ import { useAuthStore } from '@/store/authStore';
  * Locale is already controlled via LanguageSelector in the header; this
  * panel only persists the *server-side* preference for AI generation, so
  * the next `generateModule` call routes to the correct provider.
+ *
+ * Optional `className` merges onto the trigger so the app-shell mobile
+ * sheet can raise the trigger to a 44px touch target.
  */
-export function PreferencesPanel() {
+export function PreferencesPanel({ className }: { className?: string }) {
   const { t } = useTranslation('auth');
   const { t: tVark } = useTranslation('vark');
   const navigate = useNavigate();
@@ -52,7 +55,7 @@ export function PreferencesPanel() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" aria-label={t('preferences.open')}>
+        <Button variant="outline" size="sm" aria-label={t('preferences.open')} className={className}>
           <Settings className="h-4 w-4" aria-hidden="true" />
         </Button>
       </DialogTrigger>

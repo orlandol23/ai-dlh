@@ -1,4 +1,32 @@
 {
+  "eyebrow": "Banco de estudio",
+  "statement": "Genera un módulo de estudio sobre cualquier tema. Aprueba su quiz con un 70%. El aprobado se registra en la red de pruebas Sepolia y se puede verificar en Etherscan.",
+  "ctaSecondary": "Ver el contrato verificado",
+  "metamaskNote": "Requiere la extensión de MetaMask: el inicio de sesión usa una firma de cartera.",
+  "ledger": {
+    "eyebrow": "Libro de evidencias",
+    "caption": "Así se ve tu libro después de algunos intentos.",
+    "item1": "Genéricos de TypeScript",
+    "item1Meta": "Hace 2 días · 0x3f…9a",
+    "item2": "Índices SQL",
+    "item2Meta": "Hace 1 h",
+    "item3": "Bucle de eventos",
+    "item3Meta": "Hace 6 días",
+    "stateRecorded": "registrado",
+    "stateRegistering": "registrando…",
+    "stateBelow": "menos del 70%"
+  },
+  "pipeline": {
+    "eyebrow": "Cómo funciona",
+    "step1Title": "Conecta tu cartera",
+    "step1Body": "Firma con MetaMask. Sin correo ni contraseña.",
+    "step2Title": "Indica un tema y un nivel",
+    "step2Body": "El módulo y su quiz se generan para ti.",
+    "step3Title": "Lee, responde y recibe tu nota",
+    "step3Body": "La corrección se ejecuta en el servidor. Las explicaciones de las preguntas falladas permanecen bloqueadas hasta que las desbloquees en un nuevo intento.",
+    "step4Title": "Alcanza el 70%: queda registrado",
+    "step4Body": "Una cola registra el aprobado en la red de pruebas Sepolia. Puedes salir de la página mientras continúa el registro."
+  },
   "hero": {
     "titleLine1": "Aprende con <0>IA</0>",
     "titleLine2": "Certifica en la <0>cadena</0>",

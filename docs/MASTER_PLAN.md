@@ -6,7 +6,7 @@
 
 > Rule (inherited from the ROADMAP): **no checkbox by intention**. An item's status changes only in the PR that completes it (with a link), or by a dated decision in "Decisions during execution".
 
-_Updated: 2026-09-01_
+_Updated: 2026-09-07_
 
 | Item | Status | Reference |
 |---|---|---|
@@ -22,6 +22,10 @@ _Updated: 2026-09-01_
 | Outside the plan: queue, event-driven worker (wake on enqueue) | ✅ | [#33](https://github.com/orlandol23/ai-dlh/pull/33) |
 | Outside the plan: security, drizzle-orm 0.45.2 + react-router 7 | ✅ | [#34](https://github.com/orlandol23/ai-dlh/pull/34) |
 | C1b: Slither + gas gate in CI | ✅ | [#35](https://github.com/orlandol23/ai-dlh/pull/35) |
+| Outside the plan: queue journal (send/wait split, nonce recovery), dead endpoints removed, docs in English | ✅ | [#36](https://github.com/orlandol23/ai-dlh/pull/36) |
+| Audit 2026-09, block 1: logger cannot crash the caller or leak a key; Slither gate real; CI read-only token | ✅ | [#37](https://github.com/orlandol23/ai-dlh/pull/37) |
+| Audit 2026-09, block 2: fenced queue transitions, sign → journal → broadcast, lock as a DB-enforced pair | 🔄 open | [#38](https://github.com/orlandol23/ai-dlh/pull/38) |
+| Phase 0b: hardening before Phase 1 (see "Plan review, 2026-09-07") | ⬜ | none |
 | Phase 1: A1–A7 | ⬜ | none |
 | Phase 2: B1–B7 | ⬜ | none |
 | Phase 3: C2–C8 | ⬜ | none |
@@ -48,6 +52,7 @@ _Updated: 2026-09-01_
 | 2026-07-26 | **ADR layer created** (`docs/adr/`, 6 decisions already taken, recorded with their course source) plus a "Course items" section (CU-1…CU-8, additive, the PR sequence unchanged) plus `docs/SOLIDITY_REVIEW_CHECKLIST.md` as a gate on every contract PR. **Open pending decision: CU-5** (Arweave as primary in C5). |
 | 2026-08-27 | **CU-7 executed ahead of schedule** ([#29](https://github.com/orlandol23/ai-dlh/pull/29), 2026-07-27): the frontend wallet login moved from ethers v6 to **viem** before Phase 1, and the "decide after Phase 1" assessment was overtaken by the facts. wagmi stays out (not needed until A6). E5 and the CU-7 row updated. |
 | 2026-09-01 | **Gas gate tool chosen: a script of our own** ([#35](https://github.com/orlandol23/ai-dlh/pull/35)), closing the "name the chosen tool in the PR" item. Rejected: `gasReporterOutput.json` as an artifact (`hardhat-gas-reporter` 1.0.9 prints a table, does not fail the build, and the JSON format varies between versions) and `forge snapshot` (it would require Foundry in a Hardhat project, for this alone). The script measures named scenarios, has an explicit tolerance and fails with an actionable message. |
+| 2026-09-06 | **Five decisions from the September audit** (`docs/AUDIT-2026-09.md`), all to land as **Phase 0b** before A1: (1) **premium is a paid subscription for access to more expensive models**, which is Phase 1; until A2 ships, the option leaves the UI and the field stays server-side, so no logged-in user routes to the paid model for free; (2) **`auth.getNonce` server-side now**, SIWE stays in C3; (3) **`token_version`** column for a real logout; (4) the certificate URL carries an **opaque token**, not the transaction hash, because `cert.getByHash` linked hashes to real wallets; (5) **`moduleTopic` stays free text until the next redeploy**, which hashes it (ADR-0004); a README statement and a UI warning now. Also: the Step 0 sentence "wallet spoofing is not a hole today" was wrong (signature replay) and is corrected below. |
 
 ## Changelog for this revision (what changed vs. the previous version)
 
@@ -69,7 +74,7 @@ _Updated: 2026-09-01_
 Evidence: `server/services/auth.service.ts`. `authenticateWithSignature` calls `web3Service.verifySignature(message, signature, normalizedWallet)` (~line 122), with a match against the declared address, **domain binding**, a time window (±skew) and an **atomic anti-replay nonce** backed by the unique index `(nonce, wallet)`. `users.walletAddress` is UNIQUE.
 
 **Recorded consequences:**
-- **SIWE stays in C3 (standardization, not a blocker).** Wallet spoofing is not a hole today.
+- **SIWE stays in C3 (standardization).** Correction, 2026-09-06: the earlier sentence "wallet spoofing is not a hole today" was wrong. The nonce is minted on the client, so a malicious site can build the message with the right domain, ask the victim to `personal_sign`, and replay it within the five-minute window. Spoofing is not possible; **replay is**. `auth.getNonce` server-side (Phase 0b) closes it; SIWE in C3 standardises it.
 - **Invariant A5:** `billing.getPlan/refresh` take an **empty input**. The wallet comes exclusively from `ctx.user.walletAddress` (the pattern in `web3.router.ts`). Never accept a wallet from the client.
 - **Invariant A6:** block the purchase if the **connected** wallet ≠ the **authenticated** wallet (or route it to `subscribeFor(authenticatedWallet)`). Lock the user's wallet against being changed while there is an active plan or pending credits.
 - **C4/C5:** the certificate mint uses the user's **proven** wallet as the recipient.
@@ -393,6 +398,105 @@ Break-even on the fixed infrastructure ≈ **5 subscribers** (contribution margi
 
 **Validated as already covered (no action):** fuzz and invariants named in the E1 checklist (CU-1 only formalizes them in CI); Arweave already mentioned in C5 (CU-5 only fixes the primary); SIWE is already C3; pause and rollback are already in the A4 runbook; human review of the es/fr/ja/ar translations is already an A6c criterion.
 
+# Plan review, 2026-09-07
+
+This plan read against `docs/AUDIT-2026-09.md` and the owner's decisions of
+2026-09-06. It is complete for its purpose (billing and adaptive learning) and
+was missing the hardening the audit found. That hardening gates the paywall's
+integrity: a paywall on top of a self-assignable premium tier, a replayable
+login and an irrevocable session would be a paywall in name only. So it goes
+first.
+
+## Phase 0b: hardening before Phase 1 (new)
+
+Sequence: **all of 0b before A1.** Each row is one PR or one commit; the DoD is
+what the PR has to show.
+
+| # | Item | Definition of done |
+|---|---|---|
+| 0b.1 | Premium out of the UI; `preferredTier` stays server-side (interim until A2) | `grep` finds no client path that sets `premium`; a test shows `updatePreferences({ preferredTier: 'premium' })` is rejected for a user with no plan |
+| 0b.2 | `auth.getNonce`: server issues and persists the nonce; login accepts only an issued, unused nonce | a replay test is red before and green after |
+| 0b.3 | `token_version` on `users`; `verifyToken` checks it; `logout` increments it | a token captured before logout is rejected after it, in a test |
+| 0b.4 | Global daily AI counter checked before any provider call; a dedicated limiter on `auth.login` | the (N+1)th call of the day is refused with no provider call, in a test; `ai.router.ts`'s comment matches the code |
+| 0b.5 | Certificate URL carries an opaque token; `cert.getByHash` retired or owner-only | the public certificate page never returns `walletAddress` |
+| 0b.6 | `moduleTopic`: README statement (public, immutable, free text) and a UI warning before generation; the `bytes32` hash is a C4 item linked from ADR-0004 | text present; C4 row links back here |
+| 0b.7 | Hygiene: `helmet`; `x-powered-by` off; explicit `express.json({ limit })`; `NODE_ENV` required; `jwt.verify` with `algorithms: ['HS256']`; `x-region` in CORS `allowedHeaders`; console-only logging in production; a delimiter around user text in `prompt-builder.ts` | each is a line in one PR, with the `.env.example` `/health` vs `/healthz` note corrected |
+| 0b.8 | A `failed_permanent` record whose nonce is still pending: consult receipts once more before parking | test with a receipt appearing after the attempt budget is spent |
+
+## Other gaps found
+
+- **Runbook for the custodial wallet.** The queue now has an honest "needs a
+  human" outcome (a nonce consumed by a transaction the row never signed,
+  which since #38 means the wallet was spent from elsewhere). The runbook has
+  to say what to check (the wallet's history on the explorer), how to rotate
+  the key, and how funding alerts are acted on. This belongs to the A4 runbook
+  and is not yet written.
+- **The idle-billing arithmetic is documented, not tested.** A soak test with
+  a fake RPC and a fake clock, counting database wakeups over a simulated day,
+  would turn the README's "48 wakeups a day" story into a number CI defends.
+- **`docs/DEPLOYMENT.md` rewrite** for Railway + Vercel + Neon is still pending
+  (listed above since PR-0.5).
+- **Owner steps still open:** Sentry DSN (activates C1, already merged), the
+  four README screenshots, archiving the aprendaMais repository.
+- **Nothing else in Phases 1 to 4 changes.** The sequence and scopes hold; 0b
+  is inserted, not substituted.
+
 # Out of scope for this plan
-- **boxing-instructor** (separate plan, later): 🔴 `api/coach.ts` is public with no rate limit, origin check or budget (interim mitigation: an Anthropic billing alert plus `max_tokens:400`); no CSP in vercel.json; pose on the main thread; the MediaPipe model has no offline cache; a frame-based engine; F8/F9/F10/F6b.
-- swiss-defi and portfolio are paused.
+- **boxing-instructor**: has its own plan, `docs/ROADMAP.md` in its repository, with Phase 11 (security and operations) added on 2026-09-07 from the same audit.
+- **swiss-defi-optimizer**: has its own plan since 2026-09-07, `docs/ROADMAP.md` in its repository. It is not paused: the reentrancy fix and the ERC-4626 conformance work landed in September.
+- portfolio is paused.
+
+# Second review, 2026-09-07: beyond the audit
+
+A second pass over the plan asking what a paid product needs that no audit
+finding would surface, because none of it is a bug. Each item is a plan entry
+until the PR that closes it links back here.
+
+1. **Personal data and LGPD.** Wallet addresses, the VARK learning style, quiz
+   answers and, from Phase 1, payment records are personal data under the
+   LGPD. There is no retention policy, no deletion path and no privacy notice.
+   Gate on A7, next to the terms of service: a privacy notice; an
+   account-deletion procedure that also says what happens to on-chain records,
+   which cannot be deleted; a retention table per data class.
+2. **Terms of service and the no-refund rule.** E1 rules out refunds on-chain.
+   That has to be disclosed before the first payment, together with the "4
+   weeks (28 days)" wording. Gate on A7.
+3. **Custodial wallet rotation and the journal.** `blockchain_nonce` is per
+   wallet. Rotating the key while records are in flight breaks recovery for
+   them: a new wallet has a different nonce sequence. The rotation procedure
+   is therefore: pause enqueueing, drain the queue to zero in flight, rotate,
+   resume. Write it into the A4 runbook, and consider a `wallet_address` column
+   on the journal so a mixed state is at least detectable.
+4. **Backups, concretely.** "The Postgres backup is part of the money" is
+   named above and has no item. Neon point-in-time recovery enabled; one
+   restore drill actually run and dated; RPO and RTO stated. The journal is
+   what makes a duplicate on-chain record impossible; losing the journal loses
+   that guarantee.
+5. **Horizontal scaling.** The single-instance assumption lives in a code
+   comment, not in the plan. Phase 3 item: either an elected sender (one
+   process owns the nonce) with `FOR UPDATE SKIP LOCKED` claims, or a written
+   statement that single instance is the design and what its ceiling is.
+6. **Output safety for generated modules.** 0b.7 delimits user text in the
+   prompt, which protects the prompt. Nothing checks the output. A content
+   policy for generated educational material (which categories are refused,
+   which are flagged) and a report control on the module page. A product
+   decision either way; record it.
+7. **Alerts, not only exceptions.** Sentry catches what throws. Nothing alerts
+   on "oldest pending record older than X" or "wallet balance below Y days of
+   gas" (the monitor exposes the number; nobody is paged). Two alerts on the
+   health endpoint before go-live.
+
+### Repository hygiene (shared by all six repositories)
+
+- **Dependency update automation.** None of the six repositories has Dependabot
+  or Renovate. Add `.github/dependabot.yml` with weekly, grouped updates for the
+  package ecosystem and for `github-actions`, and daily security updates. The
+  recurring "npm audit fix without --force" items stop recurring once this
+  exists.
+- **Responsible disclosure.** No repository has a `SECURITY.md`. Enable GitHub
+  private vulnerability reporting (Settings > Security > "Private vulnerability
+  reporting") and add a `SECURITY.md` that points to it, so a report never has
+  to be a public issue. Do not put a personal email address in the file.
+- **Branch protection on the default branch.** Require the CI checks to pass
+  before merge; forbid force-push and deletion. An owner setting; costs nothing
+  and is the first thing a reviewer checks after the README.

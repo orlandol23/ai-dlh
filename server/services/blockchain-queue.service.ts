@@ -10,6 +10,7 @@ import { config } from '../utils/env.js';
 import { logger } from '../utils/logger.js';
 import { captureException } from '../utils/sentry.js';
 import { getErrorMessage } from '../utils/errors.js';
+import { LockLostError } from './queue-errors.js';
 
 /**
  * Exponential backoff schedule between send attempts.
@@ -52,6 +53,8 @@ interface ClaimedRecord {
   moduleId: number;
   score: number;
   blockchainAttempts: number;
+  /** Proof that THIS claim, not a later one, holds the row. */
+  blockchainLockToken: string | null;
   blockchainNonce: number | null;
   blockchainSentHashes: string | null;
 }
@@ -91,23 +94,39 @@ function parseSentHashes(raw: string | null): string[] {
  *    an idle deployment must not keep waking a scale-to-zero database
  *    (see idleWaitMs for the billing arithmetic that forces this).
  *
- * Exactly-once on-chain writes (journal-before-wait):
- *  - Sending a transaction and waiting for its receipt are two separate
- *    calls into web3.service, and the nonce plus the broadcast hash are
- *    written to the row BETWEEN them. A process killed while waiting
- *    therefore leaves a row that says exactly what is in flight, and the
- *    worker that reclaims it after the stale-lock window resolves that
- *    nonce from its receipts (recoverInFlight) instead of broadcasting a
- *    second transaction. Since the recovery path re-broadcasts on the
- *    SAME nonce, at most one of those transactions can ever mine.
+ * Exactly-once on-chain writes (sign, journal, then broadcast):
+ *  - Signing, broadcasting and waiting are three separate calls into
+ *    web3.service, and the nonce and hash are written to the row between
+ *    the first and the second. A signed transaction already has its final
+ *    hash, so this is possible before any node has seen it. Every failure
+ *    from that write onwards — a lost acknowledgement, a timeout, a hard
+ *    kill — therefore leaves a row naming the exact transaction that may
+ *    be in flight, and the worker that reclaims it after the stale-lock
+ *    window resolves it from its receipts (recoverInFlight) instead of
+ *    broadcasting a second one. Since the recovery path re-broadcasts on
+ *    the SAME nonce, at most one of those transactions can ever mine. See
+ *    sendAndJournal for why journaling after the broadcast was not enough.
+ *  - Replace-by-fee replacements follow the same order, inside
+ *    web3.service: the fee-bumped transaction is signed locally, its hash
+ *    is reported through the journal callback (onReplacement) and only
+ *    then are the bytes handed to the node. A replacement whose
+ *    acknowledgement is lost therefore lands as a hash the row already
+ *    names, and recovery confirms from its receipt rather than reporting
+ *    the nonce consumed by an unknown transaction. If the journal callback
+ *    reports the lock lost, the replacement is not broadcast at all.
  *
  * Claim semantics (idempotency):
  *  - A record is claimed via a single conditional UPDATE
  *    (`... WHERE id = ? AND status IN ('pending','failed') ...` RETURNING)
- *    that also flips it to `processing` and increments the attempt
- *    counter. The UPDATE is atomic in Postgres, so even if two pollers
- *    select the same candidate, exactly one claim succeeds — the loser's
- *    WHERE no longer matches and it skips the record.
+ *    that also flips it to `processing`, increments the attempt counter
+ *    and mints a fresh lock token. The UPDATE is atomic in Postgres, so
+ *    even if two pollers select the same candidate, exactly one claim
+ *    succeeds — the loser's WHERE no longer matches and it skips the
+ *    record.
+ *  - Every write after the claim is fenced by that token (heldBy), not by
+ *    the status alone. A reclaimed row is still `processing`, so a
+ *    status-only guard would let a worker whose lock went stale mid-send
+ *    overwrite the worker that owns the row now.
  *
  * Single-instance limitation (documented on purpose):
  *  - This worker is designed for the current single-server deployment
@@ -368,6 +387,7 @@ export class BlockchainQueueService {
       .set({
         blockchainStatus: 'processing',
         blockchainLockedAt: new Date(),
+        blockchainLockToken: sql`gen_random_uuid()`,
         blockchainAttempts: sql`${progressRecords.blockchainAttempts} + 1`,
       })
       .where(
@@ -387,6 +407,10 @@ export class BlockchainQueueService {
         moduleId: progressRecords.moduleId,
         score: progressRecords.score,
         blockchainAttempts: progressRecords.blockchainAttempts,
+        // The fence. Every transition below is guarded by it, so a worker
+        // whose lock was reclaimed mid-flight writes nothing instead of
+        // overwriting the worker that owns the row now.
+        blockchainLockToken: progressRecords.blockchainLockToken,
         // Read the journal from the claim itself: whatever the candidate
         // SELECT saw may be stale by the time the claim lands.
         blockchainNonce: progressRecords.blockchainNonce,
@@ -403,7 +427,7 @@ export class BlockchainQueueService {
     if (!candidate.module) {
       // Module row was deleted; the on-chain payload needs its topic and
       // can never be produced again. Permanent by construction.
-      await this.markFailedPermanent(record.id, 'Owning module no longer exists');
+      await this.markFailedPermanent(record, 'Owning module no longer exists');
       return;
     }
 
@@ -418,16 +442,32 @@ export class BlockchainQueueService {
           ? await this.recoverInFlight(record, record.blockchainNonce, candidate.module.topic)
           : await this.sendAndJournal(record, candidate.module.topic);
 
-      await db
+      const confirmed = await db
         .update(progressRecords)
         .set({
           blockchainStatus: 'confirmed',
           transactionHash: receipt.hash,
           blockchainError: null,
           blockchainLockedAt: null,
+          blockchainLockToken: null,
           blockchainNextAttemptAt: null,
         })
-        .where(eq(progressRecords.id, record.id));
+        .where(this.heldBy(record))
+        .returning({ id: progressRecords.id });
+
+      if (confirmed.length === 0) {
+        // The completion is on-chain and the row does not say so. Nothing
+        // here can fix that, so the one thing it must not do is stay quiet:
+        // the row is claimable again, and the next holder finds the journal
+        // and recovers from the nonce rather than sending twice.
+        logger.error(
+          `Queue record ${record.id} was written on-chain (${receipt.hash}) but could not ` +
+            `be confirmed: this worker's lock was reclaimed while the transaction was in ` +
+            `flight. The journal still names nonce ${record.blockchainNonce ?? 'n/a'}, so ` +
+            `recovery will resolve it rather than resend. Needs a human.`
+        );
+        return;
+      }
 
       logger.info(
         `Queue record ${record.id} confirmed on-chain: ${receipt.hash} ` +
@@ -439,31 +479,47 @@ export class BlockchainQueueService {
   }
 
   /**
-   * Fresh send: broadcast, journal, then wait.
+   * Fresh send: sign, journal what was signed, broadcast, then wait.
    *
-   * The UPDATE between the broadcast and the wait is the whole point of
-   * this path. Everything before it can be replayed for free (no
-   * transaction exists yet); everything after it is recoverable, because
-   * the row now names the nonce and every hash sent on it. The window
-   * that used to produce duplicates — process killed while waiting for
-   * the receipt, row reclaimed, brand-new transaction sent — is closed:
-   * the reclaim finds the journal and goes through recoverInFlight.
+   * The order is the whole design. Signing happens locally, so the hash is
+   * final before any node has seen the transaction, and the journal can name
+   * the exact transaction that is about to be broadcast instead of one the
+   * network has to report back.
    *
-   * What is left is the millisecond between the node accepting the
-   * broadcast and this UPDATE landing. Closing that too would mean
-   * reserving a nonce in the database before sending, which trades a
-   * rare duplicate for a common false alarm (any nonce reserved but not
-   * used looks, to recovery, like a nonce consumed by someone else), so
-   * the window is documented rather than papered over.
+   * That is what closes the lost-acknowledgement window. A socket reset, an
+   * RPC timeout or a 502 from the gateway can make the broadcast throw AFTER
+   * the node accepted the transaction. Journal first and the row already
+   * names it, so the retry goes through `recoverInFlight`, finds the receipt
+   * and confirms. Journal afterwards and the row names nothing: the retry
+   * takes the fresh-send path, allocates a new nonce, and the append-only
+   * contract records the completion twice. No crash required, only a bad
+   * network moment, which is the common case rather than the rare one.
+   *
+   * An earlier version of this fix wrote the nonce before broadcasting but
+   * still learned the hash from the acknowledgement. That prevents the
+   * duplicate and not the false alarm: a lost acknowledgement whose
+   * transaction then mined left the row parked as `failed_permanent` while
+   * the completion sat on-chain under a hash nobody had written down.
+   * Journaling the hash removes that case too, because there is no longer a
+   * moment in which a transaction exists and the row cannot name it.
    */
   private async sendAndJournal(
     record: ClaimedRecord,
     topic: string
   ): Promise<BlockchainReceipt> {
-    const sent = await web3Service.sendCompletion(record.moduleId, record.score, topic);
+    const nonce = await web3Service.nextNonce();
+    const prepared = await web3Service.prepareCompletion(
+      record.moduleId,
+      record.score,
+      topic,
+      nonce
+    );
 
-    const hashes = [sent.hash];
-    await this.journal(record.id, sent.nonce, hashes);
+    // Written while the transaction still exists only in this process.
+    const hashes = [prepared.hash];
+    await this.journal(record, nonce, hashes);
+
+    const sent = await web3Service.broadcastCompletion(prepared);
 
     return web3Service.waitForCompletion(
       sent,
@@ -472,7 +528,7 @@ export class BlockchainQueueService {
         // Replace-by-fee reuses the nonce, so the journal keeps the whole
         // set of hashes: recovery must be able to check every one of them.
         hashes.push(replacementHash);
-        await this.journal(record.id, sent.nonce, hashes);
+        await this.journal(record, nonce, hashes);
       }
     );
   }
@@ -496,7 +552,7 @@ export class BlockchainQueueService {
       config.BLOCKCHAIN_TX_TIMEOUT_MS,
       async (replacementHash) => {
         journaled.push(replacementHash);
-        await this.journal(record.id, nonce, journaled);
+        await this.journal(record, nonce, journaled);
       }
     );
   }
@@ -507,15 +563,23 @@ export class BlockchainQueueService {
    * `transaction_hash` tracks the newest hash so the UI can link to the
    * transaction that is actually being waited on.
    */
-  private async journal(recordId: number, nonce: number, hashes: string[]): Promise<void> {
-    await db
+  private async journal(record: ClaimedRecord, nonce: number, hashes: string[]): Promise<void> {
+    const written = await db
       .update(progressRecords)
       .set({
         blockchainNonce: nonce,
         blockchainSentHashes: JSON.stringify(hashes),
         transactionHash: hashes[hashes.length - 1] ?? null,
       })
-      .where(eq(progressRecords.id, recordId));
+      .where(this.heldBy(record))
+      .returning({ id: progressRecords.id });
+
+    if (written.length === 0) {
+      // Refusing here is the point. A superseded worker rewriting the
+      // journal would point the current holder's recovery at the wrong
+      // nonce, which is worse than the lost lock it is reporting.
+      throw new LockLostError(record.id);
+    }
   }
 
   /**
@@ -528,9 +592,17 @@ export class BlockchainQueueService {
    * keep the journal too — by then it is a record of what was sent.
    */
   private async handleSendFailure(
-    record: { id: number; blockchainAttempts: number },
+    record: ClaimedRecord,
     error: unknown
   ): Promise<void> {
+    if (error instanceof LockLostError) {
+      // Not a settlement failure. The row is another worker's now, and
+      // scheduling a retry on it would be this worker writing to a record
+      // it does not hold, which is the exact thing the fence prevents.
+      this.logLostLock(record.id, 'continue: the lock was reclaimed mid-send');
+      return;
+    }
+
     const message = getErrorMessage(error);
 
     // Observability (C1): every failed send is reported with enough
@@ -546,7 +618,7 @@ export class BlockchainQueueService {
       logger.error(
         `Queue record ${record.id} failed permanently (non-retryable): ${message}`
       );
-      await this.markFailedPermanent(record.id, message);
+      await this.markFailedPermanent(record, message);
       return;
     }
 
@@ -555,7 +627,7 @@ export class BlockchainQueueService {
         `Queue record ${record.id} failed permanently after ` +
           `${record.blockchainAttempts} attempts: ${message}`
       );
-      await this.markFailedPermanent(record.id, message);
+      await this.markFailedPermanent(record, message);
       return;
     }
 
@@ -566,27 +638,64 @@ export class BlockchainQueueService {
         `retrying in ${Math.round(delayMs / 1000)}s: ${message}`
     );
 
-    await db
+    const updated = await db
       .update(progressRecords)
       .set({
         blockchainStatus: 'failed',
         blockchainError: message,
         blockchainNextAttemptAt: nextAttemptAt,
         blockchainLockedAt: null,
+        blockchainLockToken: null,
       })
-      .where(eq(progressRecords.id, record.id));
+      .where(this.heldBy(record))
+      .returning({ id: progressRecords.id });
+
+    if (updated.length === 0) {
+      this.logLostLock(record.id, 'schedule a retry');
+    }
   }
 
-  private async markFailedPermanent(recordId: number, message: string): Promise<void> {
-    await db
+  private async markFailedPermanent(record: ClaimedRecord, message: string): Promise<void> {
+    const updated = await db
       .update(progressRecords)
       .set({
         blockchainStatus: 'failed_permanent',
         blockchainError: message,
         blockchainNextAttemptAt: null,
         blockchainLockedAt: null,
+        blockchainLockToken: null,
       })
-      .where(eq(progressRecords.id, recordId));
+      .where(this.heldBy(record))
+      .returning({ id: progressRecords.id });
+
+    if (updated.length === 0) {
+      this.logLostLock(record.id, 'be failed permanently');
+    }
+  }
+
+  /**
+   * The fence: this row, still processing, still held by THIS claim.
+   *
+   * `blockchain_status = 'processing'` alone does not identify a holder. A
+   * row whose stale lock another worker reclaimed is still 'processing', so
+   * a status-only guard lets a superseded worker overwrite the current one.
+   */
+  private heldBy(record: { id: number; blockchainLockToken: string | null }) {
+    return and(
+      eq(progressRecords.id, record.id),
+      eq(progressRecords.blockchainStatus, 'processing'),
+      record.blockchainLockToken === null
+        ? sql`false`
+        : eq(progressRecords.blockchainLockToken, record.blockchainLockToken)
+    );
+  }
+
+  private logLostLock(recordId: number, attempted: string): void {
+    logger.warn(
+      `Queue record ${recordId} could not ${attempted}: this worker's lock was reclaimed ` +
+        `while it was working. Another worker owns the record now and its outcome is the ` +
+        `one that counts.`
+    );
   }
 }
 

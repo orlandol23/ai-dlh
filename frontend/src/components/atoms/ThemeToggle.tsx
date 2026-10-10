@@ -1,3 +1,4 @@
+import { Moon, Sun } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
 import { cn } from '@/lib/utils';
 
@@ -20,9 +21,7 @@ export const ThemeToggle = ({ className }: ThemeToggleProps) => {
         className
       )}
     >
-      <span className="text-base leading-none" aria-hidden="true">
-        {isDark ? '☀️' : '🌙'}
-      </span>
+      {isDark ? <Sun size={16} aria-hidden="true" /> : <Moon size={16} aria-hidden="true" />}
     </button>
   );
 };

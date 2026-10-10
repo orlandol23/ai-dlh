@@ -11,7 +11,7 @@ A full-stack Web3 learning platform: generative AI builds a study module on dema
 ![React](https://img.shields.io/badge/React-18-61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6)
 ![tRPC](https://img.shields.io/badge/tRPC-10-398CCB)
-![Tests](https://img.shields.io/badge/tests-239%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-283%20passing-brightgreen)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
 > ### 🔗 The fastest way to inspect this project
@@ -33,34 +33,17 @@ The live demo is gated behind a wallet connection, so these show the screens
 that a reviewer without MetaMask cannot reach. The public certificate page is
 the one exception — it needs no wallet and can be opened directly.
 
-<!--
-  Drop the images in docs/screenshots/ using exactly these filenames and the
-  references below will resolve with no further edits.
-
-  Capture at 1440px wide, in light mode, with the UI in English (use the
-  language selector in the header, or open in a private window with an
-  English browser locale). Crop out browser chrome and any real wallet
-  address.
--->
-
 | Screen | Route | Image |
 |---|---|---|
-| **Dashboard** — progress, generated modules, on-chain status | `/dashboard` | `docs/screenshots/dashboard.png` |
-| **Module + quiz** — AI-generated content, server-graded quiz | `/module/:id` | `docs/screenshots/module.png` |
-| **Certificate** — public, no wallet needed | `/cert/:hash` | `docs/screenshots/certificate.png` |
-| **VARK profile** — learning-style questionnaire | `/vark` | `docs/screenshots/vark.png` |
+| **Landing** — what the app does, before connecting | `/` | `docs/screenshots/p1-1-landing-desktop-1440.png` |
+| **Dashboard** — progress, generated modules, on-chain status | `/dashboard` | `docs/screenshots/p1-2-dashboard-populated-1440-light.png` |
+| **Module + quiz** — generated content, server-graded quiz | `/module/:id` | `docs/screenshots/p1-3-module-quiz-desktop-1440.png` |
+| **Certificate** — public, no wallet needed (unknown hash shown) | `/cert/:hash` | `docs/screenshots/p2-1-cert-invalid-desktop-1440.png` |
 
-<!-- Uncomment each line once the corresponding file exists:
-
-![Dashboard](docs/screenshots/dashboard.png)
-![Module and quiz](docs/screenshots/module.png)
-![Public certificate](docs/screenshots/certificate.png)
-![VARK profile](docs/screenshots/vark.png)
-
--->
-
-> **Not added yet.** The table above is the placeholder; the images are still
-> to be captured.
+![Landing](docs/screenshots/p1-1-landing-desktop-1440.png)
+![Dashboard](docs/screenshots/p1-2-dashboard-populated-1440-light.png)
+![Module and quiz](docs/screenshots/p1-3-module-quiz-desktop-1440.png)
+![Public certificate, unknown hash](docs/screenshots/p2-1-cert-invalid-desktop-1440.png)
 
 ---
 
@@ -233,11 +216,11 @@ There is no Docker setup and no mock mode: a real database, a real RPC endpoint 
 
 ## Tests
 
-266 tests pass across the three workspaces. Run each one directly:
+283 tests pass across the three workspaces. Run each one directly:
 
 ```bash
 cd server    && npx vitest run     # 194 tests, 15 files
-cd frontend  && npx vitest run     #  49 tests,  5 files
+cd frontend  && npx vitest run     #  66 tests,  7 files
 cd contracts && npx hardhat test   #  23 tests
 ```
 

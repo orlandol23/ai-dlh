@@ -60,11 +60,11 @@ backend:
 
 ```bash
 cd server    && npx vitest run   # 194 tests, 15 files
-cd frontend  && npx vitest run   #  49 tests,  5 files
+cd frontend  && npx vitest run   #  66 tests,  7 files
 cd contracts && npx hardhat test #  23 tests
 ```
 
-Total: 266 tests. Keep the counts in `README.md` in sync when tests are added.
+Total: 283 tests. Keep the counts in `README.md` in sync when tests are added.
 
 ## Lint and build
 
